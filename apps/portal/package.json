@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
-    "@next/eslint-plugin-next": "15.3.8",
+    "@next/eslint-plugin-next": "16.0.9",
     "@types/flexsearch": "^0.7.42",
     "@types/he": "^1.2.3",
     "@types/mdx": "^2.0.13",
