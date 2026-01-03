@@ -19,9 +19,8 @@ type YearInReviewStats = {
 export async function getYearInReview(
   authToken: string,
   teamIds: string[],
+  year: number,
 ): Promise<YearInReviewStats> {
-  const year = 2025;
-
   if (!authToken || teamIds.length === 0) {
     return {
       totalRpcRequests: 0,
@@ -31,9 +30,9 @@ export async function getYearInReview(
     };
   }
 
-  // Hardcoded to 2025: Jan 1, 2025 - Dec 31, 2025
-  const yearStart = new Date(2025, 0, 1);
-  const yearEnd = new Date(2025, 11, 31, 23, 59, 59, 999);
+  // Use the provided year to calculate the date range
+  const yearStart = new Date(year, 0, 1);
+  const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
 
   // Fetch all data in parallel across all teams
   const [rpcRequests, walletConnections, sponsoredTxs] = await Promise.all([
