@@ -1,14 +1,17 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import type { Token } from "../../../../bridge/index.js";
+import type { TokenWithPrices } from "../../../../bridge/types/Token.js";
 import type { ThirdwebClient } from "../../../../client/client.js";
 import { NATIVE_TOKEN_ADDRESS } from "../../../../constants/addresses.js";
+import type { SupportedFiatCurrency } from "../../../../pay/convert/type.js";
+import type { PreparedTransaction } from "../../../../transaction/prepare-transaction.js";
 import {
   type Address,
   getAddress,
   shortenAddress,
 } from "../../../../utils/address.js";
 import { resolvePromisedValue } from "../../../../utils/promise/resolve-promised-value.js";
+import { getDefaultWalletsForBridgeComponents } from "../../../../wallets/defaultWallets.js";
 import { getWalletBalance } from "../../../../wallets/utils/getWalletBalance.js";
 import { useCustomTheme } from "../../../core/design-system/CustomThemeProvider.js";
 import {
@@ -22,21 +25,28 @@ import { useActiveAccount } from "../../../core/hooks/wallets/useActiveAccount.j
 import { useActiveWallet } from "../../../core/hooks/wallets/useActiveWallet.js";
 import { ConnectButton } from "../ConnectWallet/ConnectButton.js";
 import { PoweredByThirdweb } from "../ConnectWallet/PoweredByTW.js";
+import { formatCurrencyAmount } from "../ConnectWallet/screens/formatTokenBalance.js";
 import { Container, Line } from "../components/basic.js";
 import { Button } from "../components/buttons.js";
 import { ChainName } from "../components/ChainName.js";
 import { Spacer } from "../components/Spacer.js";
 import { Text } from "../components/text.js";
 import type { PayEmbedConnectOptions } from "../PayEmbed.js";
-import type { UIOptions } from "./BridgeOrchestrator.js";
 import { ChainIcon } from "./common/TokenAndChain.js";
 import { WithHeader } from "./common/WithHeader.js";
 
-export interface TransactionPaymentProps {
+type TransactionPaymentProps = {
   /**
    * UI configuration and mode
    */
-  uiOptions: Extract<UIOptions, { mode: "transaction" }>;
+  transaction: PreparedTransaction;
+  currency: SupportedFiatCurrency;
+  buttonLabel: string | undefined;
+  metadata: {
+    title: string | undefined;
+    description: string | undefined;
+    image: string | undefined;
+  };
 
   /**
    * ThirdwebClient for blockchain interactions
@@ -46,7 +56,16 @@ export interface TransactionPaymentProps {
   /**
    * Called when user confirms transaction execution
    */
-  onContinue: (amount: string, token: Token, receiverAddress: Address) => void;
+  onContinue: (
+    amount: string,
+    token: TokenWithPrices,
+    receiverAddress: Address,
+  ) => void;
+
+  /**
+   * Request to execute the transaction immediately (skips funding flow)
+   */
+  onExecuteTransaction: () => void;
 
   /**
    * Connect options for wallet connection
@@ -58,26 +77,30 @@ export interface TransactionPaymentProps {
    * @default true
    */
   showThirdwebBranding?: boolean;
-}
+};
 
 export function TransactionPayment({
-  uiOptions,
+  transaction,
   client,
   onContinue,
+  onExecuteTransaction,
   connectOptions,
+  currency,
   showThirdwebBranding = true,
+  buttonLabel: _buttonLabel,
+  metadata,
 }: TransactionPaymentProps) {
   const theme = useCustomTheme();
   const activeAccount = useActiveAccount();
   const wallet = useActiveWallet();
 
   // Get chain metadata for native currency symbol
-  const chainMetadata = useChainMetadata(uiOptions.transaction.chain);
+  const chainMetadata = useChainMetadata(transaction.chain);
 
   // Use the extracted hook for transaction details
   const transactionDataQuery = useTransactionDetails({
     client,
-    transaction: uiOptions.transaction,
+    transaction: transaction,
     wallet,
   });
 
@@ -88,12 +111,10 @@ export function TransactionPayment({
       if (!activeAccount?.address) {
         return "0";
       }
-      const erc20Value = await resolvePromisedValue(
-        uiOptions.transaction.erc20Value,
-      );
+      const erc20Value = await resolvePromisedValue(transaction.erc20Value);
       const walletBalance = await getWalletBalance({
         address: activeAccount?.address,
-        chain: uiOptions.transaction.chain,
+        chain: transaction.chain,
         tokenAddress:
           erc20Value?.tokenAddress.toLowerCase() !== NATIVE_TOKEN_ADDRESS
             ? erc20Value?.tokenAddress
@@ -112,14 +133,28 @@ export function TransactionPayment({
     transactionDataQuery.data?.functionInfo?.functionName || "Contract Call";
   const isLoading = transactionDataQuery.isLoading || chainMetadata.isLoading;
 
-  const buttonLabel = `Execute ${functionName}`;
+  const buttonLabel = _buttonLabel || `Execute ${functionName}`;
+
+  const tokenFiatPricePerToken =
+    transactionDataQuery.data?.tokenInfo?.prices[currency] || undefined;
+
+  const totalFiatCost =
+    tokenFiatPricePerToken && transactionDataQuery.data
+      ? tokenFiatPricePerToken * Number(transactionDataQuery.data.totalCost)
+      : undefined;
+
+  const costToDisplay =
+    totalFiatCost !== undefined
+      ? formatCurrencyAmount(currency, totalFiatCost)
+      : transactionDataQuery.data?.txCostDisplay;
 
   if (isLoading) {
     return (
       <WithHeader
         client={client}
-        defaultTitle="Transaction"
-        uiOptions={uiOptions}
+        title={metadata.title || "Transaction"}
+        description={metadata.description}
+        image={metadata.image}
       >
         {/* Loading Header */}
         <SkeletonHeader theme={theme} />
@@ -171,8 +206,9 @@ export function TransactionPayment({
   return (
     <WithHeader
       client={client}
-      defaultTitle="Transaction"
-      uiOptions={uiOptions}
+      title={metadata.title || "Transaction"}
+      description={metadata.description}
+      image={metadata.image}
     >
       {/* Cost and Function Name section */}
       <Container
@@ -184,9 +220,8 @@ export function TransactionPayment({
         }}
       >
         {/* USD Value */}
-        <Text color="primaryText" size="xl" weight={700}>
-          {transactionDataQuery.data?.usdValueDisplay ||
-            transactionDataQuery.data?.txCostDisplay}
+        <Text color="primaryText" size="xl" weight={500}>
+          {costToDisplay}
         </Text>
 
         {/* Function Name */}
@@ -212,22 +247,28 @@ export function TransactionPayment({
       <Spacer y="md" />
 
       {/* Contract Info */}
-      <Container
-        flex="row"
-        style={{
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text color="secondaryText" size="sm">
-          Contract
-        </Text>
-        <Text color="primaryText" size="sm">
-          {contractName}
-        </Text>
-      </Container>
+      {contractName !== "UnknownContract" &&
+        contractName !== undefined &&
+        contractName !== "Unknown Contract" && (
+          <>
+            <Container
+              flex="row"
+              style={{
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Text color="secondaryText" size="sm">
+                Contract
+              </Text>
+              <Text color="primaryText" size="sm">
+                {contractName}
+              </Text>
+            </Container>
 
-      <Spacer y="xs" />
+            <Spacer y="xs" />
+          </>
+        )}
 
       {/* Address */}
       <Container
@@ -241,7 +282,7 @@ export function TransactionPayment({
           Address
         </Text>
         <a
-          href={`https://thirdweb.com/${uiOptions.transaction.chain.id}/${uiOptions.transaction.to}`}
+          href={`https://thirdweb.com/${transaction.chain.id}/${transaction.to}`}
           rel="noopener noreferrer"
           style={{
             color: theme.colors.accentText,
@@ -251,7 +292,7 @@ export function TransactionPayment({
           }}
           target="_blank"
         >
-          {shortenAddress(uiOptions.transaction.to as string)}
+          {shortenAddress(transaction.to as string)}
         </a>
       </Container>
 
@@ -269,13 +310,9 @@ export function TransactionPayment({
           Network
         </Text>
         <Container center="y" flex="row" gap="3xs">
-          <ChainIcon
-            chain={uiOptions.transaction.chain}
-            client={client}
-            size="xs"
-          />
+          <ChainIcon chain={transaction.chain} client={client} size="xs" />
           <ChainName
-            chain={uiOptions.transaction.chain}
+            chain={transaction.chain}
             client={client}
             color="primaryText"
             short
@@ -355,15 +392,42 @@ export function TransactionPayment({
           fullWidth
           onClick={() => {
             if (transactionDataQuery.data?.tokenInfo) {
+              if (
+                userBalance &&
+                Number(userBalance) <
+                  Number(transactionDataQuery.data.totalCost)
+              ) {
+                // if user has funds, but not enough, we need to fund the wallet with the difference
+                onContinue(
+                  (
+                    Number(transactionDataQuery.data.totalCost) -
+                    Number(userBalance)
+                  ).toString(),
+                  transactionDataQuery.data.tokenInfo,
+                  getAddress(activeAccount.address),
+                );
+                return;
+              }
+
+              // If the user has enough to pay, skip the payment step altogether
+              if (
+                userBalance &&
+                Number(userBalance) >=
+                  Number(transactionDataQuery.data.totalCost)
+              ) {
+                onExecuteTransaction();
+                return;
+              }
+
+              // otherwise, use the full transaction cost
               onContinue(
-                Math.max(
-                  0,
-                  Number(transactionDataQuery.data.totalCost) -
-                    Number(userBalance ?? "0"),
-                ).toString(),
+                transactionDataQuery.data.totalCost,
                 transactionDataQuery.data.tokenInfo,
                 getAddress(activeAccount.address),
               );
+            } else {
+              // if token not supported, can't go into buy flow, so skip to execute transaction
+              onExecuteTransaction();
             }
           }}
           style={{
@@ -382,6 +446,13 @@ export function TransactionPayment({
           }}
           theme={theme}
           {...connectOptions}
+          wallets={
+            connectOptions?.wallets ||
+            getDefaultWalletsForBridgeComponents({
+              appMetadata: connectOptions?.appMetadata,
+              chains: connectOptions?.chains,
+            })
+          }
         />
       )}
 
@@ -391,7 +462,7 @@ export function TransactionPayment({
           <PoweredByThirdweb />
         </div>
       ) : null}
-      <Spacer y="lg" />
+      <Spacer y="md" />
     </WithHeader>
   );
 }

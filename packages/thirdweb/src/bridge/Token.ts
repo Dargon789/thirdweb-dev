@@ -2,10 +2,10 @@ import type { ThirdwebClient } from "../client/client.js";
 import { getThirdwebBaseUrl } from "../utils/domains.js";
 import { getClientFetch } from "../utils/fetch.js";
 import { ApiError } from "./types/Errors.js";
-import type { Token } from "./types/Token.js";
+import type { Token, TokenWithPrices } from "./types/Token.js";
 
 /**
- * Retrieves supported Universal Bridge tokens based on the provided filters.
+ * Retrieves supported Bridge tokens based on the provided filters.
  *
  * When multiple filters are specified, a token must satisfy all filters to be included (it acts as an AND operator).
  *
@@ -15,6 +15,7 @@ import type { Token } from "./types/Token.js";
  *
  * const tokens = await Bridge.tokens({
  *   client: thirdwebClient,
+ *   chainId: 1,
  * });
  * ```
  *
@@ -28,7 +29,13 @@ import type { Token } from "./types/Token.js";
  *     symbol: "ETH",
  *     name: "Ethereum",
  *     iconUri: "https://assets.relay.link/icons/1/light.png",
- *     priceUsd: 2000.50
+ *     priceUsd: 2000.50,
+ *     prices: {
+ *       USD: 2000.50,
+ *       EUR: 1800.00,
+ *       GBP: 1500.00,
+ *       JPY: 10000.00
+ *     }
  *   },
  *   {
  *     chainId: 1,
@@ -37,7 +44,13 @@ import type { Token } from "./types/Token.js";
  *     symbol: "USDC",
  *     name: "USD Coin",
  *     iconUri: "https://assets.coingecko.com/coins/images/6319/large/USD_Coin_icon.png",
- *     priceUsd: 1.00
+ *     priceUsd: 1.00,
+ *     prices: {
+ *       USD: 1.00,
+ *       EUR: 0.84,
+ *       GBP: 0.73,
+ *       JPY: 120.00
+ *     }
  *   }
  * ]
  * ```
@@ -115,9 +128,22 @@ import type { Token } from "./types/Token.js";
  * @bridge
  * @beta
  */
-export async function tokens(options: tokens.Options): Promise<tokens.Result> {
-  const { client, chainId, tokenAddress, symbol, name, limit, offset } =
-    options;
+export async function tokens<
+  IncludePrices extends boolean = true,
+  R extends Token | TokenWithPrices = TokenWithPrices,
+>(options: tokens.Options<IncludePrices>): Promise<R[]> {
+  const {
+    client,
+    chainId,
+    tokenAddress,
+    symbol,
+    name,
+    limit,
+    offset,
+    includePrices,
+    sortBy,
+    query,
+  } = options;
 
   const clientFetch = getClientFetch(client);
   const url = new URL(`${getThirdwebBaseUrl("bridge")}/v1/tokens`);
@@ -140,6 +166,16 @@ export async function tokens(options: tokens.Options): Promise<tokens.Result> {
   if (offset !== null && offset !== undefined) {
     url.searchParams.set("offset", offset.toString());
   }
+  if (includePrices !== undefined) {
+    url.searchParams.set("includePrices", includePrices.toString());
+  }
+  if (sortBy !== undefined) {
+    url.searchParams.set("sortBy", sortBy);
+  }
+
+  if (query !== undefined) {
+    url.searchParams.set("query", query);
+  }
 
   const response = await clientFetch(url.toString());
   if (!response.ok) {
@@ -152,7 +188,7 @@ export async function tokens(options: tokens.Options): Promise<tokens.Result> {
     });
   }
 
-  const { data }: { data: Token[] } = await response.json();
+  const { data }: { data: R[] } = await response.json();
   return data;
 }
 
@@ -160,7 +196,7 @@ export declare namespace tokens {
   /**
    * Input parameters for {@link tokens}.
    */
-  type Options = {
+  type Options<IncludePrices extends boolean> = {
     /** Your {@link ThirdwebClient} instance. */
     client: ThirdwebClient;
     /** Filter by a specific chain ID. */
@@ -175,18 +211,24 @@ export declare namespace tokens {
     limit?: number;
     /** Number of tokens to skip (min: 0, default: 0). */
     offset?: number | null;
+    /** Whether or not to include prices for the tokens. Setting this to false will speed up the request. */
+    includePrices?: IncludePrices;
+    /** Sort by a specific field. */
+    sortBy?: "newest" | "oldest" | "volume" | "market_cap";
+    /** search for tokens by token name or symbol */
+    query?: string;
   };
 
   /**
    * The result returned from {@link Bridge.tokens}.
    */
-  type Result = Token[];
+  type Result<T extends Token | TokenWithPrices> = T[];
 }
 
 /**
- * Adds a token to the Universal Bridge for indexing.
+ * Adds a token to the Bridge for indexing.
  *
- * This function requests the Universal Bridge to index a specific token on a given chain.
+ * This function requests the Bridge to index a specific token on a given chain.
  * Once indexed, the token will be available for cross-chain operations.
  *
  * @example
@@ -241,7 +283,7 @@ export async function add(options: add.Options): Promise<add.Result> {
     });
   }
 
-  const { data }: { data: Token } = await response.json();
+  const { data }: { data: TokenWithPrices } = await response.json();
   return data;
 }
 
@@ -261,5 +303,5 @@ export declare namespace add {
   /**
    * The result returned from {@link Bridge.add}.
    */
-  type Result = Token;
+  type Result = TokenWithPrices;
 }

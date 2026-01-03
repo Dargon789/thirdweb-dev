@@ -87,7 +87,7 @@ export function ChatBar(props: {
                   <PopoverContent className="w-72">
                     <div>
                       <p className="mb-3 text-muted-foreground text-sm">
-                        Get access to image uploads by signing in to Nebula
+                        Get access to image uploads by signing in to thirdweb
                       </p>
                       <Button
                         className="w-full"
@@ -116,13 +116,12 @@ export function ChatBar(props: {
               ) : (
                 <Button
                   aria-label="Send"
-                  className="!h-auto w-auto border border-nebula-pink-foreground p-2 disabled:opacity-100"
+                  className="!h-auto w-auto p-2 disabled:opacity-100"
                   disabled={message.trim() === "" || props.isConnectingWallet}
                   onClick={() => {
                     if (message.trim() === "") return;
                     handleSubmit(message);
                   }}
-                  variant="pink"
                 >
                   <ArrowUpIcon className="size-4" />
                 </Button>

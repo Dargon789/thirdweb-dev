@@ -1,4 +1,4 @@
-import "../../global.css";
+import "@workspace/ui/global.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
@@ -54,7 +54,7 @@ export default function RootLayout({
       <body
         className={cn("bg-background font-sans antialiased", fontSans.variable)}
       >
-        <AppRouterProviders>{children}</AppRouterProviders>
+        <AppRouterProviders autoConnect={true}>{children}</AppRouterProviders>
         <DashboardRouterTopProgressBar />
         <NextTopLoader
           color="hsl(var(--foreground))"

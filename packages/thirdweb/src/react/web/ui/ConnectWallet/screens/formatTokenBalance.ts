@@ -1,3 +1,4 @@
+import type { SupportedFiatCurrency } from "../../../../../pay/convert/type.js";
 import { formatNumber } from "../../../../../utils/formatNumber.js";
 import { toTokens } from "../../../../../utils/units.js";
 
@@ -33,7 +34,10 @@ export function formatTokenAmount(
   ).toString();
 }
 
-export function formatCurrencyAmount(currency: string, amount: number) {
+export function formatCurrencyAmount(
+  currency: SupportedFiatCurrency,
+  amount: number,
+) {
   return formatMoney(amount, "en-US", currency);
 }
 
@@ -45,5 +49,7 @@ function formatMoney(
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currencyCode,
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
   }).format(value);
 }

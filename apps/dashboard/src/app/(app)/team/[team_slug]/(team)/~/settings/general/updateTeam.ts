@@ -1,8 +1,8 @@
 "use server";
 
-import type { Team } from "@/api/team";
+import { getAuthToken } from "@/api/auth-token";
+import type { Team } from "@/api/team/get-team";
 import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
-import { getAuthToken } from "../../../../../../../../@/api/auth-token";
 
 export async function updateTeam(params: {
   teamId: string;
@@ -12,6 +12,12 @@ export async function updateTeam(params: {
 
   if (!authToken) {
     throw new Error("No auth token");
+  }
+
+  // Validate teamId to prevent unsafe values from influencing the request path
+  const teamIdPattern = /^[a-zA-Z0-9_-]+$/;
+  if (!teamIdPattern.test(params.teamId)) {
+    throw new Error("Invalid team ID");
   }
 
   const res = await fetch(

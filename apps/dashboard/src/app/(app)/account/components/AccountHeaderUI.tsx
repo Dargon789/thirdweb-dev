@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ThirdwebClient } from "thirdweb";
-import type { Project } from "@/api/projects";
-import type { Team } from "@/api/team";
+import type { Project } from "@/api/project/projects";
+import type { Team } from "@/api/team/get-team";
 import { GradientAvatar } from "@/components/blocks/avatar/gradient-avatar";
 import { NotificationsButton } from "@/components/notifications/notification-button";
 import type { Account } from "@/hooks/useApi";
@@ -11,6 +11,7 @@ import { MobileBurgerMenuButton } from "../../components/MobileBurgerMenuButton"
 import { ThirdwebMiniLogo } from "../../components/ThirdwebMiniLogo";
 import { TeamAndProjectSelectorPopoverButton } from "../../team/components/TeamHeader/TeamAndProjectSelectorPopoverButton";
 import { TeamSelectorMobileMenuButton } from "../../team/components/TeamHeader/TeamSelectorMobileMenuButton";
+import { RewindBadge } from "./RewindBadge";
 
 export type AccountHeaderCompProps = {
   className?: string;
@@ -36,6 +37,7 @@ export function AccountHeaderDesktopUI(props: AccountHeaderCompProps) {
         <Link href="/team">
           <ThirdwebMiniLogo className="h-5" />
         </Link>
+        <RewindBadge />
 
         <SlashSeparator />
 

@@ -4,9 +4,9 @@
     "url": "https://github.com/thirdweb-dev/js/issues"
   },
   "dependencies": {
-    "@aws-sdk/client-kms": "3.592.0",
+    "@aws-sdk/client-kms": "3.948.0",
     "@aws-sdk/client-lambda": "3.592.0",
-    "@aws-sdk/credential-providers": "3.592.0",
+    "@aws-sdk/credential-providers": "3.948.0",
     "@mobile-wallet-protocol/client": "1.0.0"
   },
   "devDependencies": {
@@ -34,12 +34,12 @@
   "peerDependencies": {
     "@biomejs/biome": "2.0.6",
     "@coinbase/wallet-mobile-sdk": "^1",
-    "@react-native-async-storage/async-storage": "^1 || ^2",
+    "@react-native-async-storage/async-storage": "*",
     "@react-native-community/netinfo": "^11",
     "@walletconnect/react-native-compat": "^2",
-    "expo-application": "^5 || ^6",
-    "expo-linking": "^6 || ^7",
-    "expo-web-browser": "^13 || ^14",
+    "expo-application": "*",
+    "expo-linking": "*",
+    "expo-web-browser": "*",
     "react-native": ">=0.70",
     "react-native-aes-gcm-crypto": "^0.2",
     "react-native-get-random-values": "^1",
@@ -69,5 +69,5 @@
   "type": "module",
   "types": "./dist/types/exports/thirdweb.d.ts",
   "typings": "./dist/types/exports/thirdweb.d.ts",
-  "version": "1.5.4"
+  "version": "1.5.5"
 }

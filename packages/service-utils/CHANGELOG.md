@@ -1,5 +1,49 @@
 # @thirdweb-dev/service-utils
 
+## 0.10.10
+
+### Patch Changes
+
+- [#8479](https://github.com/thirdweb-dev/js/pull/8479) [`7967d7f`](https://github.com/thirdweb-dev/js/commit/7967d7f17ea1e906a0c4adf0cd838ddc36b71162) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - add dedicated relayer to service utils
+
+## 0.10.9
+
+### Patch Changes
+
+- [#8434](https://github.com/thirdweb-dev/js/pull/8434) [`c11fe95`](https://github.com/thirdweb-dev/js/commit/c11fe954160a544069a9518bd2364a1d7b60cc94) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update engineCloud service config
+
+## 0.10.8
+
+### Patch Changes
+
+- [#7921](https://github.com/thirdweb-dev/js/pull/7921) [`d4a44f5`](https://github.com/thirdweb-dev/js/commit/d4a44f5b5f6ec3594a9f521aee5e73f3a5cdc031) Thanks [@jnsdls](https://github.com/jnsdls)! - add reason code type into team capabilities response
+
+## 0.10.7
+
+### Patch Changes
+
+- [#7718](https://github.com/thirdweb-dev/js/pull/7718) [`80c6b6a`](https://github.com/thirdweb-dev/js/commit/80c6b6a79371d345c2ea95d2a904e1e85e766b99) Thanks [@jnsdls](https://github.com/jnsdls)! - add `gateway` team capabilities
+
+## 0.10.6
+
+### Patch Changes
+
+- [#7700](https://github.com/thirdweb-dev/js/pull/7700) [`9d8c7f1`](https://github.com/thirdweb-dev/js/commit/9d8c7f1f7d14329d2eab49d4af7e37086924f40e) Thanks [@jnsdls](https://github.com/jnsdls)! - add `gateway` to possible usage sources
+
+## 0.10.5
+
+### Patch Changes
+
+- [#7636](https://github.com/thirdweb-dev/js/pull/7636) [`746b0c9`](https://github.com/thirdweb-dev/js/commit/746b0c9d8b597517898bed5fd93ac6717f5bf8dd) Thanks [@jnsdls](https://github.com/jnsdls)! - add `mcp` to team capabilities
+
+## 0.10.4
+
+### Patch Changes
+
+- [#7614](https://github.com/thirdweb-dev/js/pull/7614) [`f82f885`](https://github.com/thirdweb-dev/js/commit/f82f885dad9a0eaecd64f365adbd1f49517b4fd9) Thanks [@jnsdls](https://github.com/jnsdls)! - update nebula ratelimit type
+
+- [#7613](https://github.com/thirdweb-dev/js/pull/7613) [`34d2fdd`](https://github.com/thirdweb-dev/js/commit/34d2fddf49291eb31d03fef98460ee719aef1044) Thanks [@jnsdls](https://github.com/jnsdls)! - update error response url
+
 ## 0.10.3
 
 ### Patch Changes

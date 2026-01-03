@@ -37,7 +37,7 @@ type UseContractEventsOptions<
  *
  * ### Using event extensions
  *
- * The `thirdweb/extesions` export contains event definitions for many popular contracts.
+ * The `thirdweb/extensions` export contains event definitions for many popular contracts.
  * You can use these event definitions to watch for specific events with a type-safe API.
  *
  * ```jsx
@@ -92,7 +92,7 @@ export function useContractEvents<
     () =>
       events?.reduce((acc, curr) => {
         // we can use the event hash as a unique identifier?
-        return `${acc}${curr.hash}_`;
+        return `${acc}${curr.hash}${curr.topics.join("")}_`;
       }, "") || "__all__",
     [events],
   );

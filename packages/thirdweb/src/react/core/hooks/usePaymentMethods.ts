@@ -1,23 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { chains } from "../../../bridge/Chains.js";
-import { routes } from "../../../bridge/Routes.js";
-import type { Token } from "../../../bridge/types/Token.js";
-import {
-  getCachedChain,
-  getInsightEnabledChainIds,
-} from "../../../chains/utils.js";
+import type { Quote } from "../../../bridge/index.js";
+import { ApiError } from "../../../bridge/types/Errors.js";
+import type { TokenWithPrices } from "../../../bridge/types/Token.js";
 import type { ThirdwebClient } from "../../../client/client.js";
-import { getOwnedTokens } from "../../../insight/get-tokens.js";
-import { toTokens } from "../../../utils/units.js";
+import { getThirdwebBaseUrl } from "../../../utils/domains.js";
+import { getClientFetch } from "../../../utils/fetch.js";
+import { toTokens, toUnits } from "../../../utils/units.js";
 import type { Wallet } from "../../../wallets/interfaces/wallet.js";
-import type { PaymentMethod } from "../machines/paymentMachine.js";
+import type { PaymentMethod } from "../../web/ui/Bridge/types.js";
+import type { SupportedTokens } from "../utils/defaultTokens.js";
 import { useActiveWallet } from "./wallets/useActiveWallet.js";
-
-type OwnedTokenWithQuote = {
-  originToken: Token;
-  balance: bigint;
-  originAmount: bigint;
-};
 
 /**
  * Hook that returns available payment methods for BridgeEmbed
@@ -37,206 +29,136 @@ type OwnedTokenWithQuote = {
  * ```
  */
 export function usePaymentMethods(options: {
-  destinationToken: Token;
+  destinationToken: TokenWithPrices;
   destinationAmount: string;
   client: ThirdwebClient;
   payerWallet?: Wallet;
-  includeDestinationToken?: boolean;
+  supportedTokens?: SupportedTokens;
 }) {
   const {
     destinationToken,
     destinationAmount,
     client,
     payerWallet,
-    includeDestinationToken,
+    supportedTokens,
   } = options;
   const localWallet = useActiveWallet(); // TODO (bridge): get all connected wallets
   const wallet = payerWallet || localWallet;
 
-  const routesQuery = useQuery({
+  const query = useQuery({
     enabled: !!wallet,
     queryFn: async (): Promise<PaymentMethod[]> => {
-      if (!wallet) {
+      const account = wallet?.getAccount();
+      if (!wallet || !account) {
         throw new Error("No wallet connected");
       }
 
-      // 1. Get all supported chains
-      const [allChains, insightEnabledChainIds] = await Promise.all([
-        chains({ client }),
-        getInsightEnabledChainIds(),
-      ]);
-
-      // 2. Check insight availability for all chains
-      const insightEnabledChains = allChains.filter((c) =>
-        insightEnabledChainIds.includes(c.chainId),
+      const url = new URL(
+        `${getThirdwebBaseUrl("bridge")}/v1/buy/quote/${account.address}`,
       );
+      url.searchParams.set(
+        "destinationChainId",
+        destinationToken.chainId.toString(),
+      );
+      url.searchParams.set("destinationTokenAddress", destinationToken.address);
+      url.searchParams.set(
+        "amount",
+        toUnits(destinationAmount, destinationToken.decimals).toString(),
+      );
+      // dont include quotes to speed up the query
+      url.searchParams.set("includeQuotes", "false");
 
-      // 3. Get all owned tokens for insight-enabled chains
-      let allOwnedTokens: Array<{
-        balance: bigint;
-        originToken: Token;
-      }> = [];
-      let page = 0;
-      const limit = 500;
+      const clientFetch = getClientFetch(client);
+      const response = await clientFetch(url.toString());
+      if (!response.ok) {
+        const errorJson = await response.json();
+        throw new ApiError({
+          code: errorJson.code || "UNKNOWN_ERROR",
+          correlationId: errorJson.correlationId || undefined,
+          message: errorJson.message || response.statusText,
+          statusCode: response.status,
+        });
+      }
 
-      while (true) {
-        const batch = await getOwnedTokens({
-          chains: insightEnabledChains.map((c) => getCachedChain(c.chainId)),
-          client,
-          ownerAddress: wallet.getAccount()?.address || "",
-          queryOptions: {
-            limit,
-            metadata: "false",
-            page,
-          },
+      const {
+        data: allValidOriginTokens,
+      }: {
+        data: { quote?: Quote; balance: string; token: TokenWithPrices }[];
+      } = await response.json();
+
+      // Sort by enough balance to pay THEN gross balance
+      const validTokenQuotes = allValidOriginTokens.map((s) => ({
+        balance: BigInt(s.balance),
+        originToken: s.token,
+        payerWallet: wallet,
+        type: "wallet" as const,
+        quote: s.quote,
+      }));
+
+      const sortedValidTokenQuotes = validTokenQuotes
+        .filter((s) => !!s.originToken.prices.USD)
+        .sort((a, b) => {
+          return (
+            Number.parseFloat(toTokens(b.balance, b.originToken.decimals)) *
+              (b.originToken.prices.USD || 1) -
+            Number.parseFloat(toTokens(a.balance, a.originToken.decimals)) *
+              (a.originToken.prices.USD || 1)
+          );
         });
 
-        if (batch.length === 0) {
-          break;
-        }
+      // Filter out quotes that are not included in the supportedTokens (if provided)
+      const tokensToInclude = supportedTokens
+        ? Object.keys(supportedTokens).flatMap(
+            (c: string) =>
+              supportedTokens[Number(c)]?.map((t) => ({
+                chainId: Number(c),
+                address: t.address,
+              })) ?? [],
+          )
+        : [];
+      const finalQuotes = supportedTokens
+        ? sortedValidTokenQuotes.filter((q) =>
+            tokensToInclude.find(
+              (t) =>
+                t.chainId === q.originToken.chainId &&
+                t.address.toLowerCase() === q.originToken.address.toLowerCase(),
+            ),
+          )
+        : sortedValidTokenQuotes;
 
-        // Convert to our format and filter out zero balances
-        const tokensWithBalance = batch
-          .filter((b) => b.value > 0n)
-          .map((b) => ({
-            balance: b.value,
-            originToken: {
-              address: b.tokenAddress,
-              chainId: b.chainId,
-              decimals: b.decimals,
-              iconUri: "",
-              name: b.name,
-              prices: {
-                USD: 0,
-              },
-              symbol: b.symbol,
-            } as Token,
-          }));
+      const requiredUsdValue =
+        (destinationToken.prices?.["USD"] ?? 0) * Number(destinationAmount);
 
-        allOwnedTokens = [...allOwnedTokens, ...tokensWithBalance];
-        page += 1;
-      }
-
-      // 4. For each chain where we have owned tokens, fetch possible routes
-      const chainsWithOwnedTokens = Array.from(
-        new Set(allOwnedTokens.map((t) => t.originToken.chainId)),
-      );
-
-      const allValidOriginTokens = new Map<string, Token>();
-
-      // Add destination token if included
-      if (includeDestinationToken) {
-        const tokenKey = `${destinationToken.chainId}-${destinationToken.address.toLowerCase()}`;
-        allValidOriginTokens.set(tokenKey, destinationToken);
-      }
-
-      // Fetch routes for each chain with owned tokens
-      await Promise.all(
-        chainsWithOwnedTokens.map(async (chainId) => {
-          try {
-            // TODO (bridge): this is quite inefficient, need to fix the popularity sorting to really capture all users tokens
-            const routesForChain = await routes({
-              client,
-              destinationChainId: destinationToken.chainId,
-              destinationTokenAddress: destinationToken.address,
-              includePrices: true,
-              limit: 100,
-              maxSteps: 3,
-              originChainId: chainId,
-            });
-
-            // Add all origin tokens from this chain's routes
-            for (const route of routesForChain) {
-              // Skip if the origin token is the same as the destination token, will be added later only if includeDestinationToken is true
-              if (
-                route.originToken.chainId === destinationToken.chainId &&
-                route.originToken.address.toLowerCase() ===
-                  destinationToken.address.toLowerCase()
-              ) {
-                continue;
-              }
-              const tokenKey = `${route.originToken.chainId}-${route.originToken.address.toLowerCase()}`;
-              allValidOriginTokens.set(tokenKey, route.originToken);
-            }
-          } catch (error) {
-            // Log error but don't fail the entire operation
-            console.warn(`Failed to fetch routes for chain ${chainId}:`, error);
-          }
-        }),
-      );
-
-      // 5. Filter owned tokens to only include valid origin tokens
-      const validOwnedTokens: OwnedTokenWithQuote[] = [];
-
-      for (const ownedToken of allOwnedTokens) {
-        const tokenKey = `${ownedToken.originToken.chainId}-${ownedToken.originToken.address.toLowerCase()}`;
-        const validOriginToken = allValidOriginTokens.get(tokenKey);
-
-        if (validOriginToken) {
-          validOwnedTokens.push({
-            balance: ownedToken.balance,
-            originAmount: 0n,
-            originToken: validOriginToken, // Use the token with pricing info from routes
-          });
-        }
-      }
-
-      // Sort by dollar balance descending
-      validOwnedTokens.sort((a, b) => {
-        const aDollarBalance =
-          Number.parseFloat(toTokens(a.balance, a.originToken.decimals)) *
-          (a.originToken.prices["USD"] || 0);
-        const bDollarBalance =
-          Number.parseFloat(toTokens(b.balance, b.originToken.decimals)) *
-          (b.originToken.prices["USD"] || 0);
-        return bDollarBalance - aDollarBalance;
+      return finalQuotes.map((x) => {
+        const tokenUsdValue =
+          (x.originToken.prices?.["USD"] ?? 0) *
+          Number(toTokens(x.balance, x.originToken.decimals));
+        const hasEnoughBalance = tokenUsdValue >= requiredUsdValue;
+        return {
+          ...x,
+          action: "buy",
+          hasEnoughBalance,
+        };
       });
-
-      const suitableOriginTokens: OwnedTokenWithQuote[] = [];
-
-      for (const token of validOwnedTokens) {
-        if (
-          includeDestinationToken &&
-          token.originToken.address.toLowerCase() ===
-            destinationToken.address.toLowerCase() &&
-          token.originToken.chainId === destinationToken.chainId
-        ) {
-          // Add same token to the front of the list
-          suitableOriginTokens.unshift(token);
-          continue;
-        }
-
-        suitableOriginTokens.push(token);
-      }
-
-      const transformedRoutes = [
-        ...suitableOriginTokens.map((s) => ({
-          balance: s.balance,
-          originToken: s.originToken,
-          payerWallet: wallet,
-          type: "wallet" as const,
-        })),
-      ];
-      return transformedRoutes;
     },
     queryKey: [
-      "bridge-routes",
+      "payment-methods",
       destinationToken.chainId,
       destinationToken.address,
       destinationAmount,
       payerWallet?.getAccount()?.address,
-      includeDestinationToken,
+      supportedTokens,
     ], // 5 minutes
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
   });
 
   return {
-    data: routesQuery.data || [],
-    error: routesQuery.error,
-    isError: routesQuery.isError,
-    isLoading: routesQuery.isLoading,
-    isSuccess: routesQuery.isSuccess,
-    refetch: routesQuery.refetch,
+    data: query.data || [],
+    error: query.error,
+    isError: query.isError,
+    isLoading: query.isLoading,
+    isSuccess: query.isSuccess,
+    refetch: query.refetch,
   };
 }

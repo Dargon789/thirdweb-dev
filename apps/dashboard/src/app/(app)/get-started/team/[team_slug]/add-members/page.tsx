@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { getTeamBySlug } from "@/api/team";
+import { getAuthToken } from "@/api/auth-token";
+import { getTeamBySlug } from "@/api/team/get-team";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
-import { getAuthToken } from "../../../../../../@/api/auth-token";
-import { TeamOnboardingLayout } from "../../../../login/onboarding/onboarding-layout";
-import { InviteTeamMembers } from "../../../../login/onboarding/team-onboarding/team-onboarding";
+import { TeamOnboardingLayout } from "../../../../../login/onboarding/onboarding-layout";
+import { InviteTeamMembers } from "../../../../../login/onboarding/team-onboarding/team-onboarding";
 
 export default async function Page(props: {
   params: Promise<{ team_slug: string }>;

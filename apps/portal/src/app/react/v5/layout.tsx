@@ -8,12 +8,7 @@ export default async function Layout(props: { children: React.ReactNode }) {
     <DocLayout
       editPageButton={true}
       sideBar={sidebar}
-      sidebarHeader={
-        <div className="flex-col items-center gap-1">
-          <p className="py-5 font-semibold text-foreground text-lg">Connect</p>
-          <PlatformSelector selected="React" />
-        </div>
-      }
+      sidebarHeader={<PlatformSelector selected="React" />}
     >
       <div>{props.children}</div>
     </DocLayout>
@@ -25,3 +20,5 @@ export const metadata = createMetadata({
     "A type-safe library to interact with any EVM-compatible blockchain in React applications.",
   title: "thirdweb React SDK",
 });
+
+export const revalidate = 86400; // revalidate every day

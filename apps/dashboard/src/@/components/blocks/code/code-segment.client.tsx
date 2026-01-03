@@ -1,15 +1,20 @@
 "use client";
+
 import type React from "react";
 import { type Dispatch, type SetStateAction, useMemo } from "react";
 import { CodeClient } from "@/components/ui/code/code.client";
 import { TabButtons } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export type CodeEnvironment =
+  | "api"
   | "javascript"
   | "typescript"
   | "react"
   | "react-native"
-  | "unity";
+  | "dotnet"
+  | "unity"
+  | "curl";
 
 type SupportedEnvironment = {
   environment: CodeEnvironment;
@@ -19,6 +24,10 @@ type SupportedEnvironment = {
 type CodeSnippet = Partial<Record<CodeEnvironment, string>>;
 
 const Environments: SupportedEnvironment[] = [
+  {
+    environment: "api",
+    title: "API",
+  },
   {
     environment: "javascript",
     title: "JavaScript",
@@ -36,8 +45,16 @@ const Environments: SupportedEnvironment[] = [
     title: "React Native",
   },
   {
+    environment: "dotnet",
+    title: ".NET",
+  },
+  {
     environment: "unity",
     title: "Unity",
+  },
+  {
+    environment: "curl",
+    title: "cURL",
   },
 ];
 
@@ -50,6 +67,7 @@ interface CodeSegmentProps {
   isInstallCommand?: boolean;
   hideTabs?: boolean;
   onlyTabs?: boolean;
+  codeContainerClassName?: string;
 }
 
 export const CodeSegment: React.FC<CodeSegmentProps> = ({
@@ -59,6 +77,7 @@ export const CodeSegment: React.FC<CodeSegmentProps> = ({
   isInstallCommand,
   hideTabs,
   onlyTabs,
+  codeContainerClassName,
 }) => {
   const activeEnvironment: CodeEnvironment = useMemo(() => {
     return (
@@ -86,13 +105,12 @@ export const CodeSegment: React.FC<CodeSegmentProps> = ({
   return (
     <div
       className={
-        "flex flex-col overflow-hidden rounded-lg border border-border"
+        "flex flex-col overflow-hidden rounded-lg border border-border grow"
       }
     >
       {!hideTabs && (
         <TabButtons
           hideBottomLine={!!onlyTabs}
-          tabClassName="text-sm gap-2 !text-sm"
           tabContainerClassName="px-3 pt-1.5 gap-0.5"
           tabIconClassName="size-4"
           tabs={environments.map((env) => ({
@@ -106,7 +124,11 @@ export const CodeSegment: React.FC<CodeSegmentProps> = ({
 
       {onlyTabs ? null : (
         <CodeClient
-          className="rounded-none border-none"
+          className={cn(
+            "rounded-none border-none grow",
+            codeContainerClassName,
+          )}
+          scrollableContainerClassName="h-full"
           code={code}
           lang={
             isInstallCommand
@@ -116,9 +138,14 @@ export const CodeSegment: React.FC<CodeSegmentProps> = ({
               : activeEnvironment === "react" ||
                   activeEnvironment === "react-native"
                 ? "tsx"
-                : activeEnvironment === "unity"
+                : activeEnvironment === "unity" ||
+                    activeEnvironment === "dotnet"
                   ? "cpp"
-                  : activeEnvironment
+                  : activeEnvironment === "api"
+                    ? "javascript"
+                    : activeEnvironment === "curl"
+                      ? "bash"
+                      : activeEnvironment
           }
         />
       )}

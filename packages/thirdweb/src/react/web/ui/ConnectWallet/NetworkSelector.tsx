@@ -146,6 +146,7 @@ type NetworkSelectorContentProps = {
   showTabs?: boolean;
   connectLocale: ConnectLocale;
   client: ThirdwebClient;
+  className?: string;
 };
 
 /**
@@ -364,7 +365,7 @@ export function NetworkSelectorContent(props: NetworkSelectorContentProps) {
   );
 
   return (
-    <Container>
+    <Container className={props.className}>
       <Container p="lg">
         {props.onBack ? (
           <ModalHeader onBack={props.onBack} title={locale.title} />
@@ -735,11 +736,11 @@ export const TabButton = /* @__PURE__ */ (() =>
   styled.button((_) => {
     const theme = useCustomTheme();
     return {
+      all: "unset",
       "&[data-active='true']": {
         background: theme.colors.secondaryButtonBg,
         color: theme.colors.primaryText,
       },
-      all: "unset",
       borderRadius: radius.lg,
       color: theme.colors.secondaryText,
       cursor: "pointer",
@@ -784,8 +785,8 @@ export const NetworkButton = /* @__PURE__ */ StyledButton((_) => {
     "&:hover": {
       background: theme.colors.secondaryButtonBg,
     },
-    alignItems: "center",
     all: "unset",
+    alignItems: "center",
     borderRadius: radius.md,
     boxSizing: "border-box",
     color: theme.colors.primaryText,
@@ -954,6 +955,8 @@ export function useNetworkSwitcherModal() {
       setRootEl(
         <CustomThemeProvider theme={props.theme}>
           <Modal
+            className="tw-modal__switch-network"
+            title="Switch Network"
             open={true}
             setOpen={(value) => {
               if (!value) {

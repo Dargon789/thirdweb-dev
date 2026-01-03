@@ -2,6 +2,7 @@
 import type { CSSObject } from "@emotion/react";
 import { useCustomTheme } from "../../../core/design-system/CustomThemeProvider.js";
 import { spacing, type Theme } from "../../../core/design-system/index.js";
+import { cls } from "../../utils/cls.js";
 import {
   fadeInAnimation,
   floatDownAnimation,
@@ -16,7 +17,7 @@ export const ScreenBottomContainer = /* @__PURE__ */ StyledDiv((_) => {
     borderTop: `1px solid ${theme.colors.separatorLine}`,
     display: "flex",
     flexDirection: "column",
-    gap: spacing.lg,
+    gap: spacing.md,
     padding: spacing.lg,
   };
 });
@@ -36,10 +37,12 @@ export function ModalHeader(props: {
   onBack?: () => void;
   title: React.ReactNode;
   leftAligned?: boolean;
+  className?: string;
 }) {
   const { onBack, title } = props;
   return (
     <div
+      className={cls("tw-header", props.className)}
       style={{
         alignItems: "center",
         display: "flex",
@@ -64,11 +67,10 @@ export function ModalHeader(props: {
   );
 }
 
-export const Line = /* @__PURE__ */ StyledDiv(() => {
+export const Line = /* @__PURE__ */ StyledDiv((props: { dashed?: boolean }) => {
   const theme = useCustomTheme();
   return {
-    background: theme.colors.separatorLine,
-    height: "1px",
+    borderTop: `1px ${props.dashed ? "dashed" : "solid"} ${theme.colors.separatorLine}`,
   };
 });
 
@@ -82,17 +84,20 @@ export function Container(props: {
   expand?: boolean;
   center?: "x" | "y" | "both";
   gap?: keyof typeof spacing;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   style?: React.CSSProperties;
   p?: keyof typeof spacing;
   px?: keyof typeof spacing;
   py?: keyof typeof spacing;
+  pb?: keyof typeof spacing;
+  pt?: keyof typeof spacing;
   relative?: boolean;
   scrollY?: boolean;
   color?: keyof Theme["colors"];
   debug?: boolean;
   bg?: keyof Theme["colors"];
   borderColor?: keyof Theme["colors"];
+  className?: string;
 }) {
   const styles: React.CSSProperties = {};
 
@@ -156,6 +161,14 @@ export function Container(props: {
     styles.paddingBottom = spacing[props.py];
   }
 
+  if (props.pb) {
+    styles.paddingBottom = spacing[props.pb];
+  }
+
+  if (props.pt) {
+    styles.paddingTop = spacing[props.pt];
+  }
+
   if (props.debug) {
     styles.outline = "1px solid red";
     styles.outlineOffset = "-1px";
@@ -168,6 +181,7 @@ export function Container(props: {
       color={props.color}
       data-animate={props.animate}
       data-scrolly={props.scrollY}
+      className={props.className}
       style={{
         ...styles,
         ...props.style,

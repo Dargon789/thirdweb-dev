@@ -1,13 +1,11 @@
+import { cn } from "@workspace/ui/lib/utils";
 import type { Metadata } from "next";
-import { createThirdwebClient, defineChain, getContract } from "thirdweb";
-import { getCurrencyMetadata } from "thirdweb/extensions/erc20";
-import { checksumAddress } from "thirdweb/utils";
-import { PaymentLinkForm } from "./components/client/PaymentLinkForm.client";
-import { PayPageWidget } from "./components/client/PayPageWidget.client";
-import type { PayParams } from "./components/types";
-import { payAppThirdwebClient } from "./constants";
+import { ThemeProvider } from "next-themes";
+import { defineChain, isAddress } from "thirdweb";
+import { PayLandingHeader } from "./landing/header";
+import { StyledBuyWidget } from "./landing/styled-buy-widget";
 
-const title = "thirdweb Pay";
+const title = "thirdweb Payments";
 const description = "Fast, secure, and simple payments.";
 
 export const metadata: Metadata = {
@@ -19,82 +17,97 @@ export const metadata: Metadata = {
   title,
 };
 
-export default async function PayPage({
-  searchParams,
-}: {
-  searchParams: Promise<PayParams>;
+type SearchParams = {
+  [key: string]: string | string[] | undefined;
+};
+
+const onlyAddress = (v: string) => (isAddress(v) ? v : undefined);
+const onlyNumber = (v: string) =>
+  Number.isNaN(Number(v)) ? undefined : Number(v);
+
+/**
+ * Validates and normalizes a URL string.
+ * Only allows http: and https: protocols with a valid hostname.
+ * @returns normalized URL string on success, undefined on failure
+ */
+const onlyUrl = (v: string): string | undefined => {
+  try {
+    const url = new URL(v);
+    // Only allow http or https protocols
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return undefined;
+    }
+    // Ensure hostname is non-empty
+    if (!url.hostname) {
+      return undefined;
+    }
+    // Return normalized URL
+    return url.toString();
+  } catch {
+    // Invalid URL format
+    return undefined;
+  }
+};
+
+export default async function PayPage(props: {
+  searchParams: Promise<SearchParams>;
 }) {
-  const params = await searchParams;
+  const searchParams = await props.searchParams;
 
-  // If no query parameters are provided, show the form
-  if (
-    !params.chainId &&
-    !params.recipientAddress &&
-    !params.tokenAddress &&
-    !params.amount
-  ) {
-    return <PaymentLinkForm />;
-  }
-
-  // Validate query parameters
-  if (Array.isArray(params.chainId)) {
-    throw new Error("A single chainId parameter is required.");
-  }
-  if (Array.isArray(params.recipientAddress)) {
-    throw new Error("A single recipientAddress parameter is required.");
-  }
-  if (Array.isArray(params.tokenAddress)) {
-    throw new Error("A single tokenAddress parameter is required.");
-  }
-  if (Array.isArray(params.amount)) {
-    throw new Error("A single amount parameter is required.");
-  }
-  if (Array.isArray(params.clientId)) {
-    throw new Error("A single clientId parameter is required.");
-  }
-  if (Array.isArray(params.redirectUri)) {
-    throw new Error("A single redirectUri parameter is required.");
-  }
-
-  // Use any provided clientId or use the dashboard client
-  const client =
-    params.clientId && !Array.isArray(params.clientId)
-      ? createThirdwebClient({ clientId: params.clientId })
-      : payAppThirdwebClient;
-
-  const tokenContract = getContract({
-    address: params.tokenAddress,
-    // eslint-disable-next-line no-restricted-syntax
-    chain: defineChain(Number(params.chainId)),
-    client: payAppThirdwebClient,
-  });
-  const {
-    symbol,
-    decimals,
-    name: tokenName,
-  } = await getCurrencyMetadata({
-    contract: tokenContract,
-  });
-  const token = {
-    address: checksumAddress(params.tokenAddress),
-    chainId: Number(params.chainId),
-    decimals,
-    name: tokenName,
-    symbol,
-  };
+  const receiver = parse(searchParams.receiver, onlyAddress);
+  const token = parse(searchParams.token, onlyAddress);
+  const chain = parse(searchParams.chain, onlyNumber);
+  const amount = parse(searchParams.amount, onlyNumber);
+  const successUrl = parse(searchParams.successUrl, onlyUrl);
 
   return (
-    <PayPageWidget
-      amount={BigInt(params.amount)}
-      chainId={Number(params.chainId)}
-      clientId={client.clientId}
-      image={params.image}
-      name={params.name}
-      purchaseData={undefined}
-      recipientAddress={params.recipientAddress}
-      redirectUri={params.redirectUri}
-      theme={params.theme}
-      token={token}
+    <ThemeProvider
+      attribute="class"
+      disableTransitionOnChange
+      enableSystem={false}
+    >
+      <div className="flex flex-col grow">
+        <PayLandingHeader />
+        <div className="flex-1 flex items-center justify-center py-20 relative overflow-hidden">
+          <DotsBackgroundPattern />
+          <StyledBuyWidget
+            // eslint-disable-next-line no-restricted-syntax
+            chain={chain ? defineChain(chain) : undefined}
+            tokenAddress={token}
+            receiverAddress={receiver}
+            amount={amount ? amount.toString() : undefined}
+            successUrl={successUrl}
+          />
+        </div>
+      </div>
+    </ThemeProvider>
+  );
+}
+
+function parse<T>(
+  value: string | string[] | undefined,
+  fn: (value: string) => T | undefined,
+): T | undefined {
+  if (typeof value === "string") {
+    return fn(value);
+  }
+
+  return undefined;
+}
+
+function DotsBackgroundPattern(props: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute -inset-x-36 -inset-y-24 text-foreground/20 dark:text-muted-foreground/20 hidden lg:block",
+        props.className,
+      )}
+      style={{
+        backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
+        backgroundSize: "24px 24px",
+        maskImage:
+          "radial-gradient(ellipse 100% 100% at 50% 50%, black 30%, transparent 50%)",
+      }}
     />
   );
 }

@@ -4,15 +4,15 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import type { ThirdwebClient } from "thirdweb";
 import { useActiveWallet, useDisconnect } from "thirdweb/react";
-import { createTeam } from "@/actions/createTeam";
+import { doLogout } from "@/actions/auth-actions";
+import { createTeam } from "@/actions/team/createTeam";
 import { resetAnalytics } from "@/analytics/reset";
-import type { Project } from "@/api/projects";
-import type { Team } from "@/api/team";
+import type { Project } from "@/api/project/projects";
+import type { Team } from "@/api/team/get-team";
 import { CustomConnectWallet } from "@/components/connect-wallet";
 import { LazyCreateProjectDialog } from "@/components/project/create-project-modal/LazyCreateAPIKeyDialog";
 import type { Account } from "@/hooks/useApi";
 import { useDashboardRouter } from "@/lib/DashboardRouter";
-import { doLogout } from "../../login/auth-actions";
 import {
   type AccountHeaderCompProps,
   AccountHeaderDesktopUI,

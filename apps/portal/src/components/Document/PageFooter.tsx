@@ -1,24 +1,32 @@
 import {
-  BadgeHelpIcon,
   BrainIcon,
   type LucideIcon,
   ScrollTextIcon,
   VideoIcon,
 } from "lucide-react";
 import { Feedback } from "../others/Feedback";
+import type { SidebarLink } from "../others/Sidebar";
 import { Subscribe } from "../others/Subscribe";
 import { DocLink } from ".";
 import { AutoEditPageButton } from "./AutoEditPageButton";
+import { AutoNextPageButton } from "./AutoNextPageButton";
 
-export function PageFooter(props: { editPageButton?: true }) {
+export function PageFooter(props: {
+  editPageButton?: true;
+  sidebarLinks?: SidebarLink[];
+}) {
   return (
-    <footer className="flex flex-col gap-7 pb-20" data-noindex>
-      <div className="flex flex-col justify-between gap-7 md:flex-row md:items-center">
+    <footer className="flex flex-col" data-noindex>
+      {props.sidebarLinks && (
+        <div className="flex gap-4 justify-end items-center py-6">
+          <AutoNextPageButton sidebarLinks={props.sidebarLinks} />
+        </div>
+      )}
+      <div className="border-t py-6 border-dashed flex flex-col items-start gap-4 md:flex-row md:justify-between md:items-center">
         {props.editPageButton && <AutoEditPageButton />}
         <Feedback />
       </div>
-      <div className="h-1 border-t" />
-      <div className="flex flex-col justify-between gap-7 md:flex-row">
+      <div className="flex flex-col justify-between gap-7 md:flex-row border-t py-6 border-dashed">
         <Links />
         <Subscribe />
       </div>
@@ -28,25 +36,18 @@ export function PageFooter(props: { editPageButton?: true }) {
 
 function Links() {
   return (
-    <ul className="flex flex-col gap-3">
-      <FooterLinkItem
-        href="https://thirdweb.com/support"
-        icon={BadgeHelpIcon}
-        label="Visit our support site"
-        prefix="Need help?"
-      />
-
+    <ul className="flex flex-col gap-2">
       <FooterLinkItem
         href="https://www.youtube.com/@thirdweb_"
         icon={VideoIcon}
-        label="video Tutorials"
+        label="Video tutorials"
         prefix="Watch our"
       />
 
       <FooterLinkItem
         href="/changelog"
         icon={ScrollTextIcon}
-        label="changelog"
+        label="Changelog"
         prefix="View our"
       />
 
@@ -69,11 +70,13 @@ function FooterLinkItem(props: {
   return (
     <li className="flex items-center gap-2 text-muted-foreground">
       <div className="flex items-center gap-2 font-medium">
-        <props.icon className="size-5" />
-        <span>{props.prefix}</span>
+        <props.icon className="size-4" />
+        <span className="text-sm">{props.prefix}</span>
       </div>
 
-      <DocLink href={props.href}>{props.label}</DocLink>
+      <DocLink href={props.href} className="text-sm">
+        {props.label}
+      </DocLink>
     </li>
   );
 }
