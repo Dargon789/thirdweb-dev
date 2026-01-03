@@ -1,7 +1,7 @@
 {
   "name": "wagmi-inapp",
   "private": true,
-  "version": "0.0.45",
+  "version": "0.0.46",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -28,6 +28,6 @@
     "@wagmi/cli": "latest",
     "buffer": "^6.0.3",
     "typescript": "5.8.3",
-    "vite": "7.1.7"
+    "vite": "7.1.11"
   }
 }
