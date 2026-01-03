@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Queue, pLimit } from "./p-limit.js";
+import { pLimit, Queue } from "./p-limit.js";
 
 describe("p-limit queue", () => {
   it("should enqueue and dequeue items in the correct order", () => {
@@ -101,5 +101,17 @@ describe("pLimit", () => {
     const results = await Promise.all([task1, task2, task3]);
 
     expect(results).toStrictEqual([1, 2, "Task failed"]);
+  });
+
+  it("should throw an error when concurrency is not an integer", () => {
+    expect(() => pLimit(1.2)).toThrow(
+      "Expected `concurrency` to be a number from 1 and up",
+    );
+  });
+
+  it("should throw an error when concurrency is a negative number", () => {
+    expect(() => pLimit(-1)).toThrow(
+      "Expected `concurrency` to be a number from 1 and up",
+    );
   });
 });

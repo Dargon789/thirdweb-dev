@@ -1,8 +1,9 @@
-import type * as ox__Signature from "ox/Signature";
+import * as ox__Secp256k1 from "ox/Secp256k1";
+import * as ox__Signature from "ox/Signature";
 import * as ox__TypedData from "ox/TypedData";
 import type { Chain } from "../chains/types.js";
 import type { ThirdwebClient } from "../client/client.js";
-import type { Hex } from "../utils/encoding/hex.js";
+import { type Hex, isHex } from "../utils/encoding/hex.js";
 import type { HashTypedDataParams } from "../utils/hashing/hashTypedData.js";
 import { type VerifyHashParams, verifyHash } from "./verify-hash.js";
 
@@ -24,7 +25,7 @@ export type VerifyTypedDataParams<
   };
 
 /**
- * @description Verify am [EIP-712](https://eips.ethereum.org/EIPS/eip-712) typed data signature. This function is interoperable with all wallet types (smart accounts or EOAs).
+ * Verify am [EIP-712](https://eips.ethereum.org/EIPS/eip-712) typed data signature. This function is interoperable with all wallet types (smart accounts or EOAs).
  *
  * @param {string} options.address The address that signed the typed data
  * @param {string | Uint8Array | Signature} options.signature The signature that was signed
@@ -38,7 +39,7 @@ export type VerifyTypedDataParams<
  * @param {typeof VerifyTypedDataParams.types} options.types The EIP-712 types that were signed.
  *
  * @returns {Promise<boolean>} A promise that resolves to `true` if the signature is valid, or `false` otherwise.
- * 
+ *
  * @example
  * ```ts
  * import { verifyTypedData } from "thirdweb/utils";
@@ -96,17 +97,34 @@ export async function verifyTypedData<
   types,
 }: VerifyTypedDataParams<typedData, primaryType>): Promise<boolean> {
   const messageHash = ox__TypedData.getSignPayload({
-    message,
     domain,
+    message,
     primaryType,
     types,
   } as HashTypedDataParams);
+
+  if (!isHex(signature)) {
+    return false;
+  }
+
+  try {
+    const recoveredAddress = ox__Secp256k1.recoverAddress({
+      payload: messageHash,
+      signature: ox__Signature.fromHex(signature),
+    });
+
+    if (recoveredAddress.toLowerCase() === address.toLowerCase()) {
+      return true;
+    }
+  } catch {
+    // no-op, we skip to contract signature check
+  }
   return verifyHash({
-    hash: messageHash,
-    signature,
+    accountFactory,
     address,
     chain,
     client,
-    accountFactory,
+    hash: messageHash,
+    signature,
   });
 }

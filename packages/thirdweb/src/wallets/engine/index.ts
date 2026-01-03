@@ -1,6 +1,7 @@
 import type { Chain } from "../../chains/types.js";
 import type { Hex } from "../../utils/encoding/hex.js";
 import { toHex } from "../../utils/encoding/hex.js";
+import { stringify } from "../../utils/json.js";
 import type { Account, SendTransactionOption } from "../interfaces/wallet.js";
 
 /**
@@ -19,6 +20,20 @@ export type EngineAccountOptions = {
    * The backend wallet to use for sending transactions inside engine.
    */
   walletAddress: string;
+  overrides?: {
+    /**
+     * The address of the smart account to act on behalf of. Requires your backend wallet to be a valid signer on that smart account.
+     */
+    accountAddress?: string;
+    /**
+     * The address of the smart account factory to use for creating smart accounts.
+     */
+    accountFactoryAddress?: string;
+    /**
+     * The salt to use for creating the smart account.
+     */
+    accountSalt?: string;
+  };
   /**
    * The chain to use for signing messages and typed data (smart backend wallet only).
    */
@@ -27,6 +42,7 @@ export type EngineAccountOptions = {
 
 /**
  * Creates an account that uses your engine backend wallet for sending transactions and signing messages.
+ * @deprecated This for v2 dedicated engine instances, for v3 and engine cloud use Engine.serverWallet()
  *
  * @param options - The options for the engine account.
  * @returns An account that uses your engine backend wallet.
@@ -55,14 +71,24 @@ export type EngineAccountOptions = {
  * ```
  */
 export function engineAccount(options: EngineAccountOptions): Account {
-  const { engineUrl, authToken, walletAddress, chain } = options;
+  const { engineUrl, authToken, walletAddress, chain, overrides } = options;
 
   // these are shared across all methods
   const headers: HeadersInit = {
-    "x-backend-wallet-address": walletAddress,
     Authorization: `Bearer ${authToken}`,
     "Content-Type": "application/json",
+    "x-backend-wallet-address": walletAddress,
   };
+
+  if (overrides?.accountAddress) {
+    headers["x-account-address"] = overrides.accountAddress;
+  }
+  if (overrides?.accountFactoryAddress) {
+    headers["x-account-factory-address"] = overrides.accountFactoryAddress;
+  }
+  if (overrides?.accountSalt) {
+    headers["x-account-salt"] = overrides.accountSalt;
+  }
 
   return {
     address: walletAddress,
@@ -70,21 +96,28 @@ export function engineAccount(options: EngineAccountOptions): Account {
       const ENGINE_URL = new URL(engineUrl);
       ENGINE_URL.pathname = `/backend-wallet/${transaction.chainId}/send-transaction`;
 
-      const engineData: Record<string, string | undefined> = {
-        // add to address if we have it (is optional to pass to engine)
-        toAddress: transaction.to || undefined,
+      const engineData: Record<string, unknown> = {
+        // optional authorization list
+        authorizationList: transaction.authorizationList,
         // engine wants a hex string here so we serialize it
         data: transaction.data || "0x",
+        // add to address if we have it (is optional to pass to engine)
+        toAddress: transaction.to || undefined,
+
+        txOverrides: {
+          gas: transaction.gas,
+          value: transaction.value,
+        },
         // value is always required
-        value: toHex(transaction.value ?? 0n),
+        value: transaction.value ?? 0n,
       };
 
       // TODO: gas overrides etc?
 
       const engineRes = await fetch(ENGINE_URL, {
-        method: "POST",
+        body: stringify(engineData),
         headers,
-        body: JSON.stringify(engineData),
+        method: "POST",
       });
       if (!engineRes.ok) {
         const body = await engineRes.text();
@@ -105,8 +138,8 @@ export function engineAccount(options: EngineAccountOptions): Account {
 
       while (Date.now() - startTime < TIMEOUT_IN_MS) {
         const queueRes = await fetch(ENGINE_URL, {
-          method: "GET",
           headers,
+          method: "GET",
         });
         if (!queueRes.ok) {
           const body = await queueRes.text();
@@ -152,13 +185,13 @@ export function engineAccount(options: EngineAccountOptions): Account {
       const ENGINE_URL = new URL(engineUrl);
       ENGINE_URL.pathname = "/backend-wallet/sign-message";
       const engineRes = await fetch(ENGINE_URL, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          message: engineMessage,
-          isBytes,
+        body: stringify({
           chainId: chain?.id,
+          isBytes,
+          message: engineMessage,
         }),
+        headers,
+        method: "POST",
       });
       if (!engineRes.ok) {
         const body = await engineRes.text();
@@ -175,18 +208,20 @@ export function engineAccount(options: EngineAccountOptions): Account {
       const ENGINE_URL = new URL(engineUrl);
       ENGINE_URL.pathname = "/backend-wallet/sign-typed-data";
       const engineRes = await fetch(ENGINE_URL, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
+        body: stringify({
+          chainId: chain?.id,
           domain: _typedData.domain,
+          primaryType: _typedData.primaryType,
           types: _typedData.types,
           value: _typedData.message,
         }),
+        headers,
+        method: "POST",
       });
       if (!engineRes.ok) {
-        engineRes.body?.cancel();
+        const body = await engineRes.text();
         throw new Error(
-          `Engine request failed with status ${engineRes.status}`,
+          `Engine request failed with status ${engineRes.status} - ${body}`,
         );
       }
       const engineJson = (await engineRes.json()) as {

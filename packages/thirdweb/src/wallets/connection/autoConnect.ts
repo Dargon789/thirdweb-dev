@@ -1,7 +1,6 @@
 import { webLocalStorage } from "../../utils/storage/webStorage.js";
 import { createWallet } from "../create-wallet.js";
 import { getDefaultWallets } from "../defaultWallets.js";
-import { getInstalledWalletProviders } from "../injected/mipdStore.js";
 import type { Wallet } from "../interfaces/wallet.js";
 import { createConnectionManager } from "../manager/index.js";
 import { autoConnectCore } from "./autoConnectCore.js";
@@ -18,8 +17,9 @@ import type { AutoConnectProps } from "./types.js";
  *
  * const autoConnected = await autoConnect({
  *  client,
- *  onConnect: (wallet) => {
- *    console.log("wallet", wallet);
+ *  onConnect: (activeWallet, allConnectedWallets) => {
+ *    console.log("active wallet", activeWallet);
+ *    console.log("all connected wallets", allConnectedWallets);
  *  },
  * });
  * ```
@@ -29,31 +29,27 @@ import type { AutoConnectProps } from "./types.js";
  * @returns {boolean} a promise resolving to true or false depending on whether the auto connect function connected to a wallet or not
  * @walletConnection
  */
-export const autoConnect = async (
+export async function autoConnect(
   props: AutoConnectProps & {
     wallets?: Wallet[];
+    /**
+     * If true, the auto connect will be forced even if autoConnect has already been attempted successfully earlier.
+     *
+     * @default `false`
+     */
+    force?: boolean;
   },
-) => {
+): Promise<boolean> {
   const wallets = props.wallets || getDefaultWallets(props);
   const manager = createConnectionManager(webLocalStorage);
   const result = await autoConnectCore({
-    storage: webLocalStorage,
+    createWalletFn: createWallet,
+    manager,
     props: {
       ...props,
       wallets,
     },
-    createWalletFn: createWallet,
-    getInstalledWallets: () => {
-      const specifiedWalletIds = new Set(wallets.map((x) => x.id));
-
-      // pass the wallets that are not already specified but are installed by the user
-      const installedWallets = getInstalledWalletProviders()
-        .filter((x) => !specifiedWalletIds.has(x.info.rdns))
-        .map((x) => createWallet(x.info.rdns));
-
-      return installedWallets;
-    },
-    manager,
+    storage: webLocalStorage,
   });
   return result;
-};
+}

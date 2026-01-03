@@ -8,11 +8,13 @@ import {
 } from "../../../../test/src/test-wallets.js";
 import { NATIVE_TOKEN_ADDRESS } from "../../../constants/addresses.js";
 import {
-  type ThirdwebContract,
   getContract,
+  type ThirdwebContract,
 } from "../../../contract/contract.js";
 import { getDeployedInfraContract } from "../../../contract/deployment/utils/infra.js";
 import { parseEventLogs } from "../../../event/actions/parse-logs.js";
+import { eth_getBlockByNumber } from "../../../rpc/actions/eth_getBlockByNumber.js";
+import { getRpcClient } from "../../../rpc/rpc.js";
 import { sendAndConfirmTransaction } from "../../../transaction/actions/send-and-confirm-transaction.js";
 import { getBalance } from "../../erc20/read/getBalance.js";
 import { approve as approveErc20 } from "../../erc20/write/approve.js";
@@ -24,61 +26,64 @@ import { mintTo } from "../../erc721/write/mintTo.js";
 import { deployERC721Contract } from "../../prebuilts/deploy-erc721.js";
 import { deployMarketplaceContract } from "../../prebuilts/deploy-marketplace.js";
 import { newOfferEvent } from "../__generated__/IOffers/events/NewOffer.js";
+import { getOffer as getOfferGenerated } from "../__generated__/IOffers/read/getOffer.js";
 import { totalOffers } from "../__generated__/IOffers/read/totalOffers.js";
 import { cancelOffer } from "../__generated__/IOffers/write/cancelOffer.js";
 import { getAllOffers } from "./read/getAllOffers.js";
 import { getAllValidOffers } from "./read/getAllValidOffers.js";
 import { getOffer } from "./read/getOffer.js";
+import { mapOffer } from "./utils.js";
 import { acceptOffer } from "./write/acceptOffer.js";
 import { makeOffer } from "./write/makeOffer.js";
 
-describe.skip("Marketplace: Offers", () => {
+describe.runIf(process.env.TW_SECRET_KEY)("Marketplace: Offers", () => {
   let nftTokenId: bigint;
   let marketplaceContract: ThirdwebContract;
   let erc721Contract: ThirdwebContract;
   let WETH9: ThirdwebContract;
+
   beforeAll(async () => {
     const marketplaceAddress = await deployMarketplaceContract({
       account: TEST_ACCOUNT_A,
       chain: ANVIL_CHAIN,
       client: TEST_CLIENT,
       params: {
-        name: "TestMarketPlace",
         contractURI: TEST_CONTRACT_URI,
+        name: "TestMarketPlace",
       },
     });
     marketplaceContract = getContract({
       address: marketplaceAddress,
-      client: TEST_CLIENT,
       chain: ANVIL_CHAIN,
+      client: TEST_CLIENT,
     });
 
     // also deploy an ERC721 contract
     const erc721Address = await deployERC721Contract({
-      type: "TokenERC721",
       account: TEST_ACCOUNT_A,
       chain: ANVIL_CHAIN,
       client: TEST_CLIENT,
       params: {
-        name: "TestERC721",
         contractURI: TEST_CONTRACT_URI,
+        name: "TestERC721",
       },
+      type: "TokenERC721",
     });
 
     erc721Contract = getContract({
       address: erc721Address,
-      client: TEST_CLIENT,
       chain: ANVIL_CHAIN,
+      client: TEST_CLIENT,
     });
 
     const mintTransaction = mintTo({
       contract: erc721Contract,
-      to: TEST_ACCOUNT_A.address,
       nft: { name: "Test:ERC721:Offers" },
+      to: TEST_ACCOUNT_A.address,
     });
     const receipt = await sendAndConfirmTransaction({
-      transaction: mintTransaction,
       account: TEST_ACCOUNT_A,
+      transaction: mintTransaction,
     });
 
     const mintEvents = parseEventLogs({
@@ -94,8 +99,8 @@ describe.skip("Marketplace: Offers", () => {
     // biome-ignore lint/style/noNonNullAssertion: test only and we know it will exist here because it gets deployed in the beforeAll
     WETH9 = (await getDeployedInfraContract({
       chain: ANVIL_CHAIN,
-      contractId: "WETH9",
       client: TEST_CLIENT,
+      contractId: "WETH9",
     }))!;
 
     expect(WETH9.address).toMatchInlineSnapshot(
@@ -125,14 +130,14 @@ describe.skip("Marketplace: Offers", () => {
 
     await expect(
       sendAndConfirmTransaction({
-        transaction: deposit({ contract: WETH9, amount: "10" }),
         account: TEST_ACCOUNT_B,
+        transaction: deposit({ amount: "10", contract: WETH9 }),
       }),
     ).resolves.toBeDefined();
 
     // check to make sure the weth9 balance is correct
     await expect(
-      getBalance({ contract: WETH9, address: TEST_ACCOUNT_B.address }),
+      getBalance({ address: TEST_ACCOUNT_B.address, contract: WETH9 }),
     ).resolves.toMatchInlineSnapshot(`
       {
         "decimals": 18,
@@ -146,12 +151,12 @@ describe.skip("Marketplace: Offers", () => {
     // now approve the marketplace contract to spend the WETH9 tokens
     await expect(
       sendAndConfirmTransaction({
+        account: TEST_ACCOUNT_B,
         transaction: approveErc20({
+          amount: "10",
           contract: WETH9,
           spender: marketplaceContract.address,
-          amount: "10",
         }),
-        account: TEST_ACCOUNT_B,
       }),
     ).resolves.toBeDefined();
 
@@ -160,10 +165,10 @@ describe.skip("Marketplace: Offers", () => {
       account: TEST_ACCOUNT_B,
       transaction: makeOffer({
         assetContractAddress: erc721Contract.address,
-        tokenId: nftTokenId,
         contract: marketplaceContract,
         currencyContractAddress: NATIVE_TOKEN_ADDRESS,
         offerExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        tokenId: nftTokenId,
         totalOffer: "1",
       }),
     });
@@ -219,14 +224,60 @@ describe.skip("Marketplace: Offers", () => {
     `);
   });
 
+  it("mapOffer should produce the correct data", async () => {
+    const rpcClient = getRpcClient(marketplaceContract);
+    const [rawOffer, latestBlock] = await Promise.all([
+      getOfferGenerated({ contract: marketplaceContract, offerId: 0n }),
+      eth_getBlockByNumber(rpcClient, {
+        blockTag: "latest",
+      }),
+    ]);
+
+    const data = await mapOffer({
+      contract: marketplaceContract,
+      latestBlock,
+      rawOffer,
+    });
+
+    expect(typeof data.endTimeInSeconds).toBe("bigint");
+
+    const obj = { ...data, endTimeInSeconds: 0n };
+
+    expect(obj).toStrictEqual({
+      id: 0n,
+      offerorAddress: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      assetContractAddress: erc721Contract.address,
+      tokenId: 0n,
+      quantity: 1n,
+      currencyContractAddress: "0x81e609b897393731A3D23c1d311330340cEbB9e9",
+      currencyValue: {
+        name: "Wrapped Ether",
+        symbol: "WETH",
+        decimals: 18,
+        value: 1000000000000000000n,
+        displayValue: "1",
+      },
+      totalPrice: 1000000000000000000n,
+      asset: {
+        metadata: { name: "Test:ERC721:Offers" },
+        owner: null,
+        id: 0n,
+        tokenURI: "ipfs://QmRk3sj4XxUx61SxBxt24uPJXDCf1G9G6iHAJgM6tbAuwD/0",
+        type: "ERC721",
+      },
+      endTimeInSeconds: 0n,
+      status: "ACTIVE",
+    });
+  });
+
   it("should allow a user to cancel an offer", async () => {
     await expect(
       sendAndConfirmTransaction({
+        account: TEST_ACCOUNT_B,
         transaction: cancelOffer({
           contract: marketplaceContract,
           offerId: 0n,
         }),
-        account: TEST_ACCOUNT_B,
       }),
     ).resolves.toBeDefined();
     await expect(totalOffers({ contract: marketplaceContract })).resolves.toBe(
@@ -248,11 +299,11 @@ describe.skip("Marketplace: Offers", () => {
     // should no longer be able to accept the offer
     await expect(
       sendAndConfirmTransaction({
+        account: TEST_ACCOUNT_B,
         transaction: acceptOffer({
           contract: marketplaceContract,
           offerId: 0n,
         }),
-        account: TEST_ACCOUNT_B,
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       "[Error: Offer is not active]",
@@ -267,10 +318,10 @@ describe.skip("Marketplace: Offers", () => {
         account: TEST_ACCOUNT_B,
         transaction: makeOffer({
           assetContractAddress: erc721Contract.address,
-          tokenId: nftTokenId,
           contract: marketplaceContract,
           currencyContractAddress: NATIVE_TOKEN_ADDRESS,
           offerExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+          tokenId: nftTokenId,
           // 2 WETH this time!
           totalOffer: "2",
         }),
@@ -297,29 +348,29 @@ describe.skip("Marketplace: Offers", () => {
     // have to approve the marketplace contract to control the NFT!
     await expect(
       sendAndConfirmTransaction({
+        account: TEST_ACCOUNT_A,
         transaction: approveErc721({
           contract: erc721Contract,
           to: marketplaceContract.address,
           tokenId: nftTokenId,
         }),
-        account: TEST_ACCOUNT_A,
       }),
     ).resolves.toBeDefined();
 
     // now we accept the offer!
     await expect(
       sendAndConfirmTransaction({
+        account: TEST_ACCOUNT_A,
         transaction: acceptOffer({
           contract: marketplaceContract,
           offerId: 1n,
         }),
-        account: TEST_ACCOUNT_A,
       }),
     ).resolves.toBeDefined();
 
     // check the balances
     await expect(
-      getBalance({ contract: WETH9, address: TEST_ACCOUNT_A.address }),
+      getBalance({ address: TEST_ACCOUNT_A.address, contract: WETH9 }),
     ).resolves.toMatchInlineSnapshot(`
       {
         "decimals": 18,
@@ -330,7 +381,7 @@ describe.skip("Marketplace: Offers", () => {
       }
     `);
     await expect(
-      getBalance({ contract: WETH9, address: TEST_ACCOUNT_B.address }),
+      getBalance({ address: TEST_ACCOUNT_B.address, contract: WETH9 }),
     ).resolves.toMatchInlineSnapshot(`
       {
         "decimals": 18,
