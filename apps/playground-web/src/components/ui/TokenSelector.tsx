@@ -2,27 +2,14 @@
 
 import { CoinsIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
-import {
-  getAddress,
-  NATIVE_TOKEN_ADDRESS,
-  type ThirdwebClient,
-} from "thirdweb";
+import { NATIVE_TOKEN_ADDRESS, type ThirdwebClient } from "thirdweb";
 import { shortenAddress } from "thirdweb/utils";
 import { Badge } from "@/components/ui/badge";
 import { Img } from "@/components/ui/Img";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectWithSearch } from "@/components/ui/select-with-search";
 import { useTokensData } from "@/hooks/useTokensData";
 import type { TokenMetadata } from "@/lib/types";
 import { cn, fallbackChainIcon, replaceIpfsUrl } from "@/lib/utils";
-import { useAllChainsData } from "../../app/hooks/chains";
-
-const checksummedNativeTokenAddress = getAddress(NATIVE_TOKEN_ADDRESS);
 
 export function TokenSelector(props: {
   selectedToken: { chainId: number; address: string } | undefined;
@@ -34,49 +21,24 @@ export function TokenSelector(props: {
   client: ThirdwebClient;
   disabled?: boolean;
   enabled?: boolean;
-  addNativeTokenIfMissing: boolean;
+  includeNativeToken?: boolean;
 }) {
   const tokensQuery = useTokensData({
     chainId: props.chainId,
     enabled: props.enabled,
   });
 
-  const { idToChain } = useAllChainsData().data;
-
   const tokens = useMemo(() => {
-    if (!tokensQuery.data) {
-      return [];
-    }
-
-    if (props.addNativeTokenIfMissing) {
-      const hasNativeToken = tokensQuery.data.some(
-        (token) => token.address === checksummedNativeTokenAddress,
+    if (props.includeNativeToken === false) {
+      return (
+        tokensQuery.data?.filter(
+          (token) =>
+            token.address.toLowerCase() !== NATIVE_TOKEN_ADDRESS.toLowerCase(),
+        ) || []
       );
-
-      if (!hasNativeToken && props.chainId) {
-        return [
-          {
-            address: checksummedNativeTokenAddress,
-            chainId: props.chainId,
-            decimals: 18,
-            name:
-              idToChain.get(props.chainId)?.nativeCurrency.name ??
-              "Native Token",
-            symbol:
-              idToChain.get(props.chainId)?.nativeCurrency.symbol ?? "ETH",
-          } satisfies TokenMetadata,
-          ...tokensQuery.data,
-        ];
-      }
     }
-    return tokensQuery.data;
-  }, [
-    tokensQuery.data,
-    props.chainId,
-    props.addNativeTokenIfMissing,
-    idToChain,
-  ]);
-
+    return tokensQuery.data || [];
+  }, [tokensQuery.data, props.includeNativeToken]);
   const addressChainToToken = useMemo(() => {
     const value = new Map<string, TokenMetadata>();
     for (const token of tokens) {
@@ -85,12 +47,41 @@ export function TokenSelector(props: {
     return value;
   }, [tokens]);
 
+  const options = useMemo(() => {
+    return tokens.map((token) => ({
+      label: token.symbol,
+      value: `${token.chainId}:${token.address}`,
+    }));
+  }, [tokens]);
+
   const selectedValue = props.selectedToken
     ? `${props.selectedToken.chainId}:${props.selectedToken.address}`
     : undefined;
 
+  const searchFn = useCallback(
+    (option: { label: string; value: string }, searchValue: string) => {
+      const token = addressChainToToken.get(option.value);
+      if (!token) {
+        return false;
+      }
+
+      const searchLower = searchValue.toLowerCase();
+      return (
+        token.symbol.toLowerCase().includes(searchLower) ||
+        token.name.toLowerCase().includes(searchLower) ||
+        token.address.toLowerCase().includes(searchLower)
+      );
+    },
+    [addressChainToToken],
+  );
+
   const renderTokenOption = useCallback(
-    (token: TokenMetadata) => {
+    (option: { label: string; value: string }) => {
+      const token = addressChainToToken.get(option.value);
+      if (!token) {
+        return option.label;
+      }
+
       const resolvedSrc = token.iconUri
         ? replaceIpfsUrl(token.iconUri, props.client)
         : fallbackChainIcon;
@@ -121,11 +112,13 @@ export function TokenSelector(props: {
         </div>
       );
     },
-    [props.disableAddress, props.client],
+    [props.disableAddress, props.client, addressChainToToken],
   );
 
   return (
-    <Select
+    <SelectWithSearch
+      className={cn("w-full", props.className)}
+      closeOnSelect={true}
       disabled={tokensQuery.isLoading || props.disabled}
       onValueChange={(tokenAddress) => {
         const token = addressChainToToken.get(tokenAddress);
@@ -134,27 +127,17 @@ export function TokenSelector(props: {
         }
         props.onChange(token);
       }}
+      options={options}
+      overrideSearchFn={searchFn}
+      placeholder={
+        tokensQuery.isLoading
+          ? "Loading Tokens..."
+          : props.placeholder || "Select Token"
+      }
+      renderOption={renderTokenOption}
+      searchPlaceholder="Search by Symbol, Name or Address"
+      showCheck={false}
       value={selectedValue}
-    >
-      <SelectTrigger className={cn("w-full", props.className)}>
-        <SelectValue
-          placeholder={
-            tokensQuery.isLoading
-              ? "Loading Tokens..."
-              : props.placeholder || "Select Token"
-          }
-        />
-      </SelectTrigger>
-      <SelectContent>
-        {tokens.map((token) => {
-          const value = `${token.chainId}:${token.address}`;
-          return (
-            <SelectItem key={value} value={value}>
-              {renderTokenOption(token)}
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
+    />
   );
 }

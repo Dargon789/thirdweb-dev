@@ -170,6 +170,12 @@ export {
   type GetClaimParamsOptions,
   getClaimParams,
 } from "../utils/extensions/drops/get-claim-params.js";
+// types
+export type {
+  ClaimConditionInput,
+  ClaimConditionsInput,
+  OverrideEntry,
+} from "../utils/extensions/drops/types.js";
 export { formatNumber } from "../utils/formatNumber.js";
 // Ethereum Signed Message hashing
 export { hashMessage } from "../utils/hashing/hashMessage.js";
@@ -191,3 +197,8 @@ export type { JWTPayload } from "../utils/jwt/types.js";
 export type { NFTInput, NFTMetadata } from "../utils/nft/parseNft.js";
 export { resolvePromisedValue } from "../utils/promise/resolve-promised-value.js";
 export { shortenLargeNumber } from "../utils/shortenLargeNumber.js";
+
+// ------------------------------------------------
+// type guards
+// ------------------------------------------------
+export * from "../utils/type-guards.js";

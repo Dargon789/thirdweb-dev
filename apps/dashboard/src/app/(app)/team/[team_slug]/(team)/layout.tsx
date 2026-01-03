@@ -1,16 +1,14 @@
 import { redirect } from "next/navigation";
+import { getValidAccount } from "@/api/account/get-account";
 import { getAuthToken, getAuthTokenWalletAddress } from "@/api/auth-token";
-import { fetchEcosystemList } from "@/api/ecosystems";
-import { getProjects } from "@/api/projects";
-import { getTeamBySlug, getTeams } from "@/api/team";
-import { getChainSubscriptions } from "@/api/team-subscription";
+import { getProjects } from "@/api/project/projects";
+import { fetchEcosystemList } from "@/api/team/ecosystems";
+import { getTeamBySlug, getTeams } from "@/api/team/get-team";
 import { CustomChatButton } from "@/components/chat/CustomChatButton";
 import { AnnouncementBanner } from "@/components/misc/AnnouncementBanner";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { siwaExamplePrompts } from "@/constants/siwa-example-prompts";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
-import { getChain } from "../../../(dashboard)/(chain)/utils";
-import { siwaExamplePrompts } from "../../../(dashboard)/support/definitions";
-import { getValidAccount } from "../../../account/settings/getAccount";
 import { TeamHeaderLoggedIn } from "../../components/TeamHeader/team-header-logged-in.client";
 import { StaffModeNotice } from "./_components/StaffModeNotice";
 import { TeamSidebarLayout } from "./TeamSidebarLayout";
@@ -21,52 +19,26 @@ export default async function TeamLayout(props: {
 }) {
   const params = await props.params;
 
-  const [
-    accountAddress,
-    account,
-    teams,
-    authToken,
-    team,
-    ecosystems,
-    chainSubscriptions,
-  ] = await Promise.all([
-    getAuthTokenWalletAddress(),
-    getValidAccount(`/team/${params.team_slug}`),
-    getTeams(),
-    getAuthToken(),
-    getTeamBySlug(params.team_slug),
-    fetchEcosystemList(params.team_slug),
-    getChainSubscriptions(params.team_slug),
-  ]);
+  const [accountAddress, account, teams, authToken, team, ecosystems] =
+    await Promise.all([
+      getAuthTokenWalletAddress(),
+      getValidAccount(`/team/${params.team_slug}`),
+      getTeams(),
+      getAuthToken(),
+      getTeamBySlug(params.team_slug),
+      fetchEcosystemList(params.team_slug),
+    ]);
 
   if (!teams || !accountAddress || !authToken || !team) {
     redirect("/login");
   }
 
-  const [teamsAndProjects, chainSidebarLinks] = await Promise.all([
-    Promise.all(
-      teams.map(async (team) => ({
-        projects: await getProjects(team.slug),
-        team,
-      })),
-    ),
-    chainSubscriptions
-      ? await Promise.all(
-          chainSubscriptions.map(async (chainSubscription) => {
-            if (!chainSubscription.chainId) {
-              throw new Error("Chain ID is required");
-            }
-            const chain = await getChain(chainSubscription.chainId);
-
-            return {
-              chainId: chain.chainId,
-              chainName: chain.name,
-              slug: chain.slug,
-            };
-          }),
-        ).catch(() => [])
-      : [],
-  ]);
+  const teamsAndProjects = await Promise.all(
+    teams.map(async (team) => ({
+      projects: await getProjects(team.slug),
+      team,
+    })),
+  );
 
   const client = getClientThirdwebClient({
     jwt: authToken,
@@ -92,9 +64,6 @@ export default async function TeamLayout(props: {
         </div>
 
         <TeamSidebarLayout
-          chainSubscriptions={chainSidebarLinks.sort(
-            (a, b) => a.chainId - b.chainId,
-          )}
           ecosystems={ecosystems.map((ecosystem) => ({
             name: ecosystem.name,
             slug: ecosystem.slug,
@@ -103,19 +72,12 @@ export default async function TeamLayout(props: {
         >
           {props.children}
         </TeamSidebarLayout>
-        <div className="fixed right-6 bottom-6 z-50">
-          <CustomChatButton
-            authToken={authToken}
-            clientId={undefined}
-            examplePrompts={siwaExamplePrompts}
-            isFloating={true}
-            isLoggedIn={true}
-            label="Ask AI Assistant"
-            networks="all"
-            pageType="support"
-            teamId={team.id}
-          />
-        </div>
+        <CustomChatButton
+          authToken={authToken}
+          clientId={undefined}
+          examplePrompts={siwaExamplePrompts}
+          team={team}
+        />
       </div>
     </SidebarProvider>
   );

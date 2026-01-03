@@ -5,8 +5,10 @@ import Fuse from "fuse.js";
 import { useMemo, useRef, useState } from "react";
 import type { ThirdwebClient } from "../../../../../client/client.js";
 import walletInfos from "../../../../../wallets/__generated__/wallet-infos.js";
+import { NON_SEARCHABLE_WALLETS } from "../../../../../wallets/constants.js";
 import { createWallet } from "../../../../../wallets/create-wallet.js";
 import type { Wallet } from "../../../../../wallets/interfaces/wallet.js";
+import type { WalletId } from "../../../../../wallets/wallet-types.js";
 import { useCustomTheme } from "../../../../core/design-system/CustomThemeProvider.js";
 import { iconSize, spacing } from "../../../../core/design-system/index.js";
 import { useSetSelectionData } from "../../../providers/wallet-ui-states-provider.js";
@@ -28,28 +30,21 @@ import { WalletEntryButton } from "../WalletEntryButton.js";
 function AllWalletsUI(props: {
   onBack: () => void;
   onSelect: (wallet: Wallet) => void;
-  specifiedWallets: Wallet[];
   size: "compact" | "wide";
   client: ThirdwebClient;
   recommendedWallets: Wallet[] | undefined;
   connectLocale: ConnectLocale;
   disableSelectionDataReset?: boolean;
+  walletIdsToHide?: WalletId[];
 }) {
   const { itemsToShow, lastItemRef } = useShowMore<HTMLLIElement>(10, 10);
   const setSelectionData = useSetSelectionData();
 
   const walletList = useMemo(() => {
     return walletInfos
-      .filter((wallet) => {
-        return (
-          props.specifiedWallets.findIndex((x) => x.id === wallet.id) === -1
-        );
-      })
-      .filter(
-        (info) =>
-          info.id !== "inApp" && info.id !== "embedded" && info.id !== "smart",
-      );
-  }, [props.specifiedWallets]);
+      .filter((info) => !NON_SEARCHABLE_WALLETS.includes(info.id))
+      .filter((info) => !props.walletIdsToHide?.includes(info.id));
+  }, [props.walletIdsToHide]);
 
   const fuseInstance = useMemo(() => {
     return new Fuse(walletList, {
@@ -76,7 +71,12 @@ function AllWalletsUI(props: {
   }, [searchResults, itemsToShow]);
 
   return (
-    <Container animate="fadein" flex="column" fullHeight>
+    <Container
+      animate="fadein"
+      flex="column"
+      fullHeight
+      className="tw-all-wallets-screen"
+    >
       <Container p="lg">
         <ModalHeader onBack={props.onBack} title="Select Wallet" />
       </Container>
@@ -147,6 +147,7 @@ function AllWalletsUI(props: {
                     }}
                   >
                     <WalletEntryButton
+                      className="tw-select-wallet-button"
                       badge={undefined}
                       client={props.client}
                       connectLocale={props.connectLocale}

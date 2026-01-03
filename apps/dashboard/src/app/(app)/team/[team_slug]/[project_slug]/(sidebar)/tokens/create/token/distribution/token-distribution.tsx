@@ -14,21 +14,28 @@ import type {
   TokenDistributionForm,
   TokenDistributionFormValues,
 } from "../_common/form";
+import { DropERC20_TokenSaleSection } from "./drop-erc20-token-sale";
 import { TokenAirdropSection } from "./token-airdrop";
 import { TokenSaleSection } from "./token-sale";
+
+const compactNumberFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 10,
+  notation: "compact",
+});
 
 export function TokenDistributionFieldset(props: {
   accountAddress: string;
   onNext: () => void;
   onPrevious: () => void;
-  form: TokenDistributionForm;
   chainId: string;
+  form: TokenDistributionForm;
   client: ThirdwebClient;
   tokenSymbol: string | undefined;
+  isRouterEnabled: boolean;
 }) {
   const { form } = props;
-  const distributionError = getDistributionError(form);
 
+  const distributionError = getDistributionError(form);
   const supplyId = useId();
 
   return (
@@ -43,16 +50,18 @@ export function TokenDistributionFieldset(props: {
             onClick: props.onPrevious,
           }}
           title="Coin Distribution"
+          errorMessage={distributionError}
         >
           <div>
-            <div className="space-y-6 p-4 md:px-6 md:py-6">
+            <div className="p-4 md:px-6 md:py-6">
               <FormFieldSetup
                 errorMessage={form.formState.errors.supply?.message}
                 htmlFor={supplyId}
+                helperText={`${compactNumberFormatter.format(Number(form.watch("supply")))} tokens`}
                 isRequired
                 label="Total Supply"
               >
-                <div className="relative">
+                <div className="relative lg:max-w-xs">
                   <Input id={supplyId} {...form.register("supply")} />
                   <span className="-translate-y-1/2 absolute top-1/2 right-3 text-muted-foreground text-sm">
                     {props.tokenSymbol || "Tokens"}
@@ -60,25 +69,29 @@ export function TokenDistributionFieldset(props: {
                 </div>
               </FormFieldSetup>
 
-              <div className="flex flex-col gap-3">
-                <TokenDistributionBarChart
-                  distributionFormValues={form.watch()}
-                />
+              <div className="h-6" />
 
-                {distributionError && (
-                  <div className="text-destructive-text text-sm">
-                    {distributionError}
-                  </div>
-                )}
-              </div>
+              <TokenDistributionBarChart
+                distributionFormValues={form.watch()}
+              />
             </div>
 
+            {form.watch("saleMode") === "drop-erc20:token-drop" ? (
+              <DropERC20_TokenSaleSection
+                chainId={props.chainId}
+                client={props.client}
+                form={form}
+              />
+            ) : (
+              <TokenSaleSection
+                chainId={props.chainId}
+                isRouterEnabled={props.isRouterEnabled}
+                client={props.client}
+                form={form}
+              />
+            )}
+
             <TokenAirdropSection client={props.client} form={form} />
-            <TokenSaleSection
-              chainId={props.chainId}
-              client={props.client}
-              form={form}
-            />
           </div>
         </StepCard>
       </form>
@@ -97,15 +110,17 @@ function getDistributionError(form: TokenDistributionForm) {
   }
 
   const saleSupplyPercentage = SafeNumber(
-    form.watch("saleAllocationPercentage"),
+    form.watch("saleMode") === "erc20-asset:pool"
+      ? form.watch("erc20Asset_poolMode.saleAllocationPercentage")
+      : form.watch("dropERC20Mode.saleAllocationPercentage"),
   );
 
-  const saleSupply = (saleSupplyPercentage / 100) * supply;
+  const saleSupply = Math.round((saleSupplyPercentage / 100) * supply);
   const ownerSupply = Math.max(supply - totalAirdrop - saleSupply, 0);
   const totalSumOfSupply = totalAirdrop + saleSupply + ownerSupply;
 
   if (totalSumOfSupply > supply) {
-    return "Token distribution exceeds total supply";
+    return "Token allocation exceeds total supply";
   }
 
   return undefined;
@@ -127,7 +142,10 @@ export function TokenDistributionBarChart(props: {
     );
   const airdropPercentage = (totalAirdropSupply / totalSupply) * 100;
   const salePercentage = Number(
-    props.distributionFormValues.saleAllocationPercentage,
+    props.distributionFormValues.saleMode === "erc20-asset:pool"
+      ? props.distributionFormValues.erc20Asset_poolMode
+          .saleAllocationPercentage
+      : props.distributionFormValues.dropERC20Mode.saleAllocationPercentage,
   );
 
   const ownerPercentage = Math.max(100 - airdropPercentage - salePercentage, 0);
@@ -137,16 +155,19 @@ export function TokenDistributionBarChart(props: {
       color: "hsl(var(--chart-1))",
       label: "Owner",
       percent: ownerPercentage,
+      value: `${ownerPercentage}%`,
     },
     {
       color: "hsl(var(--chart-3))",
       label: "Airdrop",
       percent: airdropPercentage,
+      value: `${airdropPercentage}%`,
     },
     {
       color: "hsl(var(--chart-4))",
       label: "Sale",
       percent: salePercentage,
+      value: `${salePercentage}%`,
     },
   ];
 

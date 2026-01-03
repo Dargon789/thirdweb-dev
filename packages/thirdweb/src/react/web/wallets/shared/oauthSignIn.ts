@@ -43,6 +43,8 @@ function getOauthLoginPath(
     case "steam":
     case "line":
     case "x":
+    case "tiktok":
+    case "epic":
     case "guest":
     case "coinbase":
     case "discord":

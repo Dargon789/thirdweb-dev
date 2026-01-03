@@ -30,6 +30,7 @@ type ThirdwebAreaChartProps<TConfig extends ChartConfig> = {
     description?: string;
     titleClassName?: string;
     headerClassName?: string;
+    icon?: React.ReactNode;
   };
   customHeader?: React.ReactNode;
   // chart config
@@ -39,7 +40,7 @@ type ThirdwebAreaChartProps<TConfig extends ChartConfig> = {
 
   yAxis?: boolean;
   xAxis?: {
-    sameDay?: boolean;
+    showHour?: boolean;
   };
 
   variant?: "stacked" | "individual";
@@ -70,6 +71,7 @@ export function ThirdwebAreaChart<TConfig extends ChartConfig>(
     <Card className={props.className}>
       {props.header && (
         <CardHeader className={props.header.headerClassName}>
+          {props.header.icon}
           <CardTitle className={cn("mb-2", props.header.titleClassName)}>
             {props.header.title}
           </CardTitle>
@@ -88,9 +90,7 @@ export function ThirdwebAreaChart<TConfig extends ChartConfig>(
           {props.isPending ? (
             <LoadingChartState />
           ) : props.data.length === 0 ? (
-            <EmptyChartState type="area">
-              {props.emptyChartState}
-            </EmptyChartState>
+            <EmptyChartState content={props.emptyChartState} />
           ) : (
             <AreaChart
               accessibilityLayer
@@ -110,7 +110,7 @@ export function ThirdwebAreaChart<TConfig extends ChartConfig>(
                 tickFormatter={(value) =>
                   format(
                     new Date(value),
-                    props.xAxis?.sameDay ? "MMM dd, HH:mm" : "MMM dd",
+                    props.xAxis?.showHour ? "MMM dd, HH:mm" : "MMM dd",
                   )
                 }
                 tickLine={false}
@@ -170,7 +170,7 @@ export function ThirdwebAreaChart<TConfig extends ChartConfig>(
                     key={key}
                     stackId={props.variant !== "stacked" ? undefined : "a"}
                     stroke={`var(--color-${key})`}
-                    type="natural"
+                    type="monotone"
                   />
                 ),
               )}

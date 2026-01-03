@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { ThirdwebClient } from "thirdweb";
-import type { Ecosystem } from "@/api/ecosystems";
+import type { Ecosystem } from "@/api/team/ecosystems";
 import { Img } from "@/components/blocks/Img";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardStorageUpload } from "@/hooks/useDashboardStorageUpload";
 import { useDashboardRouter } from "@/lib/DashboardRouter";

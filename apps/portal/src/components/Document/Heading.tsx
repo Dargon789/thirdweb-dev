@@ -27,7 +27,7 @@ export function Heading(props: {
     case 2: {
       return (
         <Anchor
-          className={cn("mt-7 mb-2", props.anchorClassName)}
+          className={cn("mt-10 mb-3", props.anchorClassName)}
           data-noindex={props.noIndex}
           id={props.anchorId}
         >
@@ -46,7 +46,7 @@ export function Heading(props: {
     case 3: {
       return (
         <Anchor
-          className={cn("mt-7 mb-3", props.anchorClassName)}
+          className={cn("mt-10 mb-2", props.anchorClassName)}
           data-noindex={props.noIndex}
           id={props.anchorId}
         >
@@ -65,7 +65,7 @@ export function Heading(props: {
     case 4: {
       return (
         <Anchor
-          className={cn("mt-7 mb-3", props.anchorClassName)}
+          className={cn("mt-8 mb-3", props.anchorClassName)}
           data-noindex={props.noIndex}
           id={props.anchorId}
         >
@@ -84,13 +84,13 @@ export function Heading(props: {
     case 5: {
       return (
         <Anchor
-          className={cn("mt-7 mb-3", props.anchorClassName)}
+          className={cn("mt-8 mb-3", props.anchorClassName)}
           data-noindex={props.noIndex}
           id={props.anchorId}
         >
           <h5
             className={cn(
-              "break-words font-semibold text-foreground text-lg",
+              "break-words font-medium text-foreground text-lg",
               props.className,
             )}
           >
@@ -103,13 +103,13 @@ export function Heading(props: {
     default: {
       return (
         <Anchor
-          className={cn("mt-7 mb-3", props.anchorClassName)}
+          className={cn("mt-8 mb-3", props.anchorClassName)}
           data-noindex={props.noIndex}
           id={props.anchorId}
         >
           <h6
             className={cn(
-              "break-words font-semibold text-foreground text-lg",
+              "break-words font-medium text-foreground text-lg",
               props.className,
             )}
           >

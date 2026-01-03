@@ -22,21 +22,21 @@ export function Details(props: {
     <CustomAccordion
       anchorId={id ? `${id}` : undefined}
       containerClassName={cn(
-        "group/details border-b-0 border-l transition-colors hover:border-active-border my-4",
+        "group/details border-b-0 border-l transition-colors hover:border-active-border my-2",
         props.accordionItemClassName,
       )}
       defaultOpen={props.startExpanded}
       trigger={
         <div className="flex gap-3">
-          <h4
+          <span
             className={cn(
-              "break-all font-bold text-foreground text-lg tracking-tight",
+              "break-all text-foreground text-lg",
               "flex w-full gap-3 text-left font-semibold text-foreground group-hover:underline",
               props.headingClassName,
             )}
           >
             {props.summary}
-          </h4>
+          </span>
           {props.tags && props.tags.length > 0 && (
             <div className="ml-auto flex items-center gap-2">
               {props.tags?.map((flag) => {
@@ -58,7 +58,9 @@ export function Details(props: {
         props.accordionTriggerClassName,
       )}
     >
-      <div className="pt-4 pl-4 [&>:first-child]:mt-0">{props.children}</div>
+      <div className="pl-4 [&>:first-child]:mt-0 [&>*:last-child]:mb-0">
+        {props.children}
+      </div>
     </CustomAccordion>
   );
 }

@@ -1,8 +1,8 @@
 "use server";
 
-import type { Team } from "@/api/team";
+import { getAuthToken } from "@/api/auth-token";
+import type { Team } from "@/api/team/get-team";
 import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
-import { getAuthToken } from "../../../../../../../../@/api/auth-token";
 
 export async function updateTeam(params: {
   teamId: string;

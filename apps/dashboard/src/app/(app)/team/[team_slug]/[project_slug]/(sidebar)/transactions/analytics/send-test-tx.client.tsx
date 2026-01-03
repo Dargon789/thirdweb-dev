@@ -8,8 +8,9 @@ import { toast } from "sonner";
 import type { ThirdwebClient } from "thirdweb";
 import * as z from "zod";
 import { engineCloudProxy } from "@/actions/proxies";
-import type { Project } from "@/api/projects";
+import type { Project } from "@/api/project/projects";
 import { SingleNetworkSelector } from "@/components/blocks/NetworkSelectors";
+import { WalletAddress } from "@/components/blocks/wallet-address";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,7 +32,6 @@ import { useAllChainsData } from "@/hooks/chains/allChains";
 import { useDashboardRouter } from "@/lib/DashboardRouter";
 import { TryItOut } from "../server-wallets/components/try-it-out";
 import type { Wallet } from "../server-wallets/wallet-table/types";
-import { SmartAccountCell } from "../server-wallets/wallet-table/wallet-table-ui.client";
 
 const formSchema = z.object({
   secretKey: z.string().min(1, "Secret key is required"),
@@ -193,9 +193,9 @@ function SendTestTransactionModal(props: {
               <SelectTrigger className="w-full">
                 <SelectValue>
                   <div className="flex items-center gap-2">
-                    <SmartAccountCell
+                    <WalletAddress
                       client={props.client}
-                      wallet={selectedWallet}
+                      address={selectedWallet.address}
                     />
                     <span className="text-muted-foreground text-sm">
                       {selectedWallet.metadata.label}
@@ -207,7 +207,10 @@ function SendTestTransactionModal(props: {
                 {props.wallets.map((wallet, index) => (
                   <SelectItem key={wallet.address} value={index.toString()}>
                     <div className="flex items-center gap-2">
-                      <SmartAccountCell client={props.client} wallet={wallet} />
+                      <WalletAddress
+                        client={props.client}
+                        address={wallet.address}
+                      />
                       <span className="text-muted-foreground text-sm">
                         {wallet.metadata.label}
                       </span>
@@ -289,7 +292,7 @@ export function SendTestTransaction(props: {
 
   return (
     <div className="mt-3 w-full rounded-md border bg-background p-6">
-      <TryItOut />
+      <TryItOut useEngineAPI={false} />
       <div className="mt-6 flex flex-col gap-2 md:flex-row md:justify-end md:gap-2">
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
@@ -311,6 +314,7 @@ export function SendTestTransaction(props: {
                 `/team/${props.teamSlug}/${props.project.slug}/transactions`,
               );
             } else {
+              localStorage.setItem("engineFtuxCompleted", "true");
               router.refresh();
             }
           }}

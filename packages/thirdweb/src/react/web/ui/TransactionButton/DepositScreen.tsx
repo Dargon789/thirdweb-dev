@@ -75,7 +75,6 @@ const WaitingBadge = /* @__PURE__ */ StyledDiv(() => {
  * @internal
  */
 export function DepositScreen(props: {
-  onBack: (() => void) | undefined;
   connectLocale: ConnectLocale;
   client: ThirdwebClient;
   tx: PreparedTransaction;
@@ -144,7 +143,7 @@ export function DepositScreen(props: {
 
   return (
     <Container p="lg">
-      <ModalHeader onBack={props.onBack} title={"Insufficient funds"} />
+      <ModalHeader title={"Insufficient funds"} />
 
       <Spacer y="lg" />
 
@@ -283,10 +282,10 @@ export function DepositScreen(props: {
 const WalletAddressContainer = /* @__PURE__ */ StyledButton((_) => {
   const theme = useCustomTheme();
   return {
+    all: "unset",
     "&:hover": {
       borderColor: theme.colors.accentText,
     },
-    all: "unset",
     border: `1px solid ${theme.colors.borderColor}`,
     borderRadius: `0 0 ${radius.md} ${radius.md}`,
     boxSizing: "border-box",

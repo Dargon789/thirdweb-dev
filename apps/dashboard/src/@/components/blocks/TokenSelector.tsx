@@ -5,15 +5,16 @@ import {
   type ThirdwebClient,
 } from "thirdweb";
 import { shortenAddress } from "thirdweb/utils";
-import type { TokenMetadata } from "@/api/universal-bridge/tokens";
+import type { TokenMetadata } from "@/api/universal-bridge/types";
 import { Img } from "@/components/blocks/Img";
 import { SelectWithSearch } from "@/components/blocks/select-with-search";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/Spinner";
+import { fallbackChainIcon } from "@/constants/chain";
 import { useAllChainsData } from "@/hooks/chains/allChains";
 import { useTokensData } from "@/hooks/tokens";
-import { replaceIpfsUrl } from "@/lib/sdk";
 import { cn } from "@/lib/utils";
-import { fallbackChainIcon } from "@/utils/chain-icons";
+import { resolveSchemeWithErrorHandler } from "@/utils/resolveSchemeWithErrorHandler";
 
 type Option = { label: string; value: string };
 
@@ -121,7 +122,10 @@ export function TokenSelector(props: {
         return option.label;
       }
       const resolvedSrc = token.iconUri
-        ? replaceIpfsUrl(token.iconUri, props.client)
+        ? resolveSchemeWithErrorHandler({
+            client: props.client,
+            uri: token.iconUri,
+          })
         : fallbackChainIcon;
 
       return (
@@ -186,16 +190,21 @@ export function TokenSelector(props: {
       options={options}
       overrideSearchFn={searchFn}
       placeholder={
-        tokensQuery.isPending
-          ? "Loading Tokens"
-          : props.placeholder || "Select Token"
+        tokensQuery.isPending ? (
+          <div className="flex items-center gap-2">
+            <Spinner className="size-4" />
+            <span>Loading tokens</span>
+          </div>
+        ) : (
+          props.placeholder || "Select Token"
+        )
       }
       popoverContentClassName={props.popoverContentClassName}
       renderOption={renderOption}
       searchPlaceholder="Search by name or symbol"
       showCheck={props.showCheck}
       side={props.side}
-      value={selectedValue}
+      value={tokensQuery.isPending ? undefined : selectedValue}
     />
   );
 }

@@ -1,0 +1,240 @@
+import {
+  Callout,
+  OpenSourceCard,
+  createMetadata,
+  InstallTabs,
+  SDKCard,
+  Grid,
+  ArticleIconCard,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  Badge,
+  OpenApiEndpoint,
+} from "@doc";
+import {
+  ReactIcon,
+  TypeScriptIcon,
+  UnityIcon,
+  DotNetIcon,
+  UnrealEngineIcon,
+  EngineIcon
+} from "@/icons";
+
+export const metadata = createMetadata({
+  image: {
+    title: "Get started with Payments",
+    icon: "payments"
+  },
+  title: "Get started with Payments",
+  description: "Monetize your app with thirdweb Payments. Sell products, transfer funds between users, launch tokens, and more.",
+});
+
+# Get Started
+
+thirdweb Payments allow developers to create advanced payment flows to monetize their apps through product sales, peer to peer payments, token sales, and more.
+
+<Tabs defaultValue="react">
+  <TabsList>
+    <TabsTrigger value="react" className="flex items-center [&>p]:mb-0">
+      <ReactIcon className="size-4 mr-1.5" />
+      React
+    </TabsTrigger>
+     <TabsTrigger value="typescript" className="flex items-center [&>p]:mb-0">
+      <TypeScriptIcon className="size-4 mr-1.5" />
+      TypeScript
+    </TabsTrigger>
+    <TabsTrigger value="http" className="flex items-center [&>p]:mb-0">
+      <EngineIcon className="size-4 mr-1.5" />
+      HTTP
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="typescript">
+    Get started sending payments in your apps with the thirdweb TypeScript SDK.
+
+    ### Installation
+
+    Install the thirdweb SDK in your TypeScript project:
+
+    <InstallTabs
+      npm="npm i thirdweb"
+      yarn="yarn add thirdweb"
+      pnpm="pnpm i thirdweb"
+      bun="bun i thirdweb"
+    />
+
+    ### Set up the Client
+
+    First, create a client instance to connect with thirdweb services:
+
+    ```typescript
+    import { createThirdwebClient } from "thirdweb";
+
+    // - clientId for client-side applications
+    // - secretKey for server-side applications
+    const client = createThirdwebClient({
+      clientId: "YOUR_CLIENT_ID", // Get from your thirdweb dashboard
+    });
+    ```
+
+    ### Generate a payment
+
+    To get started, lets generate a payment for 10 USDC on Optimism, paid with USDT on Arbitrum.
+
+    ```typescript
+    import { Bridge, NATIVE_TOKEN_ADDRESS, toWei } from "thirdweb";
+
+// Quote to buy 10 USDC on Optimism, paid with USDT on Arbitrum
+const preparedQuote = await Bridge.Buy.prepare({
+  originChainId: 42161,
+  originTokenAddress: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", // USDT on Arbitrum
+  destinationChainId: 10,
+  destinationTokenAddress: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // USDC on Optimism
+  amount: 10_000_000n, // 10 USDC in wei (USDC has 6 decimals)
+  sender: "0x2a4f24F935Eb178e3e7BA9B53A5Ee6d8407C0709",
+  receiver: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+  client,
+});
+    ```
+
+    The prepared quote will contain details about the payment, including the transactions needed to execute it.
+
+    You can execute the included transactions using the wallet of your choice. To learn how to send it using thirdweb Wallets, checkout the [Send a Payment](/payments/send) guide.
+
+  </TabsContent>
+
+  <TabsContent value="react">
+    The quickest way to setup payments in your React app is with the [`BuyWidget`](/references/typescript/v5/BuyWidget), [`CheckoutWidget`](/references/typescript/v5/CheckoutWidget), and [`TransactionWidget`](/references/typescript/v5/TransactionWidget) components.
+
+    ### Live Playground
+
+<ArticleIconCard
+  title="Payment Widgets Playground"
+  description="Try out the Payment Widgets in our live playground"
+  icon={ReactIcon}
+  href="https://playground.thirdweb.com/bridge/transaction-widget"
+/>
+
+    ### Installation
+
+    Install the thirdweb SDK in your React project:
+
+    <InstallTabs
+      npm="npm i thirdweb"
+      yarn="yarn add thirdweb"
+      pnpm="pnpm i thirdweb"
+      bun="bun i thirdweb"
+    />
+
+
+    ### Create a Client
+
+    First, create a client file (e.g., `thirdwebClient.ts`) for reuse throughout your app:
+
+    ```typescript
+    // thirdwebClient.ts
+    import { createThirdwebClient } from "thirdweb";
+
+    export const client = createThirdwebClient({
+      clientId: "YOUR_CLIENT_ID", // Get from your thirdweb dashboard
+    });
+    ```
+
+    ### Setup the Provider
+
+    Wrap your application with the ThirdwebProvider:
+
+    ```tsx
+    // app.tsx / _app.tsx
+    import { ThirdwebProvider } from "thirdweb/react";
+
+    function App() {
+      return (
+        <ThirdwebProvider>
+          <YourApp />
+        </ThirdwebProvider>
+      );
+    }
+    ```
+
+    ### Buy Widget
+
+    Use the BuyWidget to let users purchase tokens:
+
+    ```tsx
+    import { BuyWidget } from "thirdweb/react";
+    import { base } from "thirdweb/chains";
+
+    function PaymentComponent() {
+      return (
+        <BuyWidget
+          client={client}
+          chain={base}
+          amount="10" // 10 USDC
+          tokenAddress="0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+        />
+      );
+    }
+    ```
+
+  </TabsContent>
+
+  <TabsContent value="http">
+    Use the thirdweb payments API to create and manage payments programmatically.
+
+    ### Create Payment
+
+    Create a payment for your product or service:
+
+    <OpenApiEndpoint path="/v1/payments" method="POST" />
+
+    ### Complete Payment
+
+    Complete a payment using the product ID:
+
+    <OpenApiEndpoint path="/v1/payments/{id}" method="POST" />
+
+    ### Swap Tokens
+
+    Swap tokens for optimal payment processing:
+
+    <OpenApiEndpoint path="/v1/payments/swap" method="POST" />
+
+    For more details, see the full [API Reference](/reference).
+  </TabsContent>
+</Tabs>
+
+## Going further
+
+To connect with other auth strategies, use external wallets, or sponsor gas for users, check out the following guides:
+
+- [Send a Payment](/payments/send)
+- [Webhooks](/payments/webhooks)
+- [Custom Data](/payments/custom-data)
+
+## Explore Full API References
+
+For comprehensive guides on implementing the full thirdweb SDK, explore our language-specific documentation:
+
+<Grid>
+	<SDKCard
+		title="TypeScript"
+		href="/references/typescript/v5"
+		icon={TypeScriptIcon}
+	/>
+	<SDKCard title="React" href="/references/typescript/v5" icon={ReactIcon} />
+	<SDKCard
+		title="React Native"
+		href="/references/typescript/v5"
+		icon={ReactIcon}
+	/>
+	<SDKCard title="DotNet" href="/dotnet/getting-started" icon={DotNetIcon} />
+	<SDKCard title="Unity" href="/unity/v5/getting-started" icon={UnityIcon} />
+	<SDKCard
+		title="Unreal Engine"
+		href="/unreal-engine/getting-started"
+		icon={UnrealEngineIcon}
+	/>
+</Grid>

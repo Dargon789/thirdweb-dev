@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { getTeamBySlug } from "@/api/team";
-import { getAuthToken } from "../../../../../../../../../@/api/auth-token";
-import { loginRedirect } from "../../../../../../../login/loginRedirect";
+import { getAuthToken } from "@/api/auth-token";
+import { getTeamBySlug } from "@/api/team/get-team";
+import { loginRedirect } from "@/utils/redirects";
 import { EcosystemPermissionsPage } from "./configuration/components/client/EcosystemPermissionsPage";
 
 export default async function Page(props: {

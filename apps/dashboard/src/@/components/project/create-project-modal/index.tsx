@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DialogDescription } from "@radix-ui/react-dialog";
 import { useMutation } from "@tanstack/react-query";
 import type { ProjectService } from "@thirdweb-dev/service-utils";
 import { SERVICES } from "@thirdweb-dev/service-utils";
@@ -8,7 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import type { Project } from "@/api/projects";
+import type { Project } from "@/api/project/projects";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CopyTextButton } from "@/components/ui/CopyTextButton";
@@ -18,6 +17,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -32,7 +32,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { createProjectClient } from "@/hooks/useApi";
 import { useDashboardRouter } from "@/lib/DashboardRouter";
@@ -64,7 +64,7 @@ const CreateProjectDialog = (props: CreateProjectDialogProps) => {
     <CreateProjectDialogUI
       createProject={async (params) => {
         const res = await createProjectClient(props.teamId, params);
-        await createVaultAccountAndAccessToken({
+        const vaultTokens = await createVaultAccountAndAccessToken({
           project: res.project,
           projectSecretKey: res.secret,
         }).catch((error) => {
@@ -74,6 +74,13 @@ const CreateProjectDialog = (props: CreateProjectDialogProps) => {
           );
           throw error;
         });
+
+        const managementAccessToken = vaultTokens.managementToken?.accessToken;
+
+        if (!managementAccessToken) {
+          throw new Error("Missing management access token for project wallet");
+        }
+
         return {
           project: res.project,
           secret: res.secret,

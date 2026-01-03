@@ -12,7 +12,10 @@ import {
   radius,
   spacing,
 } from "../../../core/design-system/index.js";
-import type { BridgePrepareRequest } from "../../../core/hooks/useBridgePrepare.js";
+import type {
+  BridgePrepareRequest,
+  BridgePrepareResult,
+} from "../../../core/hooks/useBridgePrepare.js";
 import {
   type CompletedStatusResult,
   useStepExecutor,
@@ -24,13 +27,14 @@ import { Spacer } from "../components/Spacer.js";
 import { Spinner } from "../components/Spinner.js";
 import { Text } from "../components/text.js";
 
-interface StepRunnerProps {
+type StepRunnerProps = {
+  title: string | undefined;
   request: BridgePrepareRequest;
 
   /**
    * Wallet instance for executing transactions
    */
-  wallet: Wallet;
+  wallet: Wallet | undefined;
 
   /**
    * Thirdweb client for API calls
@@ -45,7 +49,7 @@ interface StepRunnerProps {
   /**
    * Whether to automatically start the transaction process
    */
-  autoStart?: boolean;
+  autoStart: boolean;
 
   /**
    * Called when all steps are completed - receives array of completed status results
@@ -55,15 +59,21 @@ interface StepRunnerProps {
   /**
    * Called when user cancels the flow
    */
-  onCancel?: () => void;
+  onCancel: (() => void) | undefined;
 
   /**
    * Called when user clicks the back button
    */
-  onBack?: () => void;
-}
+  onBack: () => void;
+
+  /**
+   * Prepared quote to use
+   */
+  preparedQuote: BridgePrepareResult;
+};
 
 export function StepRunner({
+  title,
   request,
   wallet,
   client,
@@ -72,6 +82,7 @@ export function StepRunner({
   onCancel,
   onBack,
   autoStart,
+  preparedQuote,
 }: StepRunnerProps) {
   const theme = useCustomTheme();
 
@@ -92,8 +103,8 @@ export function StepRunner({
     onComplete: (completedStatuses: CompletedStatusResult[]) => {
       onComplete(completedStatuses);
     },
-    request,
     wallet,
+    preparedQuote,
     windowAdapter,
   });
 
@@ -247,8 +258,8 @@ export function StepRunner({
   };
 
   return (
-    <Container flex="column" fullHeight p="lg">
-      <ModalHeader onBack={onBack} title="Processing Payment" />
+    <Container flex="column" fullHeight px="md" pb="md" pt="md+">
+      <ModalHeader onBack={onBack} title={title || "Processing Payment"} />
 
       <Spacer y="xl" />
 
@@ -374,9 +385,20 @@ export function StepRunner({
         </Container>
 
         <Spacer y="md" />
-        <Text center color="secondaryText" size="xs">
-          Keep this window open until all
-          <br /> transactions are complete.
+        <Text
+          center
+          color={error ? "danger" : "secondaryText"}
+          size="xs"
+          multiline
+        >
+          {error ? (
+            error.message || "An error occurred. Please try again."
+          ) : (
+            <>
+              Keep this window open until all
+              <br /> transactions are complete.
+            </>
+          )}
         </Text>
 
         <Spacer y="lg" />

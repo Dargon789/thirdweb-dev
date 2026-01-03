@@ -3,7 +3,6 @@
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
-import { AppFooter } from "@/components/footers/app-footer";
 import {
   Collapsible,
   CollapsibleContent,
@@ -39,11 +38,11 @@ type ShadcnSidebarBaseLink = {
   isActive?: (pathname: string) => boolean;
 };
 
-type ShadcnSidebarLink =
+export type ShadcnSidebarLink =
   | ShadcnSidebarBaseLink
   | {
       group: string;
-      links: ShadcnSidebarBaseLink[];
+      links: ShadcnSidebarLink[];
     }
   | {
       separator: true;
@@ -68,7 +67,7 @@ export function FullWidthSidebarLayout(props: {
       )}
     >
       {/* left - sidebar */}
-      <Sidebar className="pt-2" collapsible="icon" side="left">
+      <Sidebar collapsible="icon" side="left">
         <SidebarContent className="p-2">
           <RenderSidebarMenu links={contentSidebarLinks} />
         </SidebarContent>
@@ -91,7 +90,6 @@ export function FullWidthSidebarLayout(props: {
         <main className="flex min-w-0 grow flex-col max-sm:w-full">
           {children}
         </main>
-        <AppFooter containerClassName="max-w-7xl" />
       </div>
     </div>
   );
@@ -99,10 +97,7 @@ export function FullWidthSidebarLayout(props: {
 
 function MobileSidebarTrigger(props: { links: ShadcnSidebarLink[] }) {
   const activeLink = useActiveShadcnSidebarLink(props.links);
-  const parentSubNav = props.links.find(
-    (link) =>
-      "subMenu" in link && link.links.some((l) => l.href === activeLink?.href),
-  );
+  const parentSubNav = findParentSubmenu(props.links, activeLink?.href);
 
   return (
     <div className="flex items-center gap-3 border-b px-4 py-4 lg:hidden">
@@ -111,7 +106,7 @@ function MobileSidebarTrigger(props: { links: ShadcnSidebarLink[] }) {
         className="h-4 bg-muted-foreground/50"
         orientation="vertical"
       />
-      {parentSubNav && "subMenu" in parentSubNav && (
+      {parentSubNav && (
         <>
           <span className="text-sm">{parentSubNav.subMenu.label}</span>
           <ChevronRightIcon className="size-4 text-muted-foreground/50 -mx-1.5" />
@@ -133,22 +128,63 @@ function useActiveShadcnSidebarLink(links: ShadcnSidebarLink[]) {
       return pathname?.startsWith(link.href);
     }
 
-    for (const link of links) {
-      if ("links" in link) {
-        for (const subLink of link.links) {
-          if (isActive(subLink)) {
-            return subLink;
+    function walk(
+      navLinks: ShadcnSidebarLink[],
+    ): ShadcnSidebarBaseLink | undefined {
+      for (const link of navLinks) {
+        if ("subMenu" in link) {
+          for (const subLink of link.links) {
+            if (isActive(subLink)) {
+              return subLink;
+            }
+          }
+        } else if ("href" in link) {
+          if (isActive(link)) {
+            return link;
           }
         }
-      } else if ("href" in link) {
-        if (isActive(link)) {
-          return link;
+
+        if ("links" in link && !("subMenu" in link)) {
+          const nested = walk(link.links);
+          if (nested) {
+            return nested;
+          }
         }
       }
+
+      return undefined;
     }
+
+    return walk(links);
   }, [links, pathname]);
 
   return activeLink;
+}
+
+function findParentSubmenu(
+  links: ShadcnSidebarLink[],
+  activeHref: string | undefined,
+): Extract<ShadcnSidebarLink, { subMenu: unknown }> | undefined {
+  if (!activeHref) {
+    return undefined;
+  }
+
+  for (const link of links) {
+    if ("subMenu" in link) {
+      if (link.links.some((subLink) => subLink.href === activeHref)) {
+        return link;
+      }
+    }
+
+    if ("links" in link && !("subMenu" in link)) {
+      const nested = findParentSubmenu(link.links, activeHref);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 function useIsSubnavActive(links: ShadcnSidebarBaseLink[]) {

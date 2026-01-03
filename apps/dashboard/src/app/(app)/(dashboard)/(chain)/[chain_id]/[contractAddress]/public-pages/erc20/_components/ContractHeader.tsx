@@ -1,3 +1,4 @@
+"use client";
 import {
   ExternalLinkIcon,
   GlobeIcon,
@@ -49,6 +50,7 @@ export function ContractHeaderUI(props: {
   imageClassName?: string;
   contractCreator: string | null;
   className?: string;
+  isDashboardUser: boolean;
 }) {
   const socialUrls = useMemo(() => {
     const socialUrlsValue: { name: string; href: string }[] = [];
@@ -74,7 +76,7 @@ export function ContractHeaderUI(props: {
   return (
     <div
       className={cn(
-        "flex flex-col lg:flex-row lg:items-center gap-5 py-6 relative",
+        "flex flex-col lg:flex-row lg:items-center gap-5 py-8 relative",
         props.className,
       )}
     >
@@ -169,29 +171,31 @@ export function ContractHeaderUI(props: {
             variant="outline"
           />
 
-          <ToolTipLabel
-            contentClassName="max-w-[300px]"
-            label={
-              <>
-                View this contract in thirdweb dashboard to view contract
-                management interface
-              </>
-            }
-          >
-            <Button
-              asChild
-              className="rounded-full bg-card gap-1.5 text-xs py-1.5 px-2.5 h-auto"
-              size="sm"
-              variant="outline"
+          {props.isDashboardUser && (
+            <ToolTipLabel
+              contentClassName="max-w-[300px]"
+              label={
+                <>
+                  View this contract in thirdweb dashboard to view contract
+                  management interface
+                </>
+              }
             >
-              <Link
-                href={`/team/~/~/contract/${props.chainMetadata.slug}/${props.clientContract.address}`}
+              <Button
+                asChild
+                className="rounded-full bg-card gap-1.5 text-xs py-1.5 px-2.5 h-auto"
+                size="sm"
+                variant="outline"
               >
-                <Settings2Icon className="size-3.5 text-muted-foreground" />
-                Manage Contract
-              </Link>
-            </Button>
-          </ToolTipLabel>
+                <Link
+                  href={`/team/~/~/contract/${props.chainMetadata.slug}/${props.clientContract.address}`}
+                >
+                  <Settings2Icon className="size-3.5 text-muted-foreground" />
+                  Manage Contract
+                </Link>
+              </Button>
+            </ToolTipLabel>
+          )}
 
           {validBlockExplorer && (
             <BadgeLink

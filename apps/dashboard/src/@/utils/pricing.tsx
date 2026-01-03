@@ -1,4 +1,4 @@
-import type { Team } from "@/api/team";
+import type { Team } from "@/api/team/get-team";
 
 type SelectivePlans = Exclude<
   Team["billingPlan"],
@@ -23,7 +23,7 @@ export const TEAM_PLANS: Record<
     features: [
       "Email Support",
       "48hr Guaranteed Response",
-      "Custom In-App Wallet Auth",
+      "Custom User Wallet Auth",
     ],
     price: 99,
     subTitle: "Everything in Starter, plus:",

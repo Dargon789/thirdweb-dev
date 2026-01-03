@@ -66,14 +66,19 @@ const projectRoute = "/team/:team_slug/:project_slug";
 
 const projectPageRedirects = [
   {
-    destination: `${projectRoute}/universal-bridge/:path*`,
+    destination: `${projectRoute}/payments/:path*`,
     permanent: false,
     source: `${projectRoute}/connect/pay/:path*`,
   },
   {
-    destination: `${projectRoute}/universal-bridge/:path*`,
+    destination: `${projectRoute}/payments/:path*`,
     permanent: false,
     source: `${projectRoute}/connect/universal-bridge/:path*`,
+  },
+  {
+    destination: `${projectRoute}/payments/:path*`,
+    permanent: false,
+    source: `${projectRoute}/universal-bridge/:path*`,
   },
   {
     destination: `${projectRoute}/account-abstraction/:path*`,
@@ -109,6 +114,16 @@ const projectPageRedirects = [
     destination: `${projectRoute}`,
     permanent: false,
     source: `${projectRoute}/connect/analytics`,
+  },
+  {
+    destination: `${projectRoute}/gateway/indexer/:path*`,
+    permanent: false,
+    source: `${projectRoute}/insight/:path*`,
+  },
+  {
+    destination: `${projectRoute}/gateway/rpc/:path*`,
+    permanent: false,
+    source: `${projectRoute}/rpc/:path*`,
   },
 ];
 
@@ -375,11 +390,21 @@ async function redirects() {
       permanent: false,
       source: "/template/:slug",
     },
-    // redirect /connect/pay to /universal-bridge
+    // redirect /connect/pay to /payments
     {
-      destination: "/universal-bridge",
-      permanent: false,
+      destination: "/payments",
+      permanent: true,
       source: "/connect/pay",
+    },
+    {
+      destination: "/payments",
+      permanent: true,
+      source: "/universal-bridge",
+    },
+    {
+      destination: "/payments/:slug",
+      permanent: true,
+      source: "/universal-bridge/:slug",
     },
     // PREVIOUS CAMPAIGNS
     {
@@ -445,9 +470,30 @@ async function redirects() {
       permanent: false,
       source: "/universal-bridge",
     },
+    // redirect /nebula to /ai
+    {
+      destination: "/ai",
+      permanent: false,
+      source: "/nebula",
+    },
     ...legacyDashboardToTeamRedirects,
     ...projectPageRedirects,
     ...teamPageRedirects,
+    {
+      source: "/support/:path*",
+      destination: "/team/~/~/support",
+      permanent: false,
+    },
+    {
+      source: "/routes",
+      destination: "/tokens",
+      permanent: false,
+    },
+    {
+      source: "/payments/x402",
+      destination: "/x402",
+      permanent: false,
+    },
   ];
 }
 

@@ -1,4 +1,4 @@
-import { ScrollShadow } from "../others/ScrollShadow/ScrollShadow";
+import { ScrollShadow } from "@/components/ui/ScrollShadow";
 
 export function Table(props: { children: React.ReactNode }) {
   return (

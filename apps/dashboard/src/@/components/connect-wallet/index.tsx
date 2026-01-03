@@ -1,7 +1,5 @@
 "use client";
 
-import { useFavoriteChainIds } from "@app/(dashboard)/(chain)/components/client/star-button";
-import { doLogout } from "@app/login/auth-actions";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -14,12 +12,15 @@ import {
   useActiveAccount,
   useConnectModal,
 } from "thirdweb/react";
+import { doLogout } from "@/actions/auth-actions";
 import { resetAnalytics } from "@/analytics/reset";
 import { CustomChainRenderer } from "@/components/misc/CustomChainRenderer";
 import { LazyConfigureNetworkModal } from "@/components/misc/configure-networks/LazyConfigureNetworkModal";
 import { Button } from "@/components/ui/button";
+import { appMetadata } from "@/constants/connect";
 import { popularChains } from "@/constants/popularChains";
 import { useAllChainsData } from "@/hooks/chains/allChains";
+import { useFavoriteChainIds } from "@/hooks/favorite-chains";
 import { useStore } from "@/lib/reactive";
 import {
   addRecentlyUsedChainId,
@@ -138,11 +139,7 @@ export const CustomConnectWallet = (props: {
   return (
     <>
       <ConnectButton
-        appMetadata={{
-          logoUrl: "https://thirdweb.com/favicon.ico",
-          name: "thirdweb",
-          url: "https://thirdweb.com",
-        }}
+        appMetadata={appMetadata}
         chain={props.chain}
         chains={allChainsV5}
         client={client}
@@ -280,11 +277,7 @@ export function useCustomConnectModal() {
   return useCallback(
     (options: { chain?: Chain; client: ThirdwebClient }) => {
       return connect({
-        appMetadata: {
-          logoUrl: "https://thirdweb.com/favicon.ico",
-          name: "thirdweb",
-          url: "https://thirdweb.com",
-        },
+        appMetadata,
         chain: options?.chain,
         client: options.client,
         privacyPolicyUrl: "/privacy-policy",

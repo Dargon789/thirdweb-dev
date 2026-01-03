@@ -1,36 +1,11 @@
-import { notFound } from "next/navigation";
-import { getAuthToken } from "@/api/auth-token";
-import { getProject } from "@/api/projects";
+import { redirect } from "next/navigation";
 
-import { KeyManagement } from "./components/key-management";
-
-export default async function VaultPage(props: {
+// Redirect old Vault page to new Server Wallets Configuration
+export default async function Page(props: {
   params: Promise<{ team_slug: string; project_slug: string }>;
 }) {
-  const { team_slug, project_slug } = await props.params;
-  const [authToken, project] = await Promise.all([
-    getAuthToken(),
-    getProject(team_slug, project_slug),
-  ]);
-
-  if (!project || !authToken) {
-    notFound();
-  }
-
-  const projectEngineCloudService = project.services.find(
-    (service) => service.name === "engineCloud",
-  );
-
-  const maskedAdminKey = projectEngineCloudService?.maskedAdminKey;
-  const isManagedVault = !!projectEngineCloudService?.encryptedAdminKey;
-
-  return (
-    <div className="flex flex-col gap-8">
-      <KeyManagement
-        maskedAdminKey={maskedAdminKey ?? undefined}
-        isManagedVault={isManagedVault}
-        project={project}
-      />
-    </div>
+  const params = await props.params;
+  redirect(
+    `/team/${params.team_slug}/${params.project_slug}/wallets/server-wallets/configuration`,
   );
 }

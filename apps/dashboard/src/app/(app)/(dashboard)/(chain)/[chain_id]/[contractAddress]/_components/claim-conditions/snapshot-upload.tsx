@@ -1,40 +1,46 @@
-import { CircleAlertIcon, DownloadIcon, UploadIcon } from "lucide-react";
-import { useRef } from "react";
-import { useDropzone } from "react-dropzone";
-import type { Column } from "react-table";
-import { type ThirdwebClient, ZERO_ADDRESS } from "thirdweb";
+import {
+  ArrowRightIcon,
+  CircleAlertIcon,
+  CircleSlashIcon,
+  RotateCcwIcon,
+} from "lucide-react";
+import { useState } from "react";
+import { isAddress, type ThirdwebClient, ZERO_ADDRESS } from "thirdweb";
+import { DownloadableCode } from "@/components/blocks/code/downloadable-code";
+import { DropZone } from "@/components/blocks/drop-zone/drop-zone";
+import { PaginationButtons } from "@/components/blocks/pagination-buttons";
 import { Button } from "@/components/ui/button";
 import { InlineCode } from "@/components/ui/inline-code";
-import { UnorderedList } from "@/components/ui/List/List";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ToolTipLabel } from "@/components/ui/tooltip";
 import { useCsvUpload } from "@/hooks/useCsvUpload";
-import { cn } from "@/lib/utils";
-import { CsvDataTable } from "../csv-data-table";
+import type { SnapshotEntry } from "./legacy-zod-schema";
 
-interface SnapshotAddressInput {
-  address: string;
-  maxClaimable?: string;
-  price?: string;
-  currencyAddress?: string;
-  isValid?: boolean;
-}
 interface SnapshotUploadProps {
-  setSnapshot: (snapshot: SnapshotAddressInput[]) => void;
+  setSnapshot: (snapshot: (SnapshotEntry & { ensName?: string })[]) => void;
   dropType: "specific" | "any" | "overrides";
   isDisabled: boolean;
-  value?: SnapshotAddressInput[] | undefined;
+  value?: (SnapshotEntry & { ensName?: string })[] | undefined;
   onClose: () => void;
   client: ThirdwebClient;
 }
 
-const csvParser = (items: SnapshotAddressInput[]): SnapshotAddressInput[] => {
+const csvParser = (items: SnapshotEntry[]): SnapshotEntry[] => {
   return items
     .map(({ address, maxClaimable, price, currencyAddress }) => ({
       address: (address || "").trim(),
@@ -45,31 +51,125 @@ const csvParser = (items: SnapshotAddressInput[]): SnapshotAddressInput[] => {
     .filter(({ address }) => address !== "");
 };
 
-const SnapshotViewerSheetContent: React.FC<SnapshotUploadProps> = ({
+function SnapshotDataTable({
+  data,
+}: {
+  data: (SnapshotEntry & {
+    ensName?: string;
+  })[];
+}) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentData = data.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  return (
+    <div className="border bg-card rounded-lg overflow-hidden">
+      <TableContainer className="border-none rounded-none">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Address</TableHead>
+              <TableHead>Max claimable</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Currency Address</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {currentData.map((item) => (
+              <TableRow key={item.address}>
+                <TableCell>
+                  {isAddress(item.address) && item.address !== ZERO_ADDRESS ? (
+                    item.ensName || item.address
+                  ) : (
+                    <ToolTipLabel
+                      label={
+                        item.address === ZERO_ADDRESS
+                          ? "Cannot send tokens to ZERO_ADDRESS"
+                          : item.address.startsWith("0x")
+                            ? "Address is not valid"
+                            : "Address couldn't be resolved"
+                      }
+                    >
+                      <div className="flex flex-row items-center gap-2">
+                        <CircleAlertIcon className="size-4 text-red-500" />
+                        <div className="cursor-default font-bold text-red-500">
+                          {item.ensName || item.address}
+                        </div>
+                      </div>
+                    </ToolTipLabel>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {item.maxClaimable === "0" || !item.maxClaimable
+                    ? "Default"
+                    : item.maxClaimable === "unlimited"
+                      ? "Unlimited"
+                      : item.maxClaimable}
+                </TableCell>
+                <TableCell>
+                  {item.price === "0"
+                    ? "Free"
+                    : !item.price || item.price === "unlimited"
+                      ? "Default"
+                      : item.price}
+                </TableCell>
+                <TableCell>
+                  {item.currencyAddress ===
+                    "0x0000000000000000000000000000000000000000" ||
+                  !item.currencyAddress
+                    ? "Default"
+                    : item.currencyAddress}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {totalPages > 1 && (
+        <div className="border-t p-4 lg:px-6">
+          <PaginationButtons
+            activePage={currentPage}
+            totalPages={totalPages}
+            onPageClick={handlePageChange}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const UploadSnapshot: React.FC<Omit<SnapshotUploadProps, "value">> = ({
   setSnapshot,
   dropType,
   isDisabled,
-  value,
   onClose,
   client,
 }) => {
-  const csvUpload = useCsvUpload<SnapshotAddressInput>({
+  const csvUpload = useCsvUpload<SnapshotEntry>({
     client,
     csvParser,
-    defaultRawData: value,
   });
 
-  const dropzone = useDropzone({
-    onDrop: csvUpload.setFiles,
-  });
-
-  const paginationPortalRef = useRef<HTMLDivElement>(null);
   const normalizeData = csvUpload.normalizeQuery.data;
 
   if (!normalizeData) {
     return (
-      <div className="flex min-h-[400px] w-full grow items-center justify-center">
+      <div className="flex min-h-[400px] w-full flex-col grow items-center justify-center">
         <Spinner className="size-10" />
+        <p className="text-base text-foreground mt-5">Resolving ENS</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          {csvUpload.normalizeProgress.current} /{" "}
+          {csvUpload.normalizeProgress.total}
+        </p>
       </div>
     );
   }
@@ -83,179 +183,145 @@ const SnapshotViewerSheetContent: React.FC<SnapshotUploadProps> = ({
         currencyAddress: o.currencyAddress,
         maxClaimable: o.maxClaimable,
         price: o.price,
+        ensName: o.address.startsWith("0x") ? undefined : o.address,
       })),
     );
     onClose();
   };
 
-  const columns = [
-    {
-      accessor: ({ address, isValid }) => {
-        if (isValid) {
-          return address;
-        }
-        return (
-          <ToolTipLabel
-            label={
-              address === ZERO_ADDRESS
-                ? "Cannot send tokens to ZERO_ADDRESS"
-                : address.startsWith("0x")
-                  ? "Address is not valid"
-                  : "Address couldn't be resolved"
-            }
-          >
-            <div className="flex flex-row items-center gap-2">
-              <CircleAlertIcon className="size-4 text-red-500" />
-              <div className="cursor-default font-bold text-red-500">
-                {address}
-              </div>
-            </div>
-          </ToolTipLabel>
-        );
-      },
-      Header: "Address",
-    },
-    {
-      accessor: ({ maxClaimable }) => {
-        return maxClaimable === "0" || !maxClaimable
-          ? "Default"
-          : maxClaimable === "unlimited"
-            ? "Unlimited"
-            : maxClaimable;
-      },
-      Header: "Max claimable",
-    },
-    {
-      accessor: ({ price }) => {
-        return price === "0"
-          ? "Free"
-          : !price || price === "unlimited"
-            ? "Default"
-            : price;
-      },
-      Header: "Price",
-    },
-    {
-      accessor: ({ currencyAddress }) => {
-        return currencyAddress ===
-          "0x0000000000000000000000000000000000000000" || !currencyAddress
-          ? "Default"
-          : currencyAddress;
-      },
-      Header: "Currency Address",
-    },
-  ] as Column<SnapshotAddressInput>[];
-
   return (
-    <div className="flex flex-col gap-6">
+    <div className="space-y-6">
       {csvUpload.rawData.length > 0 ? (
         <div>
-          <CsvDataTable<SnapshotAddressInput>
-            columns={columns}
-            data={csvUpload.normalizeQuery.data.result}
-            portalRef={paginationPortalRef}
+          <SnapshotDataTable
+            data={csvUpload.normalizeQuery.data.result.map((x) => ({
+              address: x.resolvedAddress,
+              ensName: x.address.startsWith("0x") ? undefined : x.address,
+              maxClaimable: x.maxClaimable,
+              currencyAddress: x.currencyAddress,
+              price: x.price,
+            }))}
           />
-        </div>
-      ) : (
-        <div className="flex grow flex-col items-center gap-8 overflow-auto">
-          <div className="relative aspect-[21/9] w-full">
-            <div
-              className={cn(
-                "flex h-full cursor-pointer rounded-md border border-border hover:border-primary",
-                csvUpload.noCsv ? "bg-red-200" : "bg-background",
+
+          <div className="py-6">
+            {csvUpload.normalizeQuery.data.invalidFound && (
+              <p className="text-sm text-destructive-text mb-3">
+                Invalid addresses found, please remove from the list to continue
+              </p>
+            )}
+
+            <div className="flex justify-start items-center gap-3">
+              <Button
+                className="gap-2"
+                disabled={isDisabled || csvUpload.rawData.length === 0}
+                onClick={() => {
+                  csvUpload.reset();
+                }}
+                variant="outline"
+              >
+                <RotateCcwIcon className="size-4" />
+                Reset
+              </Button>
+
+              {csvUpload.normalizeQuery.data?.invalidFound ? (
+                <Button
+                  className="gap-2"
+                  disabled={isDisabled || csvUpload.rawData.length === 0}
+                  onClick={() => {
+                    csvUpload.removeInvalid();
+                  }}
+                >
+                  <CircleSlashIcon className="size-4" />
+                  Remove invalid
+                </Button>
+              ) : (
+                <Button
+                  className="gap-2"
+                  disabled={isDisabled || csvUpload.rawData.length === 0}
+                  onClick={onSave}
+                >
+                  Next
+                  <ArrowRightIcon className="size-4" />
+                </Button>
               )}
-              {...dropzone.getRootProps()}
-            >
-              <input {...dropzone.getInputProps()} />
-              <div className="!m-auto flex flex-col">
-                <UploadIcon
-                  className={cn(
-                    "mx-auto mb-2 size-8",
-                    csvUpload.noCsv ? "text-red-500" : "text-gray-600",
-                  )}
-                />
-                {dropzone.isDragActive ? (
-                  <p>Drop the files here</p>
-                ) : (
-                  <p
-                    className={
-                      csvUpload.noCsv ? "text-red-500" : "text-gray-600"
-                    }
-                  >
-                    {csvUpload.noCsv
-                      ? `No valid CSV file found, make sure your CSV includes the "address" column.`
-                      : "Drag & Drop a CSV file here"}
-                  </p>
-                )}
-              </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <p className="text-lg">Requirements</p>
-            <UnorderedList>
+        </div>
+      ) : (
+        <div>
+          <DropZone
+            className="py-20"
+            onDrop={csvUpload.setFiles}
+            isError={csvUpload.noCsv}
+            title={
+              csvUpload.noCsv
+                ? "Invalid CSV file"
+                : "Drag & Drop a CSV file here"
+            }
+            description={
+              "The CSV file must follow the format specified in the requirements below"
+            }
+            resetButton={{ label: "Reset", onClick: () => csvUpload.reset() }}
+            accept=".csv"
+          />
+
+          <div className="flex flex-col gap-2 mt-6">
+            <p className="text-base font-medium">Requirements</p>
+            <div className="space-y-2 text-muted-foreground text-sm">
               {dropType === "specific" ? (
                 <>
-                  <li>
+                  <p>
                     Files <em>must</em> contain one .csv file with a list of
                     addresses and their <InlineCode code="maxClaimable" />.
                     (amount each wallet is allowed to claim)
-                    <br />
-                    <a
-                      className="text-link-foreground hover:text-foreground"
-                      download
-                      href="/assets/examples/snapshot-with-maxclaimable.csv"
-                    >
-                      <DownloadIcon className="inline size-3" /> Example
-                      snapshot
-                    </a>
-                  </li>
-                  <li>
+                  </p>
+
+                  <DownloadableCode
+                    code={snapshotWithMaxClaimable}
+                    lang="csv"
+                    fileNameWithExtension="snapshot-with-maxclaimable.csv"
+                  />
+
+                  <p>
                     You may optionally add <InlineCode code="price" /> and
                     <InlineCode code="currencyAddress" /> overrides as well.
                     This lets you override the currency and price you would like
                     to charge per wallet you specified
-                    <br />
-                    <a
-                      className="text-link-foreground hover:text-foreground"
-                      download
-                      href="/assets/examples/snapshot-with-overrides.csv"
-                    >
-                      <DownloadIcon className="inline size-3" /> Example
-                      snapshot
-                    </a>
-                  </li>
+                  </p>
+
+                  <DownloadableCode
+                    code={snapshotWithOverrides}
+                    lang="csv"
+                    fileNameWithExtension="snapshot-with-overrides.csv"
+                  />
                 </>
               ) : (
                 <>
-                  <li>
+                  <p>
                     Files <em>must</em> contain one .csv file with a list of
                     addresses.
-                    <br />
-                    <a
-                      className="text-link-foreground hover:text-foreground"
-                      download
-                      href="/assets/examples/snapshot.csv"
-                    >
-                      <DownloadIcon className="inline size-3" /> Example
-                      snapshot
-                    </a>
-                  </li>
-                  <li>
+                  </p>
+
+                  <DownloadableCode
+                    code={snapshotCSV}
+                    lang="csv"
+                    fileNameWithExtension="snapshot.csv"
+                  />
+
+                  <p>
                     You may optionally add a <InlineCode code="maxClaimable" />
                     column override. (amount each wallet is allowed to claim) If
                     not specified, the default value is the one you have set on
                     your claim phase.
-                    <br />
-                    <a
-                      className="text-link-foreground hover:text-foreground"
-                      download
-                      href="/assets/examples/snapshot-with-maxclaimable.csv"
-                    >
-                      <DownloadIcon className="inline size-3" /> Example
-                      snapshot
-                    </a>
-                  </li>
-                  <li>
+                  </p>
+
+                  <DownloadableCode
+                    code={snapshotWithMaxClaimable}
+                    lang="csv"
+                    fileNameWithExtension="snapshot-with-maxclaimable.csv"
+                  />
+
+                  <p>
                     You may optionally add <InlineCode code="price" /> and
                     <InlineCode code="currencyAddress" /> overrides. This lets
                     you override the currency and price you would like to charge
@@ -264,70 +330,47 @@ const SnapshotViewerSheetContent: React.FC<SnapshotUploadProps> = ({
                       When defining a custom currency address, you must also
                       define a price override.
                     </strong>
-                    <br />
-                    <a
-                      className="text-link-foreground hover:text-foreground"
-                      download
-                      href="/assets/examples/snapshot-with-overrides.csv"
-                    >
-                      <DownloadIcon className="inline size-3" /> Example
-                      snapshot
-                    </a>
-                  </li>
+                  </p>
+
+                  <DownloadableCode
+                    code={snapshotWithOverrides}
+                    lang="csv"
+                    fileNameWithExtension="snapshot-with-overrides.csv"
+                  />
                 </>
               )}
-              <li>
+              <p>
                 Repeated addresses will be removed and only the first found will
                 be kept.
-              </li>
-              <li>
+              </p>
+              <p>
                 The limit you set is for the maximum amount of NFTs a wallet can
                 claim, not how many they can receive in total.
-              </li>
-            </UnorderedList>
+              </p>
+            </div>
           </div>
         </div>
       )}
-      <div className="mt-4 flex flex-col items-center justify-between border-t p-0 md:mt-0 md:flex-row md:p-4">
-        <div ref={paginationPortalRef} />
-        {!isDisabled && (
-          <div className="mt-4 flex w-full flex-row items-center gap-2 md:mt-0 md:w-auto">
-            <Button
-              className="w-full rounded-md md:w-auto"
-              disabled={isDisabled || csvUpload.rawData.length === 0}
-              onClick={() => {
-                csvUpload.reset();
-              }}
-            >
-              Reset
-            </Button>
-            {csvUpload.normalizeQuery.data?.invalidFound ? (
-              <Button
-                className="w-full rounded-md md:w-auto"
-                disabled={isDisabled || csvUpload.rawData.length === 0}
-                onClick={() => {
-                  csvUpload.removeInvalid();
-                }}
-                variant="primary"
-              >
-                Remove invalid
-              </Button>
-            ) : (
-              <Button
-                className="w-full rounded-md md:w-auto"
-                disabled={isDisabled || csvUpload.rawData.length === 0}
-                onClick={onSave}
-                variant="primary"
-              >
-                Next
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
     </div>
   );
 };
+
+function ViewSnapshot(props: {
+  data: (SnapshotEntry & { ensName?: string })[];
+  onReset: () => void;
+}) {
+  return (
+    <div>
+      <SnapshotDataTable data={props.data} />
+      <div className="py-6">
+        <Button className="gap-2" onClick={props.onReset} variant="outline">
+          <RotateCcwIcon className="size-4" />
+          Reset
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function SnapshotViewerSheet(
   props: SnapshotUploadProps & {
@@ -343,8 +386,8 @@ export function SnapshotViewerSheet(
       }}
       open={props.isOpen}
     >
-      <SheetContent className="flex w-full flex-col overflow-y-auto sm:min-w-[540px] lg:min-w-[900px]">
-        <SheetHeader>
+      <SheetContent className="!w-full !max-w-4xl overflow-y-auto flex flex-col">
+        <SheetHeader className="mb-3">
           <SheetTitle className="text-left">Snapshot</SheetTitle>
         </SheetHeader>
         <SnapshotViewerSheetContent {...props} />
@@ -352,3 +395,45 @@ export function SnapshotViewerSheet(
     </Sheet>
   );
 }
+
+function SnapshotViewerSheetContent(props: SnapshotUploadProps) {
+  const [showEditMode, setShowEditMode] = useState(false);
+
+  if (showEditMode) {
+    return (
+      <UploadSnapshot
+        setSnapshot={props.setSnapshot}
+        dropType={props.dropType}
+        isDisabled={props.isDisabled}
+        onClose={props.onClose}
+        client={props.client}
+      />
+    );
+  }
+
+  if (props.value && props.value.length > 0) {
+    return (
+      <ViewSnapshot
+        data={props.value || []}
+        onReset={() => setShowEditMode(true)}
+      />
+    );
+  }
+
+  return <UploadSnapshot {...props} />;
+}
+
+const snapshotWithMaxClaimable = `\
+address,maxClaimable
+0x0000000000000000000000000000000000000000,2
+0x000000000000000000000000000000000000dEaD,5`;
+
+const snapshotWithOverrides = `\
+address,maxClaimable,price,currencyAddress
+0x0000000000000000000000000000000000000000,2,0.1,0x0000000000000000000000000000000000000000
+0x000000000000000000000000000000000000dEaD,5,2.5,0x0000000000000000000000000000000000000000`;
+
+const snapshotCSV = `\
+address
+0x0000000000000000000000000000000000000000
+0x000000000000000000000000000000000000dEaD`;

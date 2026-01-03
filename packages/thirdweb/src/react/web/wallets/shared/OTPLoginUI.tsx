@@ -29,7 +29,10 @@ type VerificationStatus =
   | "valid"
   | "idle"
   | "payment_required";
-type AccountStatus = "sending" | "sent" | "error";
+type AccountStatus =
+  | { type: "sending" }
+  | { type: "sent" }
+  | { type: "error"; message: string | undefined };
 type ScreenToShow = "base" | "enter-password-or-recovery-code";
 
 /**
@@ -52,7 +55,9 @@ export function OTPLoginUI(props: {
   const [otpInput, setOtpInput] = useState("");
   const [verifyStatus, setVerifyStatus] = useState<VerificationStatus>("idle");
   const [error, setError] = useState<string | undefined>();
-  const [accountStatus, setAccountStatus] = useState<AccountStatus>("sending");
+  const [accountStatus, setAccountStatus] = useState<AccountStatus>({
+    type: "sending",
+  });
   const [countdown, setCountdown] = useState(0);
   const ecosystem = isEcosystemWallet(wallet)
     ? {
@@ -66,7 +71,7 @@ export function OTPLoginUI(props: {
   const sendEmailOrSms = useCallback(async () => {
     setOtpInput("");
     setVerifyStatus("idle");
-    setAccountStatus("sending");
+    setAccountStatus({ type: "sending" });
 
     try {
       if ("email" in userInfo) {
@@ -76,7 +81,7 @@ export function OTPLoginUI(props: {
           email: userInfo.email,
           strategy: "email",
         });
-        setAccountStatus("sent");
+        setAccountStatus({ type: "sent" });
         setCountdown(60); // Start 60-second countdown
       } else if ("phone" in userInfo) {
         await preAuthenticate({
@@ -85,7 +90,7 @@ export function OTPLoginUI(props: {
           phoneNumber: userInfo.phone,
           strategy: "phone",
         });
-        setAccountStatus("sent");
+        setAccountStatus({ type: "sent" });
         setCountdown(60); // Start 60-second countdown
       } else {
         throw new Error("Invalid userInfo");
@@ -93,7 +98,10 @@ export function OTPLoginUI(props: {
     } catch (e) {
       console.error(e);
       setVerifyStatus("idle");
-      setAccountStatus("error");
+      setAccountStatus({
+        type: "error",
+        message: e instanceof Error ? e.message : undefined,
+      });
     }
   }, [props.client, userInfo, ecosystem]);
 
@@ -206,7 +214,12 @@ export function OTPLoginUI(props: {
 
   if (screen === "base") {
     return (
-      <Container animate="fadein" flex="column" fullHeight>
+      <Container
+        animate="fadein"
+        flex="column"
+        fullHeight
+        className="tw-otp-login-screen"
+      >
         <Container p="lg">
           <ModalHeader onBack={goBack} title={locale.signIn} />
         </Container>
@@ -219,7 +232,9 @@ export function OTPLoginUI(props: {
           >
             <Container center="x" flex="column" px="lg">
               {!isWideModal && <Spacer y="xl" />}
-              <Text>{locale.emailLoginScreen.enterCodeSendTo}</Text>
+              <Text className="tw-screen-title">
+                {locale.emailLoginScreen.enterCodeSendTo}
+              </Text>
               <Spacer y="sm" />
               <Text color="primaryText">
                 {"email" in userInfo ? userInfo.email : userInfo.phone}
@@ -243,7 +258,12 @@ export function OTPLoginUI(props: {
             {verifyStatus === "invalid" && (
               <FadeIn>
                 <Spacer y="md" />
-                <Text center color="danger" size="sm">
+                <Text
+                  center
+                  color="danger"
+                  size="sm"
+                  className="tw-invalid-code-text"
+                >
                   {locale.emailLoginScreen.invalidCode}
                 </Text>
               </FadeIn>
@@ -252,7 +272,12 @@ export function OTPLoginUI(props: {
             {verifyStatus === "linking_error" && (
               <FadeIn>
                 <Spacer y="md" />
-                <Text center color="danger" size="sm">
+                <Text
+                  center
+                  color="danger"
+                  size="sm"
+                  className="tw-screen-error"
+                >
                   {error || "Failed to verify code"}
                 </Text>
               </FadeIn>
@@ -261,7 +286,12 @@ export function OTPLoginUI(props: {
             {verifyStatus === "payment_required" && (
               <FadeIn>
                 <Spacer y="md" />
-                <Text center color="danger" size="sm">
+                <Text
+                  center
+                  color="danger"
+                  size="sm"
+                  className="tw-screen-error"
+                >
                   {locale.maxAccountsExceeded}
                 </Text>
               </FadeIn>
@@ -283,6 +313,7 @@ export function OTPLoginUI(props: {
                     }}
                     type="submit"
                     variant="accent"
+                    className="tw-verify-button"
                   >
                     {locale.emailLoginScreen.verify}
                   </Button>
@@ -294,14 +325,24 @@ export function OTPLoginUI(props: {
 
             {!isWideModal && <Line />}
 
-            <Container gap="xs" p={isWideModal ? undefined : "lg"}>
-              {accountStatus === "error" && (
-                <Text center color="danger" size="sm">
-                  {locale.emailLoginScreen.failedToSendCode}
+            <Container
+              gap="sm"
+              p={isWideModal ? undefined : "lg"}
+              flex="column"
+            >
+              {accountStatus.type === "error" && (
+                <Text
+                  center
+                  color="danger"
+                  size="sm"
+                  className="tw-screen-error"
+                >
+                  {accountStatus.message ||
+                    locale.emailLoginScreen.failedToSendCode}
                 </Text>
               )}
 
-              {accountStatus === "sending" && (
+              {accountStatus.type === "sending" && (
                 <Container
                   center="both"
                   flex="row"
@@ -315,13 +356,14 @@ export function OTPLoginUI(props: {
                 </Container>
               )}
 
-              {accountStatus !== "sending" && (
+              {accountStatus.type !== "sending" && (
                 <LinkButton
                   onClick={countdown === 0 ? sendEmailOrSms : undefined}
                   style={{
                     cursor: countdown > 0 ? "default" : "pointer",
                     opacity: countdown > 0 ? 0.5 : 1,
                   }}
+                  className="tw-resend-button"
                   type="button"
                 >
                   {countdown > 0
@@ -342,10 +384,10 @@ export function OTPLoginUI(props: {
 const LinkButton = /* @__PURE__ */ StyledButton((_) => {
   const theme = useCustomTheme();
   return {
+    all: "unset",
     "&:hover": {
       color: theme.colors.primaryText,
     },
-    all: "unset",
     color: theme.colors.accentText,
     cursor: "pointer",
     fontSize: fontSize.sm,

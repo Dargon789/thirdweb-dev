@@ -1,5 +1,6 @@
 import type { ThirdwebContract } from "thirdweb";
 import type { ChainMetadata } from "thirdweb/chains";
+import { AssetPageView } from "../_components/asset-page-view";
 import { PageHeader } from "../_components/PageHeader";
 import { ContractHeaderUI } from "../erc20/_components/ContractHeader";
 
@@ -13,9 +14,15 @@ export function NFTPublicPageLayout(props: {
   };
   children: React.ReactNode;
   contractCreator: string | null;
+  isDashboardUser: boolean;
 }) {
   return (
     <div className="flex grow flex-col">
+      <AssetPageView
+        assetType="nft"
+        chainId={props.chainMetadata.chainId}
+        is_testnet={props.chainMetadata.testnet}
+      />
       <PageHeader containerClassName="max-w-8xl" />
       <div className="border-b">
         <div className="container max-w-8xl">
@@ -36,6 +43,7 @@ export function NFTPublicPageLayout(props: {
                 : {}
             }
             symbol={props.contractMetadata.symbol}
+            isDashboardUser={props.isDashboardUser}
           />
         </div>
       </div>

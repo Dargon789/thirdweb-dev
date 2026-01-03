@@ -1,6 +1,9 @@
 import type { ThirdwebContract } from "thirdweb";
 import { contractType as getContractType } from "thirdweb/extensions/thirdweb";
+import { getDeployedEntrypointERC20 } from "thirdweb/tokens";
 import { resolveFunctionSelectors } from "@/lib/selectors";
+import { supportedERCs } from "@/utils/supportedERCs";
+import { getValidReward } from "../../../../../team/[team_slug]/[project_slug]/contract/[chainIdOrSlug]/[contractAddress]/rewards/utils/rewards";
 import {
   isERC20ClaimConditionsSupported,
   isERC721ClaimConditionsSupported,
@@ -19,7 +22,6 @@ import {
   isPermissionsEnumerableSupported,
   isPermissionsSupported,
 } from "./detectedFeatures/permissions";
-import { supportedERCs } from "./detectedFeatures/supportedERCs";
 import { type EmbedTypeToShow, getEmbedTypeToShow } from "./getEmbedTypeToShow";
 
 type ContractPageMetadata = {
@@ -43,6 +45,7 @@ type ContractPageMetadata = {
   isAccount: boolean;
   isAccountPermissionsSupported: boolean;
   functionSelectors: string[];
+  showClaimRewards: boolean;
 };
 
 export async function getContractPageMetadataSetup(
@@ -53,10 +56,14 @@ export async function getContractPageMetadataSetup(
     functionSelectorsResult,
     isInsightSupportedResult,
     contractTypeResult,
+    claimRewardResult,
   ] = await Promise.allSettled([
     resolveFunctionSelectors(contract),
     isAnalyticsSupportedFn(contract.chain.id),
     getContractType({ contract }),
+    isClaimRewardsSupported({
+      assetContract: contract,
+    }),
   ]);
 
   const functionSelectors =
@@ -71,6 +78,11 @@ export async function getContractPageMetadataSetup(
 
   const contractType =
     contractTypeResult.status === "fulfilled" ? contractTypeResult.value : null;
+
+  const showClaimRewards =
+    claimRewardResult.status === "fulfilled"
+      ? !!claimRewardResult.value
+      : false;
 
   return {
     embedType: getEmbedTypeToShow(functionSelectors),
@@ -93,5 +105,30 @@ export async function getContractPageMetadataSetup(
     isSplitSupported: contractType === "Split",
     isVoteContract: contractType === "VoteERC20",
     supportedERCs: supportedERCs(functionSelectors),
+    showClaimRewards,
   };
+}
+
+async function isClaimRewardsSupported(params: {
+  assetContract: ThirdwebContract;
+}): Promise<boolean> {
+  try {
+    const entrypointContract = await getDeployedEntrypointERC20({
+      chain: params.assetContract.chain,
+      client: params.assetContract.client,
+    });
+
+    if (!entrypointContract) {
+      return false;
+    }
+
+    const reward = await getValidReward({
+      assetContract: params.assetContract,
+      entrypointContract,
+    });
+
+    return !!reward;
+  } catch {
+    return false;
+  }
 }

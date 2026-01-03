@@ -1,5 +1,4 @@
 "use client";
-
 import { CircleAlertIcon, InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { createContext, useCallback, useContext, useState } from "react";
@@ -150,9 +149,13 @@ export const ErrorProvider: ComponentWithChildren = ({ children }) => {
               />
             )}
 
-            <Button asChild className="py-2 text-sm" variant="primary">
-              <Link href="/support" rel="noopener noreferrer" target="_blank">
-                Visit support site
+            <Button asChild className="py-2 text-sm" variant="default">
+              <Link
+                href="/team/~/~/support"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Contact Support
               </Link>
             </Button>
           </div>

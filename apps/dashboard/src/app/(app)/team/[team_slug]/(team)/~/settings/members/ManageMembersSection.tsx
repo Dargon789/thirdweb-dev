@@ -6,8 +6,8 @@ import { EllipsisIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { ThirdwebClient } from "thirdweb";
-import type { Team } from "@/api/team";
-import type { TeamAccountRole, TeamMember } from "@/api/team-members";
+import type { Team } from "@/api/team/get-team";
+import type { TeamAccountRole, TeamMember } from "@/api/team/team-members";
 import { GradientAvatar } from "@/components/blocks/avatar/gradient-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { FiltersSection, type MemberSortId } from "./_common";
 
 type RoleFilterValue = "ALL ROLES" | TeamAccountRole;

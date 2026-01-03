@@ -44,6 +44,10 @@ type ThirdwebBarChartProps<TConfig extends ChartConfig> = {
   toolTipValueFormatter?: (value: unknown) => React.ReactNode;
   hideLabel?: boolean;
   emptyChartState?: React.ReactElement;
+  className?: string;
+  xAxis?: {
+    showHour?: boolean;
+  };
 };
 
 export function ThirdwebBarChart<TConfig extends ChartConfig>(
@@ -55,7 +59,7 @@ export function ThirdwebBarChart<TConfig extends ChartConfig>(
     props.variant || configKeys.length > 4 ? "stacked" : "grouped";
 
   return (
-    <Card>
+    <Card className={cn("overflow-hidden", props.className)}>
       {props.header && (
         <CardHeader>
           <CardTitle className={cn("mb-2", props.header.titleClassName)}>
@@ -74,16 +78,19 @@ export function ThirdwebBarChart<TConfig extends ChartConfig>(
           {props.isPending ? (
             <LoadingChartState />
           ) : props.data.length === 0 ? (
-            <EmptyChartState type="bar">
-              {props.emptyChartState}
-            </EmptyChartState>
+            <EmptyChartState content={props.emptyChartState} />
           ) : (
             <BarChart accessibilityLayer data={props.data}>
               <CartesianGrid vertical={false} />
               <XAxis
                 axisLine={false}
                 dataKey="time"
-                tickFormatter={(value) => format(new Date(value), "MMM d")}
+                tickFormatter={(value) =>
+                  format(
+                    new Date(value),
+                    props.xAxis?.showHour ? "MMM dd, HH:mm" : "MMM dd",
+                  )
+                }
                 tickLine={false}
                 tickMargin={10}
               />

@@ -1,14 +1,16 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { trackPayEvent } from "../../../../../analytics/track/pay.js";
 import { defineChain } from "../../../../../chains/utils.js";
 import type { ThirdwebClient } from "../../../../../client/client.js";
+import type { SupportedFiatCurrency } from "../../../../../pay/convert/type.js";
 import { useCustomTheme } from "../../../../core/design-system/CustomThemeProvider.js";
-import { radius, spacing } from "../../../../core/design-system/index.js";
+import {
+  iconSize,
+  radius,
+  spacing,
+} from "../../../../core/design-system/index.js";
 import { useChainsQuery } from "../../../../core/hooks/others/useChainQuery.js";
 import type { BridgePrepareResult } from "../../../../core/hooks/useBridgePrepare.js";
-import type { PaymentMethod } from "../../../../core/machines/paymentMachine.js";
 import {
   formatCurrencyAmount,
   formatTokenAmount,
@@ -17,14 +19,20 @@ import { Container, ModalHeader } from "../../components/basic.js";
 import { Button } from "../../components/buttons.js";
 import { Spacer } from "../../components/Spacer.js";
 import { Text } from "../../components/text.js";
-import type { UIOptions } from "../BridgeOrchestrator.js";
+import type { ModeInfo, PaymentMethod } from "../types.js";
+
 import { PaymentOverview } from "./PaymentOverview.js";
 
-export interface PaymentDetailsProps {
-  /**
-   * The UI mode to use
-   */
-  uiOptions: UIOptions;
+type PaymentDetailsProps = {
+  metadata: {
+    title: string | undefined;
+    description: string | undefined;
+  };
+
+  currency: SupportedFiatCurrency;
+  modeInfo: ModeInfo;
+
+  confirmButtonLabel: string | undefined;
   /**
    * The client to use
    */
@@ -52,16 +60,19 @@ export interface PaymentDetailsProps {
    * Called when an error occurs
    */
   onError: (error: Error) => void;
-}
+};
 
 export function PaymentDetails({
-  uiOptions,
+  metadata,
+  confirmButtonLabel,
   client,
   paymentMethod,
   preparedQuote,
   onConfirm,
   onBack,
   onError,
+  currency,
+  modeInfo,
 }: PaymentDetailsProps) {
   const theme = useCustomTheme();
 
@@ -72,38 +83,6 @@ export function PaymentDetails({
       onError(error as Error);
     }
   };
-
-  useQuery({
-    queryFn: () => {
-      if (
-        preparedQuote.type === "buy" ||
-        preparedQuote.type === "sell" ||
-        preparedQuote.type === "transfer"
-      ) {
-        trackPayEvent({
-          chainId:
-            preparedQuote.type === "transfer"
-              ? preparedQuote.intent.chainId
-              : preparedQuote.intent.originChainId,
-          client,
-          event: "payment_details",
-          fromToken:
-            preparedQuote.type === "transfer"
-              ? preparedQuote.intent.tokenAddress
-              : preparedQuote.intent.originTokenAddress,
-          toChainId:
-            preparedQuote.type === "transfer"
-              ? preparedQuote.intent.chainId
-              : preparedQuote.intent.destinationChainId,
-          toToken:
-            preparedQuote.type === "transfer"
-              ? preparedQuote.intent.tokenAddress
-              : preparedQuote.intent.destinationTokenAddress,
-        });
-      }
-    },
-    queryKey: ["payment_details", preparedQuote.type],
-  });
 
   const chainsQuery = useChainsQuery(
     preparedQuote.steps.flatMap((s) => [
@@ -184,6 +163,43 @@ export function PaymentDetails({
               : undefined,
         };
       }
+
+      case "sell": {
+        const method =
+          paymentMethod.type === "wallet" ? paymentMethod : undefined;
+        if (!method) {
+          // can never happen
+          onError(new Error("Invalid payment method"));
+          return {
+            destinationAmount: "0",
+            destinationToken: undefined,
+            estimatedTime: 0,
+            originAmount: "0",
+            originToken: undefined,
+          };
+        }
+
+        return {
+          destinationAmount: formatTokenAmount(
+            preparedQuote.destinationAmount,
+            preparedQuote.steps[preparedQuote.steps.length - 1]
+              ?.destinationToken?.decimals ?? 18,
+          ),
+          destinationToken:
+            preparedQuote.steps[preparedQuote.steps.length - 1]
+              ?.destinationToken,
+          estimatedTime: preparedQuote.estimatedExecutionTimeMs,
+          originAmount: formatTokenAmount(
+            preparedQuote.originAmount,
+            method.originToken.decimals,
+          ),
+          originToken:
+            paymentMethod.type === "wallet"
+              ? paymentMethod.originToken
+              : undefined,
+        };
+      }
+
       case "onramp": {
         const method =
           paymentMethod.type === "fiat" ? paymentMethod : undefined;
@@ -214,7 +230,7 @@ export function PaymentDetails({
       }
       default: {
         throw new Error(
-          `Unsupported bridge prepare type: ${preparedQuote.type}`,
+          `Unsupported bridge prepare type: ${(preparedQuote as unknown as { type: string }).type}`,
         );
       }
     }
@@ -223,27 +239,32 @@ export function PaymentDetails({
   const displayData = getDisplayData();
 
   return (
-    <Container flex="column" fullHeight p="lg">
-      <ModalHeader onBack={onBack} title="Payment Details" />
+    <Container flex="column" fullHeight px="md" pb="md" pt="md+">
+      <ModalHeader
+        onBack={onBack}
+        title={metadata.title || "Payment Details"}
+      />
 
-      <Spacer y="xl" />
+      <Spacer y="lg" />
 
       <Container flex="column">
         {/* Quote Summary */}
         <Container flex="column">
           {displayData.destinationToken && (
             <PaymentOverview
+              currency={currency}
+              metadata={metadata}
+              modeInfo={modeInfo}
               client={client}
               fromAmount={displayData.originAmount}
               paymentMethod={paymentMethod}
               receiver={preparedQuote.intent.receiver}
               sender={
                 preparedQuote.intent.sender ||
-                paymentMethod.payerWallet.getAccount()?.address
+                paymentMethod.payerWallet?.getAccount()?.address
               }
               toAmount={displayData.destinationAmount}
               toToken={displayData.destinationToken}
-              uiOptions={uiOptions}
             />
           )}
 
@@ -289,12 +310,12 @@ export function PaymentDetails({
 
             <Container
               flex="column"
-              gap="sm"
+              gap="md+"
               style={{
                 backgroundColor: theme.colors.tertiaryBg,
                 border: `1px solid ${theme.colors.borderColor}`,
-                borderRadius: radius.md,
-                padding: `${spacing.sm} ${spacing.md}`,
+                borderRadius: radius.xl,
+                padding: `${spacing.md} ${spacing.md}`,
               }}
             >
               {preparedQuote.steps.map((step, stepIndex) => (
@@ -306,24 +327,24 @@ export function PaymentDetails({
                   {/* Step Header */}
                   <Container
                     flex="row"
-                    gap="md"
+                    gap="sm"
                     style={{ alignItems: "center" }}
                   >
                     <Container
                       center="both"
                       flex="row"
                       style={{
-                        backgroundColor: theme.colors.accentButtonBg,
-                        borderRadius: "50%",
-                        color: theme.colors.accentButtonText,
+                        backgroundColor: theme.colors.modalBg,
+                        border: `1px solid ${theme.colors.borderColor}`,
+                        borderRadius: radius.full,
+                        color: theme.colors.secondaryText,
                         flexShrink: 0,
-                        fontSize: "12px",
                         fontWeight: "bold",
-                        height: "24px",
-                        width: "24px",
+                        height: `${iconSize.lg}px`,
+                        width: `${iconSize.lg}px`,
                       }}
                     >
-                      <Text color="accentButtonText" size="xs">
+                      <Text color="secondaryText" size="sm">
                         {stepIndex + 1}
                       </Text>
                     </Container>
@@ -335,7 +356,7 @@ export function PaymentDetails({
                       style={{ flex: 1 }}
                     >
                       <Container flex="column" gap="3xs" style={{ flex: 1 }}>
-                        <Text color="primaryText" size="sm">
+                        <Text color="primaryText" size="sm" weight={500}>
                           {step.destinationToken.chainId !==
                           step.originToken.chainId ? (
                             <>
@@ -384,12 +405,17 @@ export function PaymentDetails({
           </Container>
         )}
 
-        <Spacer y="lg" />
+        <Spacer y="md" />
 
         {/* Action Buttons */}
         <Container flex="column" gap="sm">
-          <Button fullWidth onClick={handleConfirm} variant="accent">
-            Confirm Payment
+          <Button
+            fullWidth
+            onClick={handleConfirm}
+            variant="primary"
+            style={{ borderRadius: radius.full }}
+          >
+            {confirmButtonLabel || "Confirm Payment"}
           </Button>
         </Container>
       </Container>

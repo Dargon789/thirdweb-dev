@@ -11,6 +11,7 @@ import {
   APPLE_ICON,
   DISCORD_ICON,
   EMAIL_ICON,
+  EPIC_ICON,
   FACEBOOK_ICON,
   FARCASTER_ICON,
   GITHUB_ICON,
@@ -21,6 +22,7 @@ import {
   PHONE_ICON,
   STEAM_ICON,
   TELEGRAM_ICON,
+  TIKTOK_ICON,
   TWITCH_ICON,
   WALLET_ICON,
   X_ICON,
@@ -103,6 +105,10 @@ export function getAuthProviderImage(authProvider: string | null): string {
       return LINE_ICON;
     case "x":
       return X_ICON;
+    case "tiktok":
+      return TIKTOK_ICON;
+    case "epic":
+      return EPIC_ICON;
     case "farcaster":
       return FARCASTER_ICON;
     case "telegram":

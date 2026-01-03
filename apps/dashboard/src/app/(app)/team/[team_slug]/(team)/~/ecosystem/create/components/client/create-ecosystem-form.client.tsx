@@ -18,7 +18,7 @@ import {
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItemButton } from "@/components/ui/radio-group";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { UnderlineLink } from "@/components/ui/UnderlineLink";
 import { createEcosystem } from "../../actions/create-ecosystem";
 
@@ -167,7 +167,7 @@ export function CreateEcosystemForm(props: {
                 </FormControl>
                 <FormDescription>
                   <UnderlineLink
-                    href="https://portal.thirdweb.com/connect/wallet/ecosystem/permissions"
+                    href="https://portal.thirdweb.com/wallets/ecosystem/set-up#Set%20Ecosystem%20Permissions"
                     rel="noopener noreferrer"
                     target="_blank"
                   >
