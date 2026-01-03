@@ -255,7 +255,7 @@ function RenderMessage(props: {
             swapData={message.data}
             client={client}
             onTxSettled={() => {
-              // no op
+              // Nebula does not require a follow-up message after a swap transaction.
             }}
           />
         );
