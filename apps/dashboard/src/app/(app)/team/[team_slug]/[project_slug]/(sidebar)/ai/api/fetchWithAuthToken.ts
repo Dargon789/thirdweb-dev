@@ -37,13 +37,34 @@ function isLoopbackOrPrivateHostname(hostname: string): boolean {
   return false;
 }
 
+// Safely parse and validate the trusted API base URL once at module load.
+let API_BASE_URL_URL: URL;
+let TRUSTED_API_HOSTNAME: string;
+
+try {
+  API_BASE_URL_URL = new URL(API_BASE_URL);
+  if (API_BASE_URL_URL.protocol !== "https:") {
+    throw new Error(
+      "API_BASE_URL must use HTTPS protocol for outgoing requests."
+    );
+  }
+  if (isLoopbackOrPrivateHostname(API_BASE_URL_URL.hostname)) {
+    throw new Error(
+      "API_BASE_URL must not point to a loopback or private network host."
+    );
+  }
+  TRUSTED_API_HOSTNAME = API_BASE_URL_URL.hostname;
+} catch (err) {
+  // Fail fast on invalid configuration to avoid unsafe SSRF behavior at runtime.
+  throw new Error(
+    `Invalid API_BASE_URL configuration: ${
+      err instanceof Error ? err.message : String(err)
+    }`
+  );
+}
+
 // Allow-list of hostnames that outgoing requests are permitted to target.
-const ALLOWED_HOSTNAMES: readonly string[] = [
-  // Only allow the hostname from the trusted API base URL, provided it is not private/loopback.
-  ...(isLoopbackOrPrivateHostname(new URL(API_BASE_URL).hostname)
-    ? []
-    : [new URL(API_BASE_URL).hostname]),
-];
+const ALLOWED_HOSTNAMES: readonly string[] = [TRUSTED_API_HOSTNAME];
 
 const DEFAULT_TIMEOUT_MS = 30000;
 const MAX_TIMEOUT_MS = 60000;
@@ -91,11 +112,11 @@ function normalizeAndValidateEndpoint(endpoint: string): string {
     if (url.protocol !== "https:") {
       throw new Error("Only HTTPS protocol is allowed for outgoing requests.");
     }
-    if (!isAllowedHostname(url.hostname)) {
     if (isLoopbackOrPrivateHostname(url.hostname)) {
       throw new Error(
         "Loopback or private network hosts are not allowed for outgoing requests."
       );
+    if (!isAllowedHostname(url.hostname)) {
     }
       throw new Error("Hostname is not allowed for outgoing requests.");
     }
@@ -109,25 +130,14 @@ function normalizeAndValidateEndpoint(endpoint: string): string {
       throw new Error("Path traversal is not allowed in endpoint.");
     }
     // Construct a full URL under the trusted API base to avoid SSRF.
-    const baseUrl = new URL(API_BASE_URL);
-    if (baseUrl.protocol !== "https:") {
-      throw new Error(
-        "API_BASE_URL must use HTTPS protocol for outgoing requests."
-      );
-    }
-    if (isLoopbackOrPrivateHostname(baseUrl.hostname)) {
-      throw new Error(
-        "API_BASE_URL must not point to a loopback or private network host."
-      );
-    }
-    const url = new URL(endpoint, baseUrl);
-    if (!isAllowedHostname(url.hostname)) {
-      throw new Error("Hostname is not allowed for outgoing requests.");
-    }
+    const url = new URL(endpoint, API_BASE_URL_URL);
     if (isLoopbackOrPrivateHostname(url.hostname)) {
       throw new Error(
         "Loopback or private network hosts are not allowed for outgoing requests."
       );
+    }
+    if (!isAllowedHostname(url.hostname)) {
+      throw new Error("Hostname is not allowed for outgoing requests.");
     }
     return url.toString();
   }
