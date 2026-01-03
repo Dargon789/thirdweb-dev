@@ -4,6 +4,11 @@ import "server-only";
 import { getAuthToken } from "@/api/auth-token";
 import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 
+function isValidTeamIdOrSlug(teamIdOrSlug: string): boolean {
+  // Allow only simple identifiers (letters, numbers, dashes, underscores)
+  return /^[a-zA-Z0-9_-]+$/.test(teamIdOrSlug);
+}
+
 export type VerifiedDomainResponse =
   | {
       status: "pending";
@@ -23,6 +28,10 @@ export async function checkDomainVerification(
   const token = await getAuthToken();
 
   if (!token) {
+    return null;
+  }
+
+  if (!isValidTeamIdOrSlug(teamIdOrSlug)) {
     return null;
   }
 
@@ -50,6 +59,12 @@ export async function createDomainVerification(
   if (!token) {
     return {
       error: "Unauthorized",
+    };
+  }
+
+  if (!isValidTeamIdOrSlug(teamIdOrSlug)) {
+    return {
+      error: "Invalid team identifier",
     };
   }
 
