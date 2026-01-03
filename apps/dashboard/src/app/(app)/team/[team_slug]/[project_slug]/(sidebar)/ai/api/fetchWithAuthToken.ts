@@ -12,6 +12,27 @@ const ALLOWED_HOSTNAMES: readonly string[] = [
   new URL(API_BASE_URL).hostname,
 ];
 
+const DEFAULT_TIMEOUT_MS = 30000;
+const MAX_TIMEOUT_MS = 60000;
+
+function normalizeTimeout(timeout?: number): number {
+  if (timeout === undefined) {
+    return DEFAULT_TIMEOUT_MS;
+  }
+
+  const numericTimeout = Number(timeout);
+
+  if (!Number.isFinite(numericTimeout) || numericTimeout <= 0) {
+    return DEFAULT_TIMEOUT_MS;
+  }
+
+  if (numericTimeout > MAX_TIMEOUT_MS) {
+    return MAX_TIMEOUT_MS;
+  }
+
+  return numericTimeout;
+}
+
 function isAllowedHostname(hostname: string): boolean {
   return ALLOWED_HOSTNAMES.includes(hostname);
 }
@@ -56,7 +77,7 @@ function normalizeAndValidateEndpoint(endpoint: string): string {
 }
 
 export async function fetchWithAuthToken(options: FetchWithKeyOptions) {
-  const timeout = options.timeout || 30000;
+  const timeout = normalizeTimeout(options.timeout);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
