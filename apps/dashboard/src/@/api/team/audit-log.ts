@@ -4,10 +4,15 @@ import "server-only";
 import { getAuthToken } from "@/api/auth-token";
 import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 
+// Allow only lowercase letters, numbers, and dashes, with a reasonable length limit.
+const TEAM_SLUG_REGEX = /^[a-z0-9-]{1,100}$/;
+
 function assertValidTeamSlug(teamSlug: string): void {
-  // Allow only lowercase letters, numbers, and dashes, with a reasonable length limit.
-  const TEAM_SLUG_REGEX = /^[a-z0-9-]{1,100}$/;
   if (!TEAM_SLUG_REGEX.test(teamSlug)) {
+    throw new Error("Invalid team slug");
+  }
+  // Additional defense-in-depth: ensure no path separators are present.
+  if (teamSlug.includes("/") || teamSlug.includes("\\")) {
     throw new Error("Invalid team slug");
   }
 }
