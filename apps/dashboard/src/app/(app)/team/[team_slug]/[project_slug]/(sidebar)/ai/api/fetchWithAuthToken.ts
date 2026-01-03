@@ -3,6 +3,19 @@
 import { getAuthToken } from "@/api/auth-token";
 import type { Project } from "@/api/project/projects";
 
+// Base URL for relative endpoints. This should point to the trusted API host.
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.example.com";
+
+// Allow-list of hostnames that outgoing requests are permitted to target.
+const ALLOWED_HOSTNAMES: readonly string[] = [
+  new URL(API_BASE_URL).hostname,
+];
+
+function isAllowedHostname(hostname: string): boolean {
+  return ALLOWED_HOSTNAMES.includes(hostname);
+}
+
 type FetchWithKeyOptions = {
   endpoint: string;
   project: Project;
@@ -15,14 +28,17 @@ type FetchWithKeyOptions = {
   | {
       method: "GET" | "DELETE";
     }
-);
+  );
 
 function normalizeAndValidateEndpoint(endpoint: string): string {
-  // If the endpoint is an absolute URL, only allow HTTPS.
+  // If the endpoint is an absolute URL, only allow HTTPS and approved hostnames.
   try {
     const url = new URL(endpoint);
     if (url.protocol !== "https:") {
       throw new Error("Only HTTPS protocol is allowed for outgoing requests.");
+    }
+    if (!isAllowedHostname(url.hostname)) {
+      throw new Error("Hostname is not allowed for outgoing requests.");
     }
     return url.toString();
   } catch {
@@ -33,7 +49,9 @@ function normalizeAndValidateEndpoint(endpoint: string): string {
     if (endpoint.includes("..")) {
       throw new Error("Path traversal is not allowed in endpoint.");
     }
-    return endpoint;
+    // Construct a full URL under the trusted API base to avoid SSRF.
+    const url = new URL(endpoint, API_BASE_URL);
+    return url.toString();
   }
 }
 
