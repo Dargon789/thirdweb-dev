@@ -362,7 +362,7 @@
     "expo-linking": "7.0.5",
     "expo-web-browser": "14.0.1",
     "happy-dom": "16.8.1",
-    "knip": "5.45.0",
+    "knip": "5.79.0",
     "msw": "2.7.3",
     "prettier": "3.3.3",
     "react": "19.0.0",
