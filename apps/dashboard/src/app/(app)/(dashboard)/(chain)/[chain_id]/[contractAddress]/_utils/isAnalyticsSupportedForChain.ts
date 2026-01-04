@@ -1,5 +1,5 @@
-import { INSIGHT_SERVICE_API_KEY } from "@/constants/env";
-import { getVercelEnv } from "lib/vercel-utils";
+import { INSIGHT_SERVICE_API_KEY } from "@/constants/server-envs";
+import { getVercelEnv } from "@/utils/vercel";
 
 const thirdwebDomain =
   getVercelEnv() !== "production" ? "thirdweb-dev" : "thirdweb";
@@ -19,6 +19,12 @@ export async function isInsightSupportedForChain(
     );
 
     if (!res.ok) {
+      const errorText = await res.text();
+      console.error(
+        "failed to fetch chain services for chain",
+        chainId,
+        errorText,
+      );
       return false;
     }
 

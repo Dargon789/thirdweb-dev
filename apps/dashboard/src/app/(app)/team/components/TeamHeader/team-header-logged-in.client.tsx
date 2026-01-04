@@ -1,20 +1,20 @@
 "use client";
 
-import type { Project } from "@/api/projects";
-import type { Team } from "@/api/team";
-import { useDashboardRouter } from "@/lib/DashboardRouter";
-import { CustomConnectWallet } from "@3rdweb-sdk/react/components/connect-wallet";
-import type { Account } from "@3rdweb-sdk/react/hooks/useApi";
-import { LazyCreateProjectDialog } from "components/settings/ApiKeys/Create/LazyCreateAPIKeyDialog";
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import type { ThirdwebClient } from "thirdweb";
 import { useActiveWallet, useDisconnect } from "thirdweb/react";
-import { doLogout } from "../../../login/auth-actions";
-import {
-  getChangelogNotifications,
-  getInboxNotifications,
-  markNotificationAsRead,
-} from "../NotificationButton/fetch-notifications";
+import { doLogout } from "@/actions/auth-actions";
+import { createTeam } from "@/actions/team/createTeam";
+import { useIdentifyAccount } from "@/analytics/hooks/identify-account";
+import { useIdentifyTeam } from "@/analytics/hooks/identify-team";
+import { resetAnalytics } from "@/analytics/reset";
+import type { Project } from "@/api/project/projects";
+import type { Team } from "@/api/team/get-team";
+import { CustomConnectWallet } from "@/components/connect-wallet";
+import { LazyCreateProjectDialog } from "@/components/project/create-project-modal/LazyCreateAPIKeyDialog";
+import type { Account } from "@/hooks/useApi";
+import { useDashboardRouter } from "@/lib/DashboardRouter";
 import {
   type TeamHeaderCompProps,
   TeamHeaderDesktopUI,
@@ -28,7 +28,22 @@ export function TeamHeaderLoggedIn(props: {
   account: Pick<Account, "email" | "id">;
   accountAddress: string;
   client: ThirdwebClient;
+  currentProjectSubpath?: {
+    label: string;
+    href: string;
+    icon: React.ReactNode;
+  };
 }) {
+  // identify the account
+  useIdentifyAccount({
+    accountId: props.account.id,
+    email: props.account.email,
+  });
+
+  // identify the team
+  useIdentifyTeam({
+    teamId: props.currentTeam.id,
+  });
   const [createProjectDialogState, setCreateProjectDialogState] = useState<
     { team: Team; isOpen: true } | { isOpen: false }
   >({ isOpen: false });
@@ -40,6 +55,7 @@ export function TeamHeaderLoggedIn(props: {
     // log out the user
     try {
       await doLogout();
+      resetAnalytics();
       if (activeWallet) {
         disconnect(activeWallet);
       }
@@ -50,23 +66,38 @@ export function TeamHeaderLoggedIn(props: {
   }, [router, activeWallet, disconnect]);
 
   const headerProps: TeamHeaderCompProps = {
-    currentProject: props.currentProject,
-    currentTeam: props.currentTeam,
-    teamsAndProjects: props.teamsAndProjects,
     account: props.account,
-    logout: logout,
-    connectButton: <CustomConnectWallet isLoggedIn={true} />,
+    accountAddress: props.accountAddress,
+    client: props.client,
+    connectButton: (
+      <CustomConnectWallet client={props.client} isLoggedIn={true} />
+    ),
     createProject: (team: Team) => {
       setCreateProjectDialogState({
         isOpen: true,
         team,
       });
     },
-    client: props.client,
-    accountAddress: props.accountAddress,
-    getChangelogNotifications: getChangelogNotifications,
-    getInboxNotifications: getInboxNotifications,
-    markNotificationAsRead: markNotificationAsRead,
+    createTeam: () => {
+      toast.promise(
+        createTeam().then((res) => {
+          if (res.status === "error") {
+            throw new Error(res.errorMessage);
+          }
+          router.push(`/team/${res.data.slug}`);
+        }),
+        {
+          error: "Failed to create team",
+          loading: "Creating team",
+          success: "Team created",
+        },
+      );
+    },
+    currentProject: props.currentProject,
+    currentProjectSubpath: props.currentProjectSubpath,
+    currentTeam: props.currentTeam,
+    logout: logout,
+    teamsAndProjects: props.teamsAndProjects,
   };
 
   return (
@@ -76,22 +107,22 @@ export function TeamHeaderLoggedIn(props: {
 
       {createProjectDialogState.isOpen && (
         <LazyCreateProjectDialog
-          open={true}
-          teamSlug={createProjectDialogState.team.slug}
-          teamId={createProjectDialogState.team.id}
-          onOpenChange={() =>
-            setCreateProjectDialogState({
-              isOpen: false,
-            })
+          enableNebulaServiceByDefault={
+            createProjectDialogState.isOpen &&
+            createProjectDialogState.team.enabledScopes.includes("nebula")
           }
           onCreateAndComplete={() => {
             // refresh projects
             router.refresh();
           }}
-          enableNebulaServiceByDefault={
-            createProjectDialogState.isOpen &&
-            createProjectDialogState.team.enabledScopes.includes("nebula")
+          onOpenChange={() =>
+            setCreateProjectDialogState({
+              isOpen: false,
+            })
           }
+          open={true}
+          teamId={createProjectDialogState.team.id}
+          teamSlug={createProjectDialogState.team.slug}
         />
       )}
     </div>

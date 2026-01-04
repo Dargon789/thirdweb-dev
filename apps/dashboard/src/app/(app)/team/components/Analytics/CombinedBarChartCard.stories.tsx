@@ -1,9 +1,9 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs";
+import { useState } from "react";
 import { CombinedBarChartCard } from "./CombinedBarChartCard";
 
 const meta = {
-  title: "Analytics/CombinedBarChartCard",
-  component: CombinedBarChartCard,
+  component: Variant,
   decorators: [
     (Story) => (
       <div className="container max-w-6xl py-10">
@@ -11,23 +11,24 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof CombinedBarChartCard>;
+  title: "Analytics/CombinedBarChartCard",
+} satisfies Meta<typeof Variant>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 const chartConfig = {
+  annualUsers: {
+    color: "hsl(var(--chart-3))",
+    label: "Annual Active Users",
+  },
   dailyUsers: {
-    label: "Daily Active Users",
     color: "hsl(var(--chart-1))",
+    label: "Daily Active Users",
   },
   monthlyUsers: {
-    label: "Monthly Active Users",
     color: "hsl(var(--chart-2))",
-  },
-  annualUsers: {
-    label: "Annual Active Users",
-    color: "hsl(var(--chart-3))",
+    label: "Monthly Active Users",
   },
 };
 
@@ -54,42 +55,30 @@ function generateTimeSeriesData(days: number) {
     annualBase += 50;
 
     data.push({
-      date: date.toISOString(),
-      dailyUsers: Math.max(0, Math.round(dailyBase + dailyVariation)),
-      monthlyUsers: Math.max(0, Math.round(monthlyBase + monthlyVariation)),
       annualUsers: Math.max(0, Math.round(annualBase + annualVariation)),
+      dailyUsers: Math.max(0, Math.round(dailyBase + dailyVariation)),
+      date: date.toISOString(),
+      monthlyUsers: Math.max(0, Math.round(monthlyBase + monthlyVariation)),
     });
   }
 
   return data;
 }
 
-export const UserActivity: Story = {
-  args: {
-    title: "User Activity",
-    chartConfig,
-    data: generateTimeSeriesData(30),
-    activeChart: "dailyUsers",
-    queryKey: "dailyUsers",
-  },
-};
+export const Default: Story = {};
 
-export const MonthlyUsers: Story = {
-  args: {
-    title: "Monthly Users",
-    chartConfig,
-    data: generateTimeSeriesData(30),
-    activeChart: "monthlyUsers",
-    queryKey: "monthlyUsers",
-  },
-};
+function Variant() {
+  const [activeChart, setActiveChart] = useState<
+    "dailyUsers" | "annualUsers" | "monthlyUsers"
+  >("dailyUsers");
 
-export const AnnualUsers: Story = {
-  args: {
-    title: "Annual Users",
-    chartConfig,
-    data: generateTimeSeriesData(30),
-    activeChart: "annualUsers",
-    queryKey: "annualUsers",
-  },
-};
+  return (
+    <CombinedBarChartCard
+      title="User Activity"
+      activeChart={activeChart}
+      chartConfig={chartConfig}
+      data={generateTimeSeriesData(30)}
+      onSelect={setActiveChart}
+    />
+  );
+}

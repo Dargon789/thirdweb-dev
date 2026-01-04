@@ -1,3 +1,6 @@
+"use client";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -6,8 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDashboardRouter } from "@/lib/DashboardRouter";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
 
 type DeployContractVersionSelectorProps = {
   availableVersions: string[];
@@ -33,7 +34,6 @@ export function DeployContractVersionSelector({
 
   return (
     <Select
-      value={version}
       onValueChange={(val) => {
         if (availableVersions.includes(val)) {
           const stringifiedSearchParams = searchParams?.toString();
@@ -55,14 +55,15 @@ export function DeployContractVersionSelector({
           router.push(pathName);
         }
       }}
+      value={version}
     >
-      <SelectTrigger className="min-w-[180px] bg-card hover:bg-accent">
+      <SelectTrigger className="min-w-[120px] bg-card rounded-full w-fit">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         {availableVersions.map((v, idx) => {
           return (
-            <SelectItem value={v || "latest"} key={v}>
+            <SelectItem key={v} value={v || "latest"}>
               {v}
               {idx === 0 && (
                 <span className="text-muted-foreground"> (latest) </span>

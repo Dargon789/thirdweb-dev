@@ -1,16 +1,16 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs";
 import {
   PastDueBannerUI,
   ServiceCutOffBannerUI,
 } from "./BillingAlertBannersUI";
 
 const meta = {
-  title: "Banners/Billing Alerts",
   parameters: {
     nextjs: {
       appDirectory: true,
     },
   },
+  title: "Banners/Billing Alerts",
 } satisfies Meta;
 
 export default meta;

@@ -3,14 +3,26 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import open from "open";
 import ora, { type Ora } from "ora";
+import prompts from "prompts";
 import { parse } from "toml";
 import { createThirdwebClient } from "../../../client/client.js";
 import { upload } from "../../../storage/upload.js";
+import { checkPrerequisites } from "./check-prerequisites.js";
 
 const THIRDWEB_URL = "https://thirdweb.com";
 
 export async function publishStylus(secretKey?: string) {
   const spinner = ora("Checking if this is a Stylus project...").start();
+
+  checkPrerequisites(spinner, "cargo", ["--version"], "Rust (cargo)");
+  checkPrerequisites(spinner, "rustc", ["--version"], "Rust compiler (rustc)");
+  checkPrerequisites(
+    spinner,
+    "solc",
+    ["--version"],
+    "Solidity compiler (solc)",
+  );
+
   const uri = await buildStylus(spinner, secretKey);
 
   const url = getUrl(uri, "publish").toString();
@@ -20,6 +32,16 @@ export async function publishStylus(secretKey?: string) {
 
 export async function deployStylus(secretKey?: string) {
   const spinner = ora("Checking if this is a Stylus project...").start();
+
+  checkPrerequisites(spinner, "cargo", ["--version"], "Rust (cargo)");
+  checkPrerequisites(spinner, "rustc", ["--version"], "Rust compiler (rustc)");
+  checkPrerequisites(
+    spinner,
+    "solc",
+    ["--version"],
+    "Solidity compiler (solc)",
+  );
+
   const uri = await buildStylus(spinner, secretKey);
 
   const url = getUrl(uri, "deploy").toString();
@@ -94,16 +116,64 @@ async function buildStylus(spinner: Ora, secretKey?: string) {
     }
     spinner.succeed("ABI generated.");
 
+    // Step 3.5: detect the constructor
+    spinner.start("Detecting constructor…");
+    const constructorResult = spawnSync("cargo", ["stylus", "constructor"], {
+      encoding: "utf-8",
+    });
+
+    if (constructorResult.status !== 0) {
+      spinner.fail("Failed to get constructor signature.");
+      process.exit(1);
+    }
+
+    const constructorSigRaw = constructorResult.stdout.trim(); // e.g. "constructor(address owner)"
+    spinner.succeed(`Constructor found: ${constructorSigRaw || "none"}`);
+
     // Step 4: Process the output
-    const contractName = extractContractNameFromExportAbi(abiContent);
-    if (!contractName) {
+    const parts = abiContent.split(/======= <stdin>:/g).filter(Boolean);
+    const contractNames = extractContractNamesFromExportAbi(abiContent);
+
+    let selectedContractName: string | undefined;
+    let selectedAbiContent: string | undefined;
+
+    if (contractNames.length === 1) {
+      selectedContractName = contractNames[0]?.replace(/^I/, "");
+      selectedAbiContent = parts[0];
+    } else {
+      const response = await prompts({
+        choices: contractNames.map((name, idx) => ({
+          title: name,
+          value: idx,
+        })),
+        message: "Select entrypoint:",
+        name: "contract",
+        type: "select",
+      });
+
+      const selectedIndex = response.contract;
+
+      if (typeof selectedIndex !== "number") {
+        spinner.fail("No contract selected.");
+        process.exit(1);
+      }
+
+      selectedContractName = contractNames[selectedIndex]?.replace(/^I/, "");
+      selectedAbiContent = parts[selectedIndex];
+    }
+
+    if (!selectedAbiContent) {
+      throw new Error("Entrypoint not found");
+    }
+
+    if (!selectedContractName) {
       spinner.fail("Error: Could not determine contract name from ABI output.");
       process.exit(1);
     }
 
     let cleanedAbi = "";
     try {
-      const jsonMatch = abiContent.match(/\[.*\]/s);
+      const jsonMatch = selectedAbiContent.match(/\[.*\]/s);
       if (jsonMatch) {
         cleanedAbi = jsonMatch[0];
       } else {
@@ -115,17 +185,25 @@ async function buildStylus(spinner: Ora, secretKey?: string) {
       process.exit(1);
     }
 
+    // biome-ignore lint/suspicious/noExplicitAny: <>
+    const abiArray: any[] = JSON.parse(cleanedAbi);
+
+    const constructorAbi = constructorSigToAbi(constructorSigRaw);
+    if (constructorAbi && !abiArray.some((e) => e.type === "constructor")) {
+      abiArray.unshift(constructorAbi); // put it at the top for readability
+    }
+
     const metadata = {
       compiler: {},
       language: "rust",
       output: {
-        abi: JSON.parse(cleanedAbi),
+        abi: abiArray,
         devdoc: {},
         userdoc: {},
       },
       settings: {
         compilationTarget: {
-          "src/main.rs": contractName,
+          "src/main.rs": selectedContractName,
         },
       },
       sources: {},
@@ -152,20 +230,20 @@ async function buildStylus(spinner: Ora, secretKey?: string) {
       client,
       files: [
         {
-          name: contractName,
-          metadataUri,
-          bytecodeUri,
           analytics: {
-            command: "publish-stylus",
-            contract_name: contractName,
             cli_version: "",
+            command: "publish-stylus",
+            contract_name: selectedContractName,
             project_type: "stylus",
           },
+          bytecodeUri,
           compilers: {
             stylus: [
-              { compilerVersion: "", evmVersion: "", metadataUri, bytecodeUri },
+              { bytecodeUri, compilerVersion: "", evmVersion: "", metadataUri },
             ],
           },
+          metadataUri,
+          name: selectedContractName,
         },
       ],
     });
@@ -178,12 +256,10 @@ async function buildStylus(spinner: Ora, secretKey?: string) {
   }
 }
 
-function extractContractNameFromExportAbi(abiRawOutput: string): string | null {
-  const match = abiRawOutput.match(/<stdin>:(I[A-Za-z0-9_]+)/);
-  if (match?.[1]) {
-    return match[1].replace(/^I/, "");
-  }
-  return null;
+function extractContractNamesFromExportAbi(abiRawOutput: string): string[] {
+  return [...abiRawOutput.matchAll(/<stdin>:(I?[A-Za-z0-9_]+)/g)]
+    .map((m) => m[1])
+    .filter((name): name is string => typeof name === "string");
 }
 
 function getUrl(hash: string, command: string) {
@@ -200,4 +276,25 @@ function extractBytecode(rawOutput: string): string {
     throw new Error("Could not find start of bytecode");
   }
   return rawOutput.slice(hexStart).trim();
+}
+
+function constructorSigToAbi(sig: string) {
+  if (!sig || !sig.startsWith("constructor")) return undefined;
+
+  const sigClean = sig
+    .replace(/^constructor\s*\(?/, "")
+    .replace(/\)\s*$/, "")
+    .replace(/\s+(payable|nonpayable)\s*$/, "");
+
+  const mutability = sig.includes("payable") ? "payable" : "nonpayable";
+
+  const inputs =
+    sigClean === ""
+      ? []
+      : sigClean.split(",").map((p) => {
+          const [type, name = ""] = p.trim().split(/\s+/);
+          return { internalType: type, name, type };
+        });
+
+  return { inputs, stateMutability: mutability, type: "constructor" };
 }

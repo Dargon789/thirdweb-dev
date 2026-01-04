@@ -1,10 +1,10 @@
-import { getTeamBySlug } from "@/api/team";
-import { getMemberById } from "@/api/team-members";
-import { checkDomainVerification } from "@/api/verified-domain";
-import { getThirdwebClient } from "@/constants/thirdweb.server";
 import { notFound } from "next/navigation";
-import { getValidAccount } from "../../../../../account/settings/getAccount";
-import { getAuthToken } from "../../../../../api/lib/getAuthToken";
+import { getValidAccount } from "@/api/account/get-account";
+import { getAuthToken } from "@/api/auth-token";
+import { getTeamBySlug } from "@/api/team/get-team";
+import { getMemberByAccountId } from "@/api/team/team-members";
+import { checkDomainVerification } from "@/api/team/verified-domain";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
 import { TeamGeneralSettingsPage } from "./general/TeamGeneralSettingsPage";
 
 export default async function Page(props: {
@@ -19,7 +19,7 @@ export default async function Page(props: {
 
   const [team, teamMember, token, initialVerification] = await Promise.all([
     getTeamBySlug(params.team_slug),
-    getMemberById(params.team_slug, account.id),
+    getMemberByAccountId(params.team_slug, account.id),
     getAuthToken(),
     checkDomainVerification(params.team_slug),
   ]);
@@ -28,7 +28,7 @@ export default async function Page(props: {
     notFound();
   }
 
-  const client = getThirdwebClient({
+  const client = getClientThirdwebClient({
     jwt: token,
     teamId: team.id,
   });
@@ -37,11 +37,11 @@ export default async function Page(props: {
 
   return (
     <TeamGeneralSettingsPage
-      team={team}
-      client={client}
       accountId={account.id}
+      client={client}
       initialVerification={initialVerification}
       isOwnerAccount={isOwnerAccount}
+      team={team}
     />
   );
 }

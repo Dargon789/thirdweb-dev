@@ -59,9 +59,10 @@ async function getOwnedNFTsFromInsight(
   // TODO (insight): add support for contract address filters
   while (hasMore) {
     const pageResults = await getInsightNFTs({
-      client: options.contract.client,
       chains: [options.contract.chain],
+      client: options.contract.client,
       ownerAddress: options.address,
+      contractAddresses: [options.contract.address],
       queryOptions: {
         limit,
         page,

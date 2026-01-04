@@ -1,6 +1,6 @@
-import Link from "next/link";
+import { FormFieldSetup } from "@/components/blocks/FormFieldSetup";
+import { UnderlineLink } from "@/components/ui/UnderlineLink";
 import { QuantityInputWithUnlimited } from "../../quantity-input-with-unlimited";
-import { CustomFormControl } from "../common";
 import { useClaimConditionsFormContext } from "../index";
 
 /**
@@ -23,14 +23,13 @@ export const MaxClaimablePerWalletInput: React.FC = () => {
   }
 
   return (
-    <CustomFormControl
-      disabled={formDisabled}
-      label={`How many ${isErc20 ? "tokens" : "NFTs"} can be claimed per wallet?`}
-      error={
+    <FormFieldSetup
+      isRequired={true}
+      errorMessage={
         form.getFieldState(
           `phases.${phaseIndex}.maxClaimablePerWallet`,
           form.formState,
-        ).error
+        ).error?.message
       }
       helperText={
         <>
@@ -40,31 +39,32 @@ export const MaxClaimablePerWalletInput: React.FC = () => {
             : ". "}
           Limits are set per wallets and not per user, sophisticated actors
           could get around wallet restrictions.{" "}
-          <Link
-            className="text-blue-500"
-            target="_blank"
+          <UnderlineLink
             href="https://portal.thirdweb.com/contracts/design/Drop#sybil-attacks"
+            rel="noopener noreferrer"
+            target="_blank"
           >
             Learn more
-          </Link>
+          </UnderlineLink>
           .
         </>
       }
+      label={`How many ${isErc20 ? "tokens" : "NFTs"} can be claimed per wallet?`}
     >
       <QuantityInputWithUnlimited
-        isRequired
         decimals={tokenDecimals}
         isDisabled={
           dropType === "specific" || formDisabled || (isErc20 && !tokenDecimals)
         }
-        value={field?.maxClaimablePerWallet?.toString() || "0"}
+        isRequired
         onChange={(value) =>
           form.setValue(
             `phases.${phaseIndex}.maxClaimablePerWallet`,
             value.toString(),
           )
         }
+        value={field?.maxClaimablePerWallet?.toString() || "0"}
       />
-    </CustomFormControl>
+    </FormFieldSetup>
   );
 };
