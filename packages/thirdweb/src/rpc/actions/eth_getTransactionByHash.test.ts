@@ -43,7 +43,7 @@ describe.runIf(process.env.TW_SECRET_KEY)("eth_getTransactionByHash", () => {
     ).rejects.toThrowError("Transaction not found.");
   });
 
-  it("throw error with GENESIS_ transaction hash (?)", async () => {
+  it("should throw an error for an invalid transaction hash format", async () => {
     await expect(() =>
       eth_getTransactionByHash(rpcRequest, {
         // @ts-ignore Test
