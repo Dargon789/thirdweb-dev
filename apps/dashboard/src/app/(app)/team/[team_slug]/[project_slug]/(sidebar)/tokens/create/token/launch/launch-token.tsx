@@ -66,7 +66,6 @@ export function LaunchTokenStatus(props: {
   isLegacyPlan: boolean;
 }) {
   const formValues = props.values;
-  const chainId = Number(formValues.chain) || 0;
   const { createTokenFunctions } = props;
   const [steps, setSteps] = useState<MultiStepState<StepId>[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -270,7 +269,7 @@ export function LaunchTokenStatus(props: {
   }
 
   const contractLink = contractAddress
-    ? `/team/${props.teamSlug}/${props.projectSlug}/contract/${chainId}/${contractAddress}`
+    ? `/team/${props.teamSlug}/${props.projectSlug}/contract/${formValues.chain}/${contractAddress}`
     : null;
 
   return (
@@ -284,7 +283,7 @@ export function LaunchTokenStatus(props: {
             isPending={false}
             onClick={handleSubmitClick}
             transactionCount={undefined}
-            txChainID={chainId}
+            txChainID={Number(formValues.chain)}
             variant="default"
           >
             <ArrowUpFromLineIcon className="size-4" />

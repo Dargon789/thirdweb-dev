@@ -7,11 +7,6 @@ import { BASE_URL } from "@/constants/env-utils";
 import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
 
-function isValidTeamSlug(slug: string): boolean {
-  // restrict slug to a single path segment with alphanumerics, dashes, and underscores
-  return /^[a-zA-Z0-9_-]+$/.test(slug);
-}
-
 export async function createEcosystem(options: {
   teamSlug: string;
   teamId: string;
@@ -27,12 +22,6 @@ export async function createEcosystem(options: {
   }
 
   const { teamSlug, teamId, logo, ...data } = options;
-
-  if (!isValidTeamSlug(teamSlug)) {
-    return {
-      status: 400,
-    };
-  }
 
   const imageUrl = await upload({
     client: getClientThirdwebClient({

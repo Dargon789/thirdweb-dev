@@ -70,10 +70,27 @@ async function fetchAnalytics(params: {
   url: string | URL;
   init?: RequestInit;
 }): Promise<Response> {
+  const [pathname, searchParams] = params.url.toString().split("?");
+  if (!pathname) {
+    throw new Error("Invalid input, no pathname provided");
+  }
+
+  // create a new URL object for the analytics server
   const analyticsServiceUrl = new URL(
-    params.url,
     ANALYTICS_SERVICE_URL || "https://analytics.thirdweb.com",
   );
+
+  analyticsServiceUrl.pathname = pathname;
+  for (const param of searchParams?.split("&") || []) {
+    const [key, value] = param.split("=");
+    if (!key || !value) {
+      throw new Error("Invalid input, no key or value provided");
+    }
+    analyticsServiceUrl.searchParams.append(
+      decodeURIComponent(key),
+      decodeURIComponent(value),
+    );
+  }
 
   return fetch(analyticsServiceUrl, {
     ...params.init,
