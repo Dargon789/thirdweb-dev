@@ -8,4 +8,4 @@
 "wallet-ui": patch
 ---
 
- Merged pull  updated description of using session keys with Engine #6474 
+Updated the guide on using session keys with Engine.
