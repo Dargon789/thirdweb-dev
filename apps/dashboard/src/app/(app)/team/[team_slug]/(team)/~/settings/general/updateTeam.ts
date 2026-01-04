@@ -1,8 +1,8 @@
 "use server";
 
-import type { Team } from "@/api/team";
-import { API_SERVER_URL } from "@/constants/env";
-import { getAuthToken } from "../../../../../../api/lib/getAuthToken";
+import { getAuthToken } from "@/api/auth-token";
+import type { Team } from "@/api/team/get-team";
+import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 
 export async function updateTeam(params: {
   teamId: string;
@@ -14,19 +14,28 @@ export async function updateTeam(params: {
     throw new Error("No auth token");
   }
 
-  const res = await fetch(`${API_SERVER_URL}/v1/teams/${params.teamId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${authToken}`,
+  // Validate teamId to prevent unsafe values from influencing the request path
+  const teamIdPattern = /^[a-zA-Z0-9_-]+$/;
+  if (!teamIdPattern.test(params.teamId)) {
+    throw new Error("Invalid team ID");
+  }
+
+  const res = await fetch(
+    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/teams/${params.teamId}`,
+    {
+      body: JSON.stringify(params.value),
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+      },
+      method: "PUT",
     },
-    body: JSON.stringify(params.value),
-  });
+  );
 
   if (!res.ok) {
     return {
-      ok: false as const,
       error: await res.text(),
+      ok: false as const,
     };
   }
 
@@ -35,7 +44,7 @@ export async function updateTeam(params: {
   };
 
   return {
-    ok: true as const,
     data: data.result,
+    ok: true as const,
   };
 }

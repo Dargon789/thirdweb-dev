@@ -1,5 +1,6 @@
 import type { SocialAuthOption } from "../../../../wallets/types.js";
 import type { Account } from "../../../interfaces/wallet.js";
+import type { ClientScopedStorage } from "../authentication/client-scoped-storage.js";
 import type {
   AuthArgsType,
   AuthLoginReturnType,
@@ -36,6 +37,10 @@ export interface InAppConnector {
   ): Promise<AuthLoginReturnType>;
   logout(): Promise<LogoutReturnType>;
   linkProfile(args: AuthArgsType): Promise<Profile[]>;
-  unlinkProfile(args: Profile): Promise<Profile[]>;
+  unlinkProfile(
+    args: Profile,
+    allowAccountDeletion?: boolean,
+  ): Promise<Profile[]>;
   getProfiles(): Promise<Profile[]>;
+  storage: ClientScopedStorage;
 }

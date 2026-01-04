@@ -1,9 +1,14 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { MinusIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { ThirdwebClient } from "thirdweb";
 import { apiServerProxy } from "@/actions/proxies";
-import type { LinkedWallet } from "@/api/linked-wallets";
+import type { LinkedWallet } from "@/api/account/linked-wallets";
 import { WalletAddress } from "@/components/blocks/wallet-address";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   Table,
   TableBody,
@@ -22,26 +28,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDashboardRouter } from "@/lib/DashboardRouter";
-import { useMutation } from "@tanstack/react-query";
-import { formatDate } from "date-fns";
-import { MinusIcon } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { SearchInput } from "../components/SearchInput";
 
 export function LinkWallet(props: {
   wallets: LinkedWallet[];
   accountEmail: string | undefined;
+  client: ThirdwebClient;
 }) {
   const router = useDashboardRouter();
   return (
     <LinkWalletUI
-      wallets={props.wallets}
       accountEmail={props.accountEmail}
+      client={props.client}
       unlinkWallet={async (walletId) => {
         const res = await apiServerProxy({
-          pathname: `/v1/account/wallets/${walletId}`,
           method: "DELETE",
+          pathname: `/v1/account/wallets/${walletId}`,
         });
 
         if (!res.ok) {
@@ -51,6 +53,7 @@ export function LinkWallet(props: {
 
         router.refresh();
       }}
+      wallets={props.wallets}
     />
   );
 }
@@ -59,6 +62,7 @@ export function LinkWalletUI(props: {
   wallets: LinkedWallet[];
   unlinkWallet: (walletId: string) => Promise<void>;
   accountEmail: string | undefined;
+  client: ThirdwebClient;
 }) {
   const [deletedWalletIds, setDeletedWalletIds] = useState<string[]>([]);
   const [searchValue, setSearchValue] = useState("");
@@ -75,9 +79,9 @@ export function LinkWalletUI(props: {
   return (
     <div>
       <SearchInput
+        onValueChange={setSearchValue}
         placeholder="Search wallet address"
         value={searchValue}
-        onValueChange={setSearchValue}
       />
 
       <div className="h-4" />
@@ -98,19 +102,21 @@ export function LinkWalletUI(props: {
                   <WalletAddress
                     address={wallet.walletAddress}
                     className="text-muted-foreground"
+                    client={props.client}
                   />
                 </TableCell>
                 <TableCell className="text-muted-foreground text-sm">
-                  {formatDate(wallet.createdAt, "MMM d, yyyy")}
+                  {format(wallet.createdAt, "MMM d, yyyy")}
                 </TableCell>
                 <TableCell>
                   <UnlinkButton
-                    wallet={wallet}
-                    unlinkWallet={props.unlinkWallet}
                     accountEmail={props.accountEmail}
+                    client={props.client}
                     onUnlinkSuccess={() => {
                       setDeletedWalletIds([...deletedWalletIds, wallet.id]);
                     }}
+                    unlinkWallet={props.unlinkWallet}
+                    wallet={wallet}
                   />
                 </TableCell>
               </TableRow>
@@ -118,7 +124,7 @@ export function LinkWalletUI(props: {
 
             {walletsToShow.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="h-[200px] text-center">
+                <TableCell className="h-[200px] text-center" colSpan={3}>
                   <div className="flex flex-col gap-3">
                     <p className="text-sm">No Wallets Found</p>
                     {searchValue && (
@@ -143,24 +149,25 @@ function UnlinkButton(props: {
   unlinkWallet: (walletId: string) => Promise<void>;
   onUnlinkSuccess: () => void;
   accountEmail: string | undefined;
+  client: ThirdwebClient;
 }) {
   const [open, setOpen] = useState(false);
   const unlinkWallet = useMutation({
     mutationFn: props.unlinkWallet,
+    onError: () => {
+      toast.error("Failed to unlink wallet");
+    },
     onSuccess: () => {
       props.onUnlinkSuccess();
       setOpen(false);
       toast.success("Wallet unlinked successfully");
     },
-    onError: () => {
-      toast.error("Failed to unlink wallet");
-    },
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-2">
+        <Button className="gap-2" size="sm" variant="outline">
           <MinusIcon className="size-4" />
           Unlink
         </Button>
@@ -181,6 +188,7 @@ function UnlinkButton(props: {
             <WalletAddress
               address={props.wallet.walletAddress}
               className="text-muted-foreground"
+              client={props.client}
             />
           </div>
         </div>
@@ -195,18 +203,18 @@ function UnlinkButton(props: {
 
         <div className="flex justify-end gap-4 rounded-b-lg border-t bg-card p-6">
           <Button
-            variant="outline"
-            onClick={() => setOpen(false)}
             disabled={unlinkWallet.isPending}
+            onClick={() => setOpen(false)}
+            variant="outline"
           >
             Cancel
           </Button>
           <Button
-            variant="destructive"
+            disabled={unlinkWallet.isPending}
             onClick={() => {
               unlinkWallet.mutate(props.wallet.id);
             }}
-            disabled={unlinkWallet.isPending}
+            variant="destructive"
           >
             {unlinkWallet.isPending ? (
               <Spinner className="mr-2 size-4" />

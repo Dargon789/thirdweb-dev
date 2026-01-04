@@ -11,18 +11,20 @@ import {
   spacing,
 } from "../../../core/design-system/index.js";
 import { useWalletInfo } from "../../../core/utils/wallet.js";
+import { Container } from "../components/basic.js";
 import { Img } from "../components/Img.js";
 import { Skeleton } from "../components/Skeleton.js";
-import { WalletImage } from "../components/WalletImage.js";
-import { Container } from "../components/basic.js";
 import { Text } from "../components/text.js";
+import { WalletImage } from "../components/WalletImage.js";
 import { StyledButton } from "../design-system/elements.js";
+import { InAppWalletIcon } from "./in-app-wallet-icon.js";
 import type { ConnectLocale } from "./locale/types.js";
 
 /**
  * @internal
  */
 export function WalletEntryButton(props: {
+  className?: string;
   wallet: Wallet;
   selectWallet: () => void;
   connectLocale: ConnectLocale;
@@ -51,34 +53,51 @@ export function WalletEntryButton(props: {
     wallet && walletId === "inApp"
       ? (wallet.getConfig() as InAppWalletCreationOptions)?.metadata
       : undefined;
-  const nameOverride = customMeta?.name || walletName;
+  let nameOverride = customMeta?.name || walletName;
   const iconOverride = customMeta?.icon;
+
+  // change "Social Login" to name of the login method if only 1 method is enabled
+  if (wallet.id === "inApp") {
+    const config = wallet.getConfig() as InAppWalletCreationOptions;
+    if (config?.auth?.options.length === 1) {
+      const name = config.auth?.options[0];
+      if (name) {
+        nameOverride = uppercaseFirstLetter({ text: name });
+      }
+    }
+  }
 
   return (
     <WalletButtonEl
-      type="button"
-      onClick={selectWallet}
+      className={props.className}
       data-active={props.isActive}
+      onClick={selectWallet}
+      type="button"
     >
       {iconOverride ? (
         <Img
+          alt=""
           client={props.client}
-          src={iconOverride}
-          alt={nameOverride}
-          width={`${iconSize.xl}`}
           height={`${iconSize.xl}`}
+          src={iconOverride}
+          width={`${iconSize.xl}`}
+        />
+      ) : wallet.id === "inApp" ? (
+        <InAppWalletIcon
+          client={props.client}
+          wallet={wallet as Wallet<"inApp">}
         />
       ) : (
-        <WalletImage id={walletId} size={iconSize.xl} client={props.client} />
+        <WalletImage client={props.client} id={walletId} size={iconSize.xl} />
       )}
 
-      <Container flex="column" gap="xxs" expand>
+      <Container expand flex="column" gap="xxs">
         {nameOverride ? (
-          <Text color="primaryText" weight={600}>
+          <Text color="primaryText" weight={500}>
             {nameOverride}
           </Text>
         ) : (
-          <Skeleton width="100px" height={fontSize.md} />
+          <Skeleton height={fontSize.md} width="100px" />
         )}
         {props.badge ? (
           <Text size="sm">{props.badge}</Text>
@@ -96,16 +115,6 @@ export const WalletButtonEl = /* @__PURE__ */ StyledButton((_) => {
   const theme = useCustomTheme();
   return {
     all: "unset",
-    display: "flex",
-    alignItems: "center",
-    gap: spacing.sm,
-    cursor: "pointer",
-    boxSizing: "border-box",
-    width: "100%",
-    color: theme.colors.secondaryText,
-    position: "relative",
-    borderRadius: radius.md,
-    padding: `${spacing.xs} ${spacing.xs}`,
     "&:hover": {
       backgroundColor: theme.colors.tertiaryBg,
       transform: "scale(1.01)",
@@ -113,6 +122,21 @@ export const WalletButtonEl = /* @__PURE__ */ StyledButton((_) => {
     '&[data-active="true"]': {
       backgroundColor: theme.colors.tertiaryBg,
     },
+
+    alignItems: "center",
+    borderRadius: radius.md,
+    boxSizing: "border-box",
+    color: theme.colors.secondaryText,
+    cursor: "pointer",
+    display: "flex",
+    flexDirection: "row",
+    gap: spacing.sm,
+    padding: `${spacing.xs} ${spacing.xs}`,
     transition: "background-color 200ms ease, transform 200ms ease",
+    width: "100%",
   };
 });
+
+function uppercaseFirstLetter(props: { text: string }) {
+  return props.text.charAt(0).toUpperCase() + props.text.slice(1);
+}

@@ -1,10 +1,10 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { BadgeContainer } from "stories/utils";
+import type { Meta, StoryObj } from "@storybook/nextjs";
+import { BadgeContainer } from "@/storybook/utils";
 import { EmptyStateCard } from "./EmptyStateCard";
 
 const meta = {
-  title: "Analytics/EmptyStateCard",
   component: Component,
+  title: "Analytics/EmptyStateCard",
 } satisfies Meta<typeof Component>;
 
 export default meta;
@@ -21,15 +21,16 @@ export const Variants: Story = {
 function Component() {
   return (
     <div className="container max-w-6xl space-y-10 py-10">
-      <BadgeContainer label="Basic">
-        <EmptyStateCard metric="transactions" />
+      <BadgeContainer label="With Metric">
+        <EmptyStateCard metric="xyz" />
       </BadgeContainer>
 
       <BadgeContainer label="With Link">
-        <EmptyStateCard
-          metric="revenue"
-          link="https://docs.example.com/analytics"
-        />
+        <EmptyStateCard link="https://docs.example.com/xyz" />
+      </BadgeContainer>
+
+      <BadgeContainer label="With Link and Metric">
+        <EmptyStateCard link="https://docs.example.com/xyz" metric="xyz" />
       </BadgeContainer>
     </div>
   );

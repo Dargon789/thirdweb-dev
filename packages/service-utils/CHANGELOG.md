@@ -1,5 +1,130 @@
 # @thirdweb-dev/service-utils
 
+## 0.10.10
+
+### Patch Changes
+
+- [#8479](https://github.com/thirdweb-dev/js/pull/8479) [`7967d7f`](https://github.com/thirdweb-dev/js/commit/7967d7f17ea1e906a0c4adf0cd838ddc36b71162) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - add dedicated relayer to service utils
+
+## 0.10.9
+
+### Patch Changes
+
+- [#8434](https://github.com/thirdweb-dev/js/pull/8434) [`c11fe95`](https://github.com/thirdweb-dev/js/commit/c11fe954160a544069a9518bd2364a1d7b60cc94) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update engineCloud service config
+
+## 0.10.8
+
+### Patch Changes
+
+- [#7921](https://github.com/thirdweb-dev/js/pull/7921) [`d4a44f5`](https://github.com/thirdweb-dev/js/commit/d4a44f5b5f6ec3594a9f521aee5e73f3a5cdc031) Thanks [@jnsdls](https://github.com/jnsdls)! - add reason code type into team capabilities response
+
+## 0.10.7
+
+### Patch Changes
+
+- [#7718](https://github.com/thirdweb-dev/js/pull/7718) [`80c6b6a`](https://github.com/thirdweb-dev/js/commit/80c6b6a79371d345c2ea95d2a904e1e85e766b99) Thanks [@jnsdls](https://github.com/jnsdls)! - add `gateway` team capabilities
+
+## 0.10.6
+
+### Patch Changes
+
+- [#7700](https://github.com/thirdweb-dev/js/pull/7700) [`9d8c7f1`](https://github.com/thirdweb-dev/js/commit/9d8c7f1f7d14329d2eab49d4af7e37086924f40e) Thanks [@jnsdls](https://github.com/jnsdls)! - add `gateway` to possible usage sources
+
+## 0.10.5
+
+### Patch Changes
+
+- [#7636](https://github.com/thirdweb-dev/js/pull/7636) [`746b0c9`](https://github.com/thirdweb-dev/js/commit/746b0c9d8b597517898bed5fd93ac6717f5bf8dd) Thanks [@jnsdls](https://github.com/jnsdls)! - add `mcp` to team capabilities
+
+## 0.10.4
+
+### Patch Changes
+
+- [#7614](https://github.com/thirdweb-dev/js/pull/7614) [`f82f885`](https://github.com/thirdweb-dev/js/commit/f82f885dad9a0eaecd64f365adbd1f49517b4fd9) Thanks [@jnsdls](https://github.com/jnsdls)! - update nebula ratelimit type
+
+- [#7613](https://github.com/thirdweb-dev/js/pull/7613) [`34d2fdd`](https://github.com/thirdweb-dev/js/commit/34d2fddf49291eb31d03fef98460ee719aef1044) Thanks [@jnsdls](https://github.com/jnsdls)! - update error response url
+
+## 0.10.3
+
+### Patch Changes
+
+- [#7570](https://github.com/thirdweb-dev/js/pull/7570) [`585eac2`](https://github.com/thirdweb-dev/js/commit/585eac2a6f49877318cb275f6fff5910ceabdbfb) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add encryption utilities
+
+## 0.10.2
+
+### Patch Changes
+
+- [#7461](https://github.com/thirdweb-dev/js/pull/7461) [`c7f7f48`](https://github.com/thirdweb-dev/js/commit/c7f7f4822283a4d85aa36a0f255bc147c87864dc) Thanks [@arcoraven](https://github.com/arcoraven)! - chore: data in webhook payload is an object
+
+## 0.10.1
+
+### Patch Changes
+
+- [#7444](https://github.com/thirdweb-dev/js/pull/7444) [`472e737`](https://github.com/thirdweb-dev/js/commit/472e737616312694f6c7df4876c90861d2edad94) Thanks [@arcoraven](https://github.com/arcoraven)! - chore: require webhook payload to be an array
+
+## 0.10.0
+
+### Minor Changes
+
+- [#7439](https://github.com/thirdweb-dev/js/pull/7439) [`c5f9921`](https://github.com/thirdweb-dev/js/commit/c5f9921dc9cf6c62d754f12ce6171d95bd87a590) Thanks [@arcoraven](https://github.com/arcoraven)! - feat: Add webhook producer to service-utils
+
+### Patch Changes
+
+- [#7440](https://github.com/thirdweb-dev/js/pull/7440) [`a2b737e`](https://github.com/thirdweb-dev/js/commit/a2b737e14493956dc888d94057e806bff77bacd2) Thanks [@arcoraven](https://github.com/arcoraven)! - fix: wrong casing on a field in webhook event helper
+
+## 0.9.14
+
+### Patch Changes
+
+- [#7382](https://github.com/thirdweb-dev/js/pull/7382) [`4c29886`](https://github.com/thirdweb-dev/js/commit/4c2988623fa58311ca854e849ae1872e9e48846d) Thanks [@arcoraven](https://github.com/arcoraven)! - chore: add dedicatedSupportChannel to TeamResponse
+
+## 0.9.13
+
+### Patch Changes
+
+- [#7303](https://github.com/thirdweb-dev/js/pull/7303) [`6378f37`](https://github.com/thirdweb-dev/js/commit/6378f371c50b11052f7bfbb6aeefe3fb19ea26f0) Thanks [@arcoraven](https://github.com/arcoraven)! - chore: pass allowImpersonation to auth server
+
+## 0.9.12
+
+### Patch Changes
+
+- [#7276](https://github.com/thirdweb-dev/js/pull/7276) [`42236d4`](https://github.com/thirdweb-dev/js/commit/42236d43a860e1d8b6b1f518bf6aa12bcf56b0ac) Thanks [@jnsdls](https://github.com/jnsdls)! - remove:
+  - `starter_legacy` plan type
+  - `billingPlanVersion` field
+  - `growthTrialEligible` field
+
+## 0.9.11
+
+### Patch Changes
+
+- [#7210](https://github.com/thirdweb-dev/js/pull/7210) [`86fd445`](https://github.com/thirdweb-dev/js/commit/86fd445276f3061a71bd97c53359b3a6ec9f01e3) Thanks [@jnsdls](https://github.com/jnsdls)! - add new capabilities to the type
+
+- [#7215](https://github.com/thirdweb-dev/js/pull/7215) [`55fba51`](https://github.com/thirdweb-dev/js/commit/55fba51dabac300f8789db8936f68ddffb11a46d) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update service descriptions
+
+## 0.9.10
+
+### Patch Changes
+
+- [#7114](https://github.com/thirdweb-dev/js/pull/7114) [`4b9a506`](https://github.com/thirdweb-dev/js/commit/4b9a506fdfaf8d8be5767d3c719f0b77f86131e9) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Better error messages for 403 responses
+
+## 0.9.9
+
+### Patch Changes
+
+- [#7020](https://github.com/thirdweb-dev/js/pull/7020) [`feae304`](https://github.com/thirdweb-dev/js/commit/feae304da2c428ca33b1b0b4a9b08dafe8c7bfc1) Thanks [@jnsdls](https://github.com/jnsdls)! - Prioritize JWT over service API keys in authentication
+
+## 0.9.8
+
+### Patch Changes
+
+- [#6984](https://github.com/thirdweb-dev/js/pull/6984) [`bc75ae6`](https://github.com/thirdweb-dev/js/commit/bc75ae68265cbfbac50df0704b45117b812bbf10) Thanks [@jnsdls](https://github.com/jnsdls)! - handle jwt auth method explicitly
+
+## 0.9.7
+
+### Patch Changes
+
+- [#6960](https://github.com/thirdweb-dev/js/pull/6960) [`928113b`](https://github.com/thirdweb-dev/js/commit/928113bb0bc7d6237148857320563e1e98cf51e1) Thanks [@arcoraven](https://github.com/arcoraven)! - chore: Support Engine Core and Webhook usage events
+
 ## 0.9.6
 
 ### Patch Changes

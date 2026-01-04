@@ -1,5 +1,10 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Fragment } from "react";
+import { isAddress } from "thirdweb";
+import { shortenAddress } from "thirdweb/utils";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,18 +13,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Fragment } from "react";
-import { isAddress } from "thirdweb";
-import { shortenAddress } from "thirdweb/utils";
+import { cn } from "@/lib/utils";
 
-export function PublishedContractBreadcrumbs() {
+export function PublishedContractBreadcrumbs(props: { className?: string }) {
   const pathname = usePathname() || "";
   const segments = pathname.split("/").filter((segment) => segment !== "");
 
   return (
-    <Breadcrumb className="border-border border-b px-6 py-4">
+    <Breadcrumb className={cn("py-4", props.className)}>
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink aria-label="Explore" asChild>
@@ -41,7 +42,7 @@ export function PublishedContractBreadcrumbs() {
                 {isLast ? (
                   <BreadcrumbPage>{renderedSegment}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink asChild aria-label={segment}>
+                  <BreadcrumbLink aria-label={segment} asChild>
                     <Link href={href}>{renderedSegment}</Link>
                   </BreadcrumbLink>
                 )}

@@ -1,18 +1,21 @@
-import { getTeams } from "@/api/team";
-import { COOKIE_ACTIVE_ACCOUNT, COOKIE_PREFIX_TOKEN } from "@/constants/cookie";
-import {
-  API_SERVER_URL,
-  THIRDWEB_ACCESS_TOKEN,
-  THIRDWEB_ENGINE_FAUCET_WALLET,
-  THIRDWEB_ENGINE_URL,
-} from "@/constants/env";
-import type { Account } from "@3rdweb-sdk/react/hooks/useApi";
 import { ipAddress } from "@vercel/functions";
 import { startOfToday } from "date-fns";
-import { cacheGet, cacheSet } from "lib/redis";
 import { type NextRequest, NextResponse } from "next/server";
-import { ZERO_ADDRESS, getAddress } from "thirdweb";
-import { getFaucetClaimAmount } from "./claim-amount";
+import { getAddress, ZERO_ADDRESS } from "thirdweb";
+import { getTeams } from "@/api/team/get-team";
+import { COOKIE_ACTIVE_ACCOUNT, COOKIE_PREFIX_TOKEN } from "@/constants/cookie";
+import {
+  NEXT_PUBLIC_THIRDWEB_API_HOST,
+  NEXT_PUBLIC_THIRDWEB_ENGINE_FAUCET_WALLET,
+} from "@/constants/public-envs";
+import {
+  THIRDWEB_ACCESS_TOKEN,
+  THIRDWEB_ENGINE_URL,
+  TURNSTILE_SECRET_KEY,
+} from "@/constants/server-envs";
+import type { Account } from "@/hooks/useApi";
+import { cacheGet, cacheSet } from "@/lib/redis";
+import { getFaucetClaimAmount } from "@/utils/faucet";
 
 interface RequestTestnetFundsPayload {
   chainId: number;
@@ -62,7 +65,7 @@ export const POST = async (req: NextRequest) => {
 
   if (
     !THIRDWEB_ENGINE_URL ||
-    !THIRDWEB_ENGINE_FAUCET_WALLET ||
+    !NEXT_PUBLIC_THIRDWEB_ENGINE_FAUCET_WALLET ||
     !THIRDWEB_ACCESS_TOKEN
   ) {
     return NextResponse.json(
@@ -100,14 +103,14 @@ export const POST = async (req: NextRequest) => {
     "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     {
       body: JSON.stringify({
-        secret: process.env.TURNSTILE_SECRET_KEY,
-        response: turnstileToken,
         remoteip: ip,
+        response: turnstileToken,
+        secret: TURNSTILE_SECRET_KEY,
       }),
-      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      method: "POST",
     },
   );
 
@@ -122,12 +125,15 @@ export const POST = async (req: NextRequest) => {
   }
 
   // Make sure the connected wallet has a thirdweb account
-  const accountRes = await fetch(`${API_SERVER_URL}/v1/account/me`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${authCookie.value}`,
+  const accountRes = await fetch(
+    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/account/me`,
+    {
+      headers: {
+        Authorization: `Bearer ${authCookie.value}`,
+      },
+      method: "GET",
     },
-  });
+  );
 
   if (accountRes.status !== 200) {
     // Account not found on this connected address
@@ -220,18 +226,18 @@ export const POST = async (req: NextRequest) => {
     // then actually transfer the funds
     const url = `${THIRDWEB_ENGINE_URL}/backend-wallet/${chainId}/transfer`;
     const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-idempotency-key": idempotencyKey,
-        "x-backend-wallet-address": THIRDWEB_ENGINE_FAUCET_WALLET,
-        Authorization: `Bearer ${THIRDWEB_ACCESS_TOKEN}`,
-      },
       body: JSON.stringify({
-        to: toAddress,
-        currencyAddress: ZERO_ADDRESS,
         amount: amountToClaim,
+        currencyAddress: ZERO_ADDRESS,
+        to: toAddress,
       }),
+      headers: {
+        Authorization: `Bearer ${THIRDWEB_ACCESS_TOKEN}`,
+        "Content-Type": "application/json",
+        "x-backend-wallet-address": NEXT_PUBLIC_THIRDWEB_ENGINE_FAUCET_WALLET,
+        "x-idempotency-key": idempotencyKey,
+      },
+      method: "POST",
     });
 
     if (!response.ok) {

@@ -5,7 +5,7 @@ export const wallet = {
   id: "jp.co.rakuten-wallet",
   name: "Rakuten Wallet",
   homepage: "https://www.rakuten-wallet.co.jp/web3/",
-  image_id: "a7b5c4b1-8b55-4b6c-af68-4b2786480600",
+  image_id: "ce8ac290-b727-493c-7b9c-ca63ae2e9300",
   app: {
     browser: "https://www.rakuten-wallet.co.jp/",
     ios: "https://apps.apple.com/jp/app/id6504903632",

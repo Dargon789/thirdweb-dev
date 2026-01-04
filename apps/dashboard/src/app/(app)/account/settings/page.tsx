@@ -1,9 +1,9 @@
-import { getDefaultTeam } from "@/api/team";
-import { getThirdwebClient } from "@/constants/thirdweb.server";
-import { getAuthToken } from "../../api/lib/getAuthToken";
-import { loginRedirect } from "../../login/loginRedirect";
+import { getValidAccount } from "@/api/account/get-account";
+import { getAuthToken } from "@/api/auth-token";
+import { getDefaultTeam } from "@/api/team/get-team";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
+import { loginRedirect } from "@/utils/redirects";
 import { AccountSettingsPage } from "./AccountSettingsPage";
-import { getValidAccount } from "./getAccount";
 
 export default async function Page() {
   const pagePath = "/account";
@@ -18,7 +18,7 @@ export default async function Page() {
     loginRedirect(pagePath);
   }
 
-  const client = getThirdwebClient({
+  const client = getClientThirdwebClient({
     jwt: token,
     teamId: undefined,
   });
@@ -27,8 +27,8 @@ export default async function Page() {
     <AccountSettingsPage
       account={account}
       client={client}
-      defaultTeamSlug={defaultTeam.slug}
       defaultTeamName={defaultTeam.name}
+      defaultTeamSlug={defaultTeam.slug}
     />
   );
 }

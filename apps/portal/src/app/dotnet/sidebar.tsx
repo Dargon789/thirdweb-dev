@@ -1,331 +1,302 @@
+import { CodeIcon, ExternalLinkIcon, ZapIcon } from "lucide-react";
 import type { SideBar } from "@/components/Layouts/DocLayout";
 import type { SidebarLink } from "@/components/others/Sidebar";
-import { CodeIcon, ExternalLink, ZapIcon } from "lucide-react";
-
-const walletProviders: SidebarLink = (() => {
-  const parentSlug = "/dotnet/wallets/providers";
-  return {
-    name: "Wallet Providers",
-    links: [
-      {
-        name: "In App Wallet",
-        href: `${parentSlug}/in-app-wallet`,
-      },
-      {
-        name: "Ecosystem Wallet",
-        href: `${parentSlug}/ecosystem-wallet`,
-      },
-      {
-        name: "Account Abstraction",
-        href: `${parentSlug}/account-abstraction`,
-      },
-      {
-        name: "Private Key Wallet",
-        href: `${parentSlug}/private-key`,
-      },
-      {
-        name: "Engine Wallet",
-        href: `${parentSlug}/engine-wallet`,
-      },
-    ],
-  };
-})();
 
 const walletActions: SidebarLink = (() => {
   const parentSlug = "/dotnet/wallets/actions";
   return {
-    name: "Wallet Actions",
     links: [
       {
-        name: "IThirdwebWallet",
         isCollapsible: false,
         links: [
           {
-            name: "GetAddress",
             href: `${parentSlug}/getaddress`,
+            name: "GetAddress",
           },
           {
-            name: "IsConnected",
             href: `${parentSlug}/isconnected`,
+            name: "IsConnected",
           },
           {
-            name: "Sign",
             href: `${parentSlug}/sign`,
+            name: "Sign",
           },
           {
-            name: "SignTypedDataV4",
             href: `${parentSlug}/signtypeddatav4`,
+            name: "SignTypedDataV4",
           },
           {
-            name: "Authenticate",
             href: `${parentSlug}/authenticate`,
+            name: "Authenticate",
           },
           {
-            name: "Disconnect",
             href: `${parentSlug}/disconnect`,
+            name: "Disconnect",
           },
           {
-            name: "SendTransaction",
             href: `${parentSlug}/sendtransaction`,
+            name: "SendTransaction",
           },
           {
-            name: "ExecuteTransaction",
             href: `${parentSlug}/executetransaction`,
+            name: "ExecuteTransaction",
           },
           {
-            name: "Transfer",
             href: `${parentSlug}/transfer`,
+            name: "Transfer",
           },
           {
-            name: "SwitchNetwork",
             href: `${parentSlug}/switchnetwork`,
+            name: "SwitchNetwork",
           },
           {
-            name: "SignAuthorization (Experimental)",
             href: `${parentSlug}/signauthorization`,
+            name: "SignAuthorization",
           },
         ],
+        name: "IThirdwebWallet",
       },
       {
-        name: "InAppWallet & EcosystemWallet",
         isCollapsible: false,
         links: [
           {
-            name: "GetUserDetails",
             href: `${parentSlug}/getuserdetails`,
+            name: "GetUserDetails",
           },
           {
-            name: "GetUserAuthDetails",
             href: `${parentSlug}/getuserauthdetails`,
+            name: "GetUserAuthDetails",
           },
           {
-            name: "GetEcosystemDetails",
             href: `${parentSlug}/getecosystemdetails`,
+            name: "GetEcosystemDetails",
           },
           {
-            name: "GenerateExternalLoginLink",
             href: `${parentSlug}/generateexternalloginlink`,
+            name: "GenerateExternalLoginLink",
+          },
+          {
+            href: `${parentSlug}/createsessionkey7702`,
+            name: "CreateSessionKey (EIP-7702)",
+          },
+          {
+            href: `${parentSlug}/signerhaspermissions7702`,
+            name: "SignerHasFullPermissions",
+          },
+          {
+            href: `${parentSlug}/getcallpolicies7702`,
+            name: "GetCallPoliciesForSigner",
+          },
+          {
+            href: `${parentSlug}/gettransferpolicies7702`,
+            name: "GetTransferPoliciesForSigner",
+          },
+          {
+            href: `${parentSlug}/getsessionexpiration7702`,
+            name: "GetSessionExpirationForSigner",
+          },
+          {
+            href: `${parentSlug}/getsessionstate7702`,
+            name: "GetSessionStateForSigner",
           },
         ],
+        name: "InAppWallet & EcosystemWallet",
       },
       {
-        name: "SmartWallet",
         isCollapsible: false,
         links: [
           {
-            name: "IsDeployed",
             href: `${parentSlug}/isdeployed`,
+            name: "IsDeployed",
           },
           {
-            name: "CreateSessionKey",
             href: `${parentSlug}/createsessionkey`,
+            name: "CreateSessionKey (EIP-4337)",
           },
           {
-            name: "AddAdmin",
             href: `${parentSlug}/addadmin`,
+            name: "AddAdmin",
           },
           {
-            name: "RemoveAdmin",
             href: `${parentSlug}/removeadmin`,
+            name: "RemoveAdmin",
           },
           {
-            name: "GetAllActiveSigners",
             href: `${parentSlug}/getallactivesigners`,
+            name: "GetAllActiveSigners",
           },
           {
-            name: "GetAllAdmins",
             href: `${parentSlug}/getalladmins`,
+            name: "GetAllAdmins",
           },
           {
-            name: "GetPersonalWallet",
             href: `${parentSlug}/getpersonalwallet`,
+            name: "GetPersonalWallet",
           },
           {
-            name: "GetBalance",
             href: `${parentSlug}/getbalance`,
+            name: "GetBalance",
           },
           {
-            name: "GetTransactionCount",
             href: `${parentSlug}/gettransactioncount`,
+            name: "GetTransactionCount",
           },
         ],
+        name: "SmartWallet",
       },
     ],
+    name: "Wallet Actions",
   };
 })();
 
 const contracts: SidebarLink = {
-  name: "Contract Interactions",
+  isCollapsible: false,
   links: [
     {
-      name: "Create Contract",
       href: "/dotnet/contracts/create",
+      name: "Create Contract",
     },
     {
-      name: "Contract Extensions",
-      href: "/dotnet/contracts/extensions",
-    },
-    {
-      name: "Read Contract",
       href: "/dotnet/contracts/read",
+      name: "Read Contract",
     },
     {
-      name: "Write Contract",
       href: "/dotnet/contracts/write",
+      name: "Write Contract",
     },
     {
-      name: "Prepare Transaction",
-      href: "/dotnet/contracts/prepare",
+      href: "/dotnet/contracts/extensions",
+      name: "Contract Extensions",
     },
   ],
+  name: "Contracts",
 };
 
 const transactions: SidebarLink = {
-  name: "Transaction Builder",
+  isCollapsible: false,
   links: [
     {
-      name: "Create Transaction",
+      href: "/dotnet/transactions/prepare",
+      name: "Prepare Contract Transaction",
+    },
+    {
       href: "/dotnet/transactions/create",
+      name: "Create Transaction",
     },
     {
-      name: "Instance Methods",
       href: "/dotnet/transactions/instance",
+      name: "Instance Methods",
     },
     {
-      name: "Static Methods",
       href: "/dotnet/transactions/static",
+      name: "Static Methods",
     },
   ],
+  name: "Transactions",
 };
 
 export const sidebar: SideBar = {
-  name: ".NET SDK",
   links: [
     { separator: true },
     {
-      name: "Overview",
       href: "/dotnet",
+      name: "Overview",
     },
     {
-      name: "Getting Started",
       href: "/dotnet/getting-started",
       icon: <ZapIcon />,
+      name: "Getting Started",
     },
     {
-      name: "API Reference",
       href: "https://thirdweb-dev.github.io/dotnet/index.html",
+      icon: <ExternalLinkIcon />,
       isCollapsible: false,
-      icon: <ExternalLink />,
+      name: "API Reference",
     },
     {
-      name: "Integrations",
-      isCollapsible: true,
       icon: <CodeIcon />,
+      isCollapsible: true,
       links: [
         {
+          href: "/unity",
           name: "Unity",
-          href: "/unity/v5",
         },
         {
-          name: "Godot",
           href: "/dotnet/godot",
+          name: "Godot",
         },
         {
-          name: "MAUI",
           href: "/dotnet/maui",
+          name: "MAUI",
         },
       ],
+      name: "Integrations",
     },
     {
       separator: true,
     },
     {
-      name: "Core",
       isCollapsible: false,
       links: [
         {
-          name: "Thirdweb Client",
           href: "/dotnet/client",
+          name: "Thirdweb Client",
         },
         {
-          name: "Storage",
           href: "/dotnet/storage",
+          name: "Storage",
         },
         {
-          name: "Utilities",
           href: "/dotnet/utils",
+          name: "Utilities",
         },
       ],
+      name: "Core",
     },
     {
       separator: true,
     },
     {
+      isCollapsible: false,
+      links: [
+        {
+          href: `/dotnet/wallets/user-wallet`,
+          name: "User Wallet",
+        },
+        {
+          href: `/dotnet/wallets/server-wallet`,
+          name: "Server Wallet",
+        },
+        {
+          href: `/dotnet/wallets/account-abstraction`,
+          name: "Account Abstraction",
+        },
+        walletActions,
+      ],
       name: "Wallets",
-      isCollapsible: false,
-      links: [walletProviders, walletActions],
     },
     {
       separator: true,
     },
+    contracts,
+    transactions,
     {
-      name: "Transactions",
-      isCollapsible: false,
-      links: [contracts, transactions],
-    },
-    {
-      separator: true,
-    },
-    {
-      name: "Bridge",
       isCollapsible: false,
       links: [
         {
+          href: "/dotnet/api/quickstart",
           name: "Quickstart",
-          href: "/dotnet/universal-bridge/quickstart",
         },
         {
-          name: "Universal Bridge Full Reference",
-          href: "https://thirdweb-dev.github.io/dotnet/docs/Thirdweb.Bridge.ThirdwebBridge.html",
+          href: "/reference",
+          name: "API Full Reference",
         },
       ],
-    },
-    {
-      separator: true,
-    },
-    {
-      name: "Indexer",
-      isCollapsible: false,
-      links: [
-        {
-          name: "Quickstart",
-          href: "/dotnet/insight/quickstart",
-        },
-        {
-          name: "Insight Full Reference",
-          href: "https://thirdweb-dev.github.io/dotnet/docs/Thirdweb.Indexer.ThirdwebInsight.html",
-        },
-      ],
-    },
-    {
-      separator: true,
-    },
-    {
-      name: "AI",
-      isCollapsible: false,
-      links: [
-        {
-          name: "Quickstart",
-          href: "/dotnet/nebula/quickstart",
-        },
-        {
-          name: "Nebula Full Reference",
-          href: "https://thirdweb-dev.github.io/dotnet/docs/Thirdweb.AI.ThirdwebNebula.html",
-        },
-      ],
+      name: "API",
     },
     {
       separator: true,
     },
   ],
+  name: ".NET SDK",
 };

@@ -7,7 +7,9 @@ import {
   tokenURI,
 } from "../__generated__/IERC721A/read/tokenURI.js";
 import { tokenByIndex } from "../__generated__/IERC721Enumerable/read/tokenByIndex.js";
+
 export { isTokenURISupported as isGetNFTSupported } from "../__generated__/IERC721A/read/tokenURI.js";
+
 import { getNFT as getNFTInsight } from "../../../insight/index.js";
 
 /**
@@ -79,11 +81,11 @@ async function getNFTFromInsight(
   options: BaseTransactionOptions<GetNFTParams>,
 ): Promise<NFT> {
   const nft = await getNFTInsight({
-    client: options.contract.client,
     chain: options.contract.chain,
+    client: options.contract.client,
     contractAddress: options.contract.address,
-    tokenId: options.tokenId,
     includeOwners: options.includeOwner,
+    tokenId: options.tokenId,
   });
   if (!nft) {
     // fresh contracts might be delayed in indexing, so we fallback to RPC
@@ -122,12 +124,12 @@ async function getNFTFromRPC(
         uri: "",
       },
       {
+        chainId: options.contract.chain.id,
+        owner,
+        tokenAddress: options.contract.address,
         tokenId,
         tokenUri: "",
         type: "ERC721",
-        owner,
-        tokenAddress: options.contract.address,
-        chainId: options.contract.chain.id,
       },
     );
   }
@@ -137,18 +139,30 @@ async function getNFTFromRPC(
       client: options.contract.client,
       tokenId,
       tokenUri: uri,
-    }).catch(() => ({
-      id: tokenId,
-      type: "ERC721",
-      uri,
-    })),
+    })
+      .then((metadata) => {
+        // if the metadata is null-ish, return a default metadata object
+        if (!metadata) {
+          return {
+            id: tokenId,
+            type: "ERC721",
+            uri,
+          };
+        }
+        return metadata;
+      })
+      .catch(() => ({
+        id: tokenId,
+        type: "ERC721",
+        uri,
+      })),
     {
+      chainId: options.contract.chain.id,
+      owner,
+      tokenAddress: options.contract.address,
       tokenId: tokenId,
       tokenUri: uri,
       type: "ERC721",
-      owner,
-      tokenAddress: options.contract.address,
-      chainId: options.contract.chain.id,
     },
   );
 }

@@ -4,7 +4,7 @@
 export const wallet = {
   id: "org.ecoinwallet",
   name: "ECOIN Wallet",
-  homepage: "https://ecoinwallet.org/newsite",
+  homepage: "https://ecoinwallet.org",
   image_id: "9639c263-d590-4862-ba9f-d5c7c1878d00",
   app: {
     browser: null,
@@ -26,7 +26,7 @@ export const wallet = {
     universal: "https://ecoinwallet.org/link",
   },
   desktop: {
-    native: null,
-    universal: null,
+    native: "",
+    universal: "",
   },
 } as const;

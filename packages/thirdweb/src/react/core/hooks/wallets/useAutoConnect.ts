@@ -14,27 +14,25 @@ export function useAutoConnectCore(
   storage: AsyncStorage,
   props: AutoConnectProps & { wallets: Wallet[] },
   createWalletFn: (id: WalletId) => Wallet,
-  getInstalledWallets?: () => Wallet[],
 ) {
   const manager = useConnectionManagerCtx("useAutoConnect");
   const { connect } = useConnect({
-    client: props.client,
     accountAbstraction: props.accountAbstraction,
+    client: props.client,
   });
 
   // trigger the auto connect on first mount only
   const query = useQuery({
-    queryKey: ["autoConnect", props.client.clientId],
     queryFn: () =>
       autoConnectCore({
+        connectOverride: connect,
         createWalletFn,
         manager,
         props,
-        storage,
-        connectOverride: connect,
-        getInstalledWallets,
         setLastAuthProvider,
+        storage,
       }),
+    queryKey: ["autoConnect", props.client.clientId],
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });

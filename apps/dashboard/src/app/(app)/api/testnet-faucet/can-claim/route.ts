@@ -1,14 +1,14 @@
-import { getTeams } from "@/api/team";
+import { ipAddress } from "@vercel/functions";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { getTeams } from "@/api/team/get-team";
+import { NEXT_PUBLIC_THIRDWEB_ENGINE_FAUCET_WALLET } from "@/constants/public-envs";
 import {
   DISABLE_FAUCET_CHAIN_IDS,
   THIRDWEB_ACCESS_TOKEN,
-  THIRDWEB_ENGINE_FAUCET_WALLET,
   THIRDWEB_ENGINE_URL,
-} from "@/constants/env";
-import { ipAddress } from "@vercel/functions";
-import { cacheTtl } from "lib/redis";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+} from "@/constants/server-envs";
+import { cacheTtl } from "@/lib/redis";
 import type { CanClaimResponseType } from "./CanClaimResponseType";
 
 // Note: This handler cannot use "edge" runtime because of Redis usage.
@@ -68,7 +68,7 @@ export const GET = async (req: NextRequest) => {
 
   if (
     !THIRDWEB_ENGINE_URL ||
-    !THIRDWEB_ENGINE_FAUCET_WALLET ||
+    !NEXT_PUBLIC_THIRDWEB_ENGINE_FAUCET_WALLET ||
     !THIRDWEB_ACCESS_TOKEN ||
     isFaucetDisabled
   ) {

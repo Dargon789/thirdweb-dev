@@ -4,10 +4,10 @@
 export const wallet = {
   id: "com.kucoin",
   name: "KuCoin Web3 Wallet",
-  homepage: "https://www.kucoin.com",
+  homepage: "https://www.kucoin.com/Web3",
   image_id: "70d8a90b-457b-4c04-4bc3-791e97caab00",
   app: {
-    browser: "https://www.kucoin.com",
+    browser: null,
     ios: "https://www.kucoin.com/download",
     android: "https://www.kucoin.com/download",
     mac: null,

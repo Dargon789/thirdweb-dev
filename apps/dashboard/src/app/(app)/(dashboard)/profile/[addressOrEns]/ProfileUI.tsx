@@ -1,7 +1,8 @@
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { fetchPublishedContracts } from "components/contract-components/fetchPublishedContracts";
 import { Suspense } from "react";
 import type { ThirdwebClient } from "thirdweb";
+import { fetchPublishedContracts } from "@/api/contract/fetchPublishedContracts";
+import { Spinner } from "@/components/ui/Spinner";
+import { serverThirdwebClient } from "@/constants/thirdweb-client.server";
 import { ProfileHeader } from "./components/profile-header";
 import { PublishedContracts } from "./components/published-contracts";
 
@@ -10,11 +11,15 @@ export function ProfileUI(props: {
   ensName: string | undefined;
   client: ThirdwebClient;
 }) {
-  const { profileAddress, ensName, client } = props;
+  const { profileAddress, ensName } = props;
 
   return (
     <div className="container pt-8 pb-20">
-      <ProfileHeader profileAddress={profileAddress} ensName={ensName} />
+      <ProfileHeader
+        client={props.client}
+        ensName={ensName}
+        profileAddress={profileAddress}
+      />
       <div className="h-8" />
 
       <div>
@@ -27,7 +32,6 @@ export function ProfileUI(props: {
           <AsyncPublishedContracts
             publisherAddress={profileAddress}
             publisherEnsName={ensName}
-            client={client}
           />
         </Suspense>
       </div>
@@ -40,11 +44,10 @@ export function ProfileUI(props: {
 async function AsyncPublishedContracts(props: {
   publisherAddress: string;
   publisherEnsName: string | undefined;
-  client: ThirdwebClient;
 }) {
   const publishedContracts = await fetchPublishedContracts({
     address: props.publisherAddress,
-    client: props.client,
+    client: serverThirdwebClient,
   });
 
   if (publishedContracts.length === 0) {
@@ -59,7 +62,6 @@ async function AsyncPublishedContracts(props: {
     <PublishedContracts
       publishedContracts={publishedContracts}
       publisherEnsName={props.publisherEnsName}
-      client={props.client}
     />
   );
 }
