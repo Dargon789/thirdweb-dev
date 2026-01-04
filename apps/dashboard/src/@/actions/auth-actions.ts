@@ -151,7 +151,7 @@ export async function doLogin(
 
   // set the active account cookie
   cookieStore.set(COOKIE_ACTIVE_ACCOUNT, getAddress(payload.payload.address), {
-    httpOnly: true,
+    httpOnly: false,
     // 3 days
     maxAge: 3 * 24 * 60 * 60,
     sameSite: "strict",
