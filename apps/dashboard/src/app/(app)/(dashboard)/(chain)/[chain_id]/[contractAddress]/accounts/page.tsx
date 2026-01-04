@@ -1,37 +1,17 @@
-import { notFound, redirect } from "next/navigation";
-import { localhost } from "thirdweb/chains";
-import { getRawAccount } from "../../../../../account/settings/getAccount";
-import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
-import { getContractPageMetadata } from "../_utils/getContractPageMetadata";
-import { AccountsPage } from "./AccountsPage";
-import { AccountsPageClient } from "./AccountsPage.client";
+import { getRawAccount } from "@/api/account/get-account";
+import type { PublicContractPageParams } from "../types";
+import { SharedAccountsPage } from "./shared-accounts-page";
 
 export default async function Page(props: {
-  params: Promise<{
-    contractAddress: string;
-    chain_id: string;
-  }>;
+  params: Promise<PublicContractPageParams>;
 }) {
-  const params = await props.params;
-  const info = await getContractPageParamsInfo(params);
-
-  if (!info) {
-    notFound();
-  }
-
-  const { contract, chainMetadata } = info;
-
-  const account = await getRawAccount();
-
-  if (chainMetadata.chainId === localhost.id) {
-    return <AccountsPageClient contract={contract} isLoggedIn={!!account} />;
-  }
-
-  const { isAccountFactory } = await getContractPageMetadata(contract);
-
-  if (!isAccountFactory) {
-    redirect(`/${params.chain_id}/${params.contractAddress}`);
-  }
-
-  return <AccountsPage contract={contract} isLoggedIn={!!account} />;
+  const [params, account] = await Promise.all([props.params, getRawAccount()]);
+  return (
+    <SharedAccountsPage
+      chainIdOrSlug={params.chain_id}
+      contractAddress={params.contractAddress}
+      isLoggedIn={!!account}
+      projectMeta={undefined}
+    />
+  );
 }

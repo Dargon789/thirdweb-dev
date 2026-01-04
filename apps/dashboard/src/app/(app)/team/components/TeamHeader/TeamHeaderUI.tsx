@@ -1,39 +1,42 @@
-import type { Project } from "@/api/projects";
-import type { Team } from "@/api/team";
-import { GradientAvatar } from "@/components/blocks/Avatars/GradientAvatar";
-import { ProjectAvatar } from "@/components/blocks/Avatars/ProjectAvatar";
-import { cn } from "@/lib/utils";
-import type { Account } from "@3rdweb-sdk/react/hooks/useApi";
 import Link from "next/link";
 import type { ThirdwebClient } from "thirdweb";
+import type { Project } from "@/api/project/projects";
+import type { Team } from "@/api/team/get-team";
+import { GradientAvatar } from "@/components/blocks/avatar/gradient-avatar";
+import { ProjectAvatar } from "@/components/blocks/avatar/project-avatar";
+import { TeamPlanBadge } from "@/components/blocks/TeamPlanBadge";
+import { NotificationsButton } from "@/components/notifications/notification-button";
+import type { Account } from "@/hooks/useApi";
+import { cn } from "@/lib/utils";
+import { getValidTeamPlan } from "@/utils/getValidTeamPlan";
+import { RewindBadge } from "../../../account/components/RewindBadge";
 import { SecondaryNav } from "../../../components/Header/SecondaryNav/SecondaryNav";
 import { MobileBurgerMenuButton } from "../../../components/MobileBurgerMenuButton";
-import { TeamPlanBadge } from "../../../components/TeamPlanBadge";
 import { ThirdwebMiniLogo } from "../../../components/ThirdwebMiniLogo";
-import {
-  NotificationButtonUI,
-  type NotificationMetadata,
-} from "../NotificationButton/NotificationButton";
 import { ProjectSelectorMobileMenuButton } from "./ProjectSelectorMobileMenuButton";
 import { TeamAndProjectSelectorPopoverButton } from "./TeamAndProjectSelectorPopoverButton";
 import { TeamSelectorMobileMenuButton } from "./TeamSelectorMobileMenuButton";
-import { getValidTeamPlan } from "./getValidTeamPlan";
 import { TeamVerifiedIcon } from "./team-verified-icon";
 
 export type TeamHeaderCompProps = {
   currentTeam: Team;
   teamsAndProjects: Array<{ team: Team; projects: Project[] }>;
   currentProject: Project | undefined;
+  currentProjectSubpath:
+    | {
+        label: string;
+        icon: React.ReactNode;
+        href: string;
+      }
+    | undefined;
   className?: string;
   account: Pick<Account, "email" | "id">;
   logout: () => void;
   connectButton: React.ReactNode;
   createProject: (team: Team) => void;
+  createTeam: () => void;
   client: ThirdwebClient;
   accountAddress: string;
-  getChangelogNotifications: () => Promise<NotificationMetadata[]>;
-  getInboxNotifications: () => Promise<NotificationMetadata[]>;
-  markNotificationAsRead: (id: string) => Promise<void>;
 };
 
 export function TeamHeaderDesktopUI(props: TeamHeaderCompProps) {
@@ -51,33 +54,42 @@ export function TeamHeaderDesktopUI(props: TeamHeaderCompProps) {
         <Link href="/team">
           <ThirdwebMiniLogo className="h-5" />
         </Link>
+        <RewindBadge />
 
         <SlashSeparator />
 
         <div className="flex items-center gap-1">
-          <Link
-            href={`/team/${currentTeam.slug}`}
-            className="flex flex-row items-center gap-2 font-normal text-sm"
-          >
-            <GradientAvatar
-              id={currentTeam.id}
-              src={currentTeam.image || ""}
-              className="size-6"
-              client={props.client}
+          <span className="flex flex-row items-center gap-2 font-normal text-sm">
+            <Link
+              className="flex flex-row items-center gap-2 font-normal text-sm"
+              href={`/team/${currentTeam.slug}`}
+            >
+              <GradientAvatar
+                className="size-6"
+                client={props.client}
+                id={currentTeam.id}
+                src={currentTeam.image || ""}
+              />
+              <span> {currentTeam.name} </span>
+              <TeamVerifiedIcon domain={currentTeam.verifiedDomain} />
+            </Link>
+            {/* may render its own link so has to be outside of the link */}
+            <TeamPlanBadge
+              plan={teamPlan}
+              teamSlug={currentTeam.slug}
+              isLegacyPlan={currentTeam.isLegacyPlan}
             />
-            <span> {currentTeam.name} </span>
-            <TeamVerifiedIcon domain={currentTeam.verifiedDomain} />
-            <TeamPlanBadge plan={teamPlan} />
-          </Link>
+          </span>
 
           <TeamAndProjectSelectorPopoverButton
-            currentProject={props.currentProject}
-            currentTeam={props.currentTeam}
-            teamsAndProjects={props.teamsAndProjects}
-            focus="team-selection"
-            createProject={props.createProject}
             account={props.account}
             client={props.client}
+            createProject={props.createProject}
+            createTeam={props.createTeam}
+            currentProject={props.currentProject}
+            currentTeam={props.currentTeam}
+            focus="team-selection"
+            teamsAndProjects={props.teamsAndProjects}
           />
         </div>
 
@@ -86,40 +98,55 @@ export function TeamHeaderDesktopUI(props: TeamHeaderCompProps) {
             <SlashSeparator />
             <div className="flex items-center gap-1">
               <Link
-                href={`/team/${props.currentTeam.slug}/${props.currentProject.slug}`}
                 className="flex flex-row items-center gap-2 font-semibold text-sm"
+                href={`/team/${props.currentTeam.slug}/${props.currentProject.slug}`}
               >
                 <ProjectAvatar
-                  src={props.currentProject.image || ""}
                   className="size-6"
                   client={props.client}
+                  src={props.currentProject.image || ""}
                 />
                 {props.currentProject.name}
               </Link>
 
               <TeamAndProjectSelectorPopoverButton
-                currentProject={props.currentProject}
-                currentTeam={props.currentTeam}
-                teamsAndProjects={props.teamsAndProjects}
-                focus="project-selection"
-                createProject={props.createProject}
                 account={props.account}
                 client={props.client}
+                createProject={props.createProject}
+                createTeam={props.createTeam}
+                currentProject={props.currentProject}
+                currentTeam={props.currentTeam}
+                focus="project-selection"
+                teamsAndProjects={props.teamsAndProjects}
               />
             </div>
+
+            {props.currentProjectSubpath && (
+              <>
+                <SlashSeparator />
+                <div className="flex items-center gap-1.5">
+                  <div className="flex items-center justify-center rounded-full border size-6 [&>svg]:size-[50%] [&>svg]:text-muted-foreground">
+                    {props.currentProjectSubpath.icon}
+                  </div>
+                  <Link
+                    className="flex flex-row items-center gap-2 font-semibold text-sm"
+                    href={props.currentProjectSubpath.href}
+                  >
+                    {props.currentProjectSubpath.label}
+                  </Link>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
 
       <SecondaryNav
         account={props.account}
-        logout={props.logout}
-        connectButton={props.connectButton}
-        client={props.client}
         accountAddress={props.accountAddress}
-        getChangelogs={props.getChangelogNotifications}
-        getInboxNotifications={props.getInboxNotifications}
-        markNotificationAsRead={props.markNotificationAsRead}
+        client={props.client}
+        connectButton={props.connectButton}
+        logout={props.logout}
       />
     </header>
   );
@@ -145,16 +172,16 @@ export function TeamHeaderMobileUI(props: TeamHeaderCompProps) {
       <div className="flex items-center gap-1.5">
         <div className="flex items-center gap-1">
           <Link
-            href={`/team/${currentTeam.slug}`}
             className={cn(
               "flex flex-row items-center gap-2 font-normal text-foreground text-sm",
             )}
+            href={`/team/${currentTeam.slug}`}
           >
             <GradientAvatar
-              id={currentTeam.id}
-              src={currentTeam.image || ""}
               className="size-6"
               client={props.client}
+              id={currentTeam.id}
+              src={currentTeam.image || ""}
             />
 
             {!props.currentProject && (
@@ -166,12 +193,13 @@ export function TeamHeaderMobileUI(props: TeamHeaderCompProps) {
           </Link>
 
           <TeamSelectorMobileMenuButton
-            isOnProjectPage={!!props.currentProject}
-            currentTeam={props.currentTeam}
-            teamsAndProjects={props.teamsAndProjects}
-            upgradeTeamLink={`/team/${currentTeam.slug}/settings`}
             account={props.account}
             client={props.client}
+            createTeam={props.createTeam}
+            currentTeam={props.currentTeam}
+            isOnProjectPage={!!props.currentProject}
+            teamsAndProjects={props.teamsAndProjects}
+            upgradeTeamLink={`/team/${currentTeam.slug}/settings`}
           />
         </div>
 
@@ -180,8 +208,8 @@ export function TeamHeaderMobileUI(props: TeamHeaderCompProps) {
             <SlashSeparator />
             <div className="flex items-center gap-1">
               <Link
-                href={`/team/${props.currentTeam.slug}/${props.currentProject.slug}`}
                 className="flex items-center gap-2 font-semibold text-sm"
+                href={`/team/${props.currentTeam.slug}/${props.currentProject.slug}`}
               >
                 <span className="truncate max-sm:max-w-[130px]">
                   {props.currentProject.name}
@@ -189,11 +217,11 @@ export function TeamHeaderMobileUI(props: TeamHeaderCompProps) {
               </Link>
 
               <ProjectSelectorMobileMenuButton
+                client={props.client}
+                createProject={props.createProject}
                 currentProject={props.currentProject}
                 projects={projects}
                 team={props.currentTeam}
-                createProject={props.createProject}
-                client={props.client}
               />
             </div>
           </>
@@ -201,18 +229,15 @@ export function TeamHeaderMobileUI(props: TeamHeaderCompProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <NotificationButtonUI
-          getChangelogs={props.getChangelogNotifications}
-          getInboxNotifications={props.getInboxNotifications}
-          markNotificationAsRead={props.markNotificationAsRead}
-        />
+        <NotificationsButton accountId={props.account.id} />
 
         <MobileBurgerMenuButton
-          type="loggedIn"
+          accountAddress={props.accountAddress}
+          client={props.client}
+          connectButton={props.connectButton}
           email={props.account.email}
           logout={props.logout}
-          connectButton={props.connectButton}
-          accountAddress={props.accountAddress}
+          type="loggedIn"
         />
       </div>
     </header>

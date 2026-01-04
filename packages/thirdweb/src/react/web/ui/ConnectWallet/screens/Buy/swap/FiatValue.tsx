@@ -2,12 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import type { Chain } from "../../../../../../../chains/types.js";
 import type { ThirdwebClient } from "../../../../../../../client/client.js";
 import { convertCryptoToFiat } from "../../../../../../../pay/convert/cryptoToFiat.js";
-import { formatNumber } from "../../../../../../../utils/formatNumber.js";
+import type { SupportedFiatCurrency } from "../../../../../../../pay/convert/type.js";
 import { fontSize } from "../../../../../../core/design-system/index.js";
 import { Skeleton } from "../../../../components/Skeleton.js";
-import { Text } from "../../../../components/text.js";
 import type { TextProps } from "../../../../components/text.js";
+import { Text } from "../../../../components/text.js";
 import { useDebouncedValue } from "../../../../hooks/useDebouncedValue.js";
+import { formatCurrencyAmount } from "../../formatTokenBalance.js";
 import type { ERC20OrNativeToken } from "../../nativeToken.js";
 import { getTokenAddress } from "../../nativeToken.js";
 
@@ -17,33 +18,38 @@ export function FiatValue(
     token: ERC20OrNativeToken;
     chain: Chain;
     client: ThirdwebClient;
+    currency?: SupportedFiatCurrency;
   } & TextProps,
 ) {
   const deferredTokenAmount = useDebouncedValue(props.tokenAmount, 500);
   const cryptoToFiatQuery = useQuery({
+    queryFn: () =>
+      convertCryptoToFiat({
+        chain: props.chain,
+        client: props.client,
+        fromAmount: Number(deferredTokenAmount),
+        fromTokenAddress: getTokenAddress(props.token),
+        to: props.currency || "USD",
+      }),
     queryKey: [
       "cryptoToFiat",
       props.chain.id,
       getTokenAddress(props.token),
       deferredTokenAmount,
+      props.currency,
     ],
-    queryFn: () =>
-      convertCryptoToFiat({
-        client: props.client,
-        chain: props.chain,
-        fromTokenAddress: getTokenAddress(props.token),
-        fromAmount: Number(deferredTokenAmount),
-        to: "USD",
-      }),
   });
 
   if (cryptoToFiatQuery.isLoading) {
-    return <Skeleton width={"50px"} height={fontSize.lg} />;
+    return <Skeleton height={fontSize.lg} width={"50px"} />;
   }
 
   return cryptoToFiatQuery.data?.result ? (
-    <Text {...props}>
-      ${formatNumber(cryptoToFiatQuery.data.result, 2).toFixed(2)}
+    <Text {...props} trackingTight>
+      {formatCurrencyAmount(
+        props.currency || "USD",
+        cryptoToFiatQuery.data.result,
+      )}
     </Text>
   ) : null;
 }

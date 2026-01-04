@@ -44,6 +44,10 @@ const FORCE_GAS_PRICE_CHAIN_IDS = [
   40875, // Homeverse Testnet
   1511670449, // GPT Mainnet
   5464, // Saga Mainnet
+  2020, // Ronin Mainnet
+  2021, // Ronin Testnet (Saigon)
+  98866, // Plume mainnet
+  1417429182, // Wilderworld Zephyr Testnet
 ];
 
 /**
@@ -133,7 +137,7 @@ export async function getDefaultGasOverrides(
     FORCE_GAS_PRICE_CHAIN_IDS.includes(chain.id)
   ) {
     return {
-      gasPrice: await getGasPrice({ client, chain, percentMultiplier: 10 }),
+      gasPrice: await getGasPrice({ chain, client, percentMultiplier: 10 }),
     };
   }
   const feeData = await getDynamicFeeData(client, chain);
@@ -145,7 +149,7 @@ export async function getDefaultGasOverrides(
   }
   // TODO: resolvedFeeType here could be "EIP1559", but we could not get EIP1559 fee data. should we throw?
   return {
-    gasPrice: await getGasPrice({ client, chain, percentMultiplier: 10 }),
+    gasPrice: await getGasPrice({ chain, client, percentMultiplier: 10 }),
   };
 }
 
@@ -164,7 +168,7 @@ async function getDynamicFeeData(
   let maxFeePerGas: null | bigint = null;
   let maxPriorityFeePerGas_: null | bigint = null;
 
-  const rpcRequest = getRpcClient({ client, chain });
+  const rpcRequest = getRpcClient({ chain, client });
 
   const [block, maxPriorityFeePerGas] = await Promise.all([
     eth_getBlockByNumber(rpcRequest, { blockTag: "latest" }),
@@ -239,7 +243,7 @@ function getGasStationUrl(chainId: 137 | 80002): string {
     case 137:
       return "https://gasstation.polygon.technology/v2";
     case 80002:
-      return "https://gasstation-testnet.polygon.technology/v2";
+      return "https://gasstation.polygon.technology/amoy";
   }
 }
 

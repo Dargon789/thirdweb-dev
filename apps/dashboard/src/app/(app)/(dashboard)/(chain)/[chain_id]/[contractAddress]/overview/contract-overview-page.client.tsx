@@ -1,6 +1,7 @@
 "use client";
 import type { ThirdwebContract } from "thirdweb";
 import type { ChainMetadata } from "thirdweb/chains";
+import type { ProjectMeta } from "../../../../../team/[team_slug]/[project_slug]/contract/[chainIdOrSlug]/[contractAddress]/types";
 import { ErrorPage, LoadingPage } from "../_components/page-skeletons";
 import { useContractPageMetadata } from "../_hooks/useContractPageMetadata";
 import { ContractOverviewPage } from "./ContractOverviewPage";
@@ -8,8 +9,9 @@ import { ContractOverviewPage } from "./ContractOverviewPage";
 export function ContractOverviewPageClient(props: {
   contract: ThirdwebContract;
   chainMetadata: ChainMetadata;
+  projectMeta: ProjectMeta | undefined;
 }) {
-  const { contract, chainMetadata } = props;
+  const { contract, chainMetadata, projectMeta } = props;
   const metadataQuery = useContractPageMetadata(contract);
 
   if (metadataQuery.isPending) {
@@ -24,18 +26,19 @@ export function ContractOverviewPageClient(props: {
 
   return (
     <ContractOverviewPage
+      chainSlug={chainMetadata.slug}
       contract={contract}
+      functionSelectors={contractPageMetadata.functionSelectors}
       hasDirectListings={contractPageMetadata.isDirectListingSupported}
       hasEnglishAuctions={contractPageMetadata.isEnglishAuctionSupported}
-      isErc1155={contractPageMetadata.supportedERCs.isERC1155}
+      isAnalyticsSupported={contractPageMetadata.isInsightSupported}
       isErc20={contractPageMetadata.supportedERCs.isERC20}
       isErc721={contractPageMetadata.supportedERCs.isERC721}
+      isErc1155={contractPageMetadata.supportedERCs.isERC1155}
       isPermissionsEnumerable={
         contractPageMetadata.isPermissionsEnumerableSupported
       }
-      chainSlug={chainMetadata.slug}
-      isAnalyticsSupported={contractPageMetadata.isInsightSupported}
-      functionSelectors={contractPageMetadata.functionSelectors}
+      projectMeta={projectMeta}
       // TODO - create a fully client rendered version of publishedBy and ContractCard and plug it here
       publishedBy={undefined}
     />

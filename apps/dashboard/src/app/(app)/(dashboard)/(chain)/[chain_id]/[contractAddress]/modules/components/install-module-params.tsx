@@ -1,11 +1,10 @@
-import { useThirdwebClient } from "@/constants/thirdweb.client";
-import { FormControl } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
-import { SolidityInput } from "contract-ui/components/solidity-inputs";
+import type { ThirdwebClient } from "thirdweb";
 import invariant from "tiny-invariant";
-import { FormErrorMessage, FormLabel } from "tw-components";
-import type { InstallModuleForm } from "./ModuleForm";
+import { FormFieldSetup } from "@/components/blocks/FormFieldSetup";
+import { SolidityInput } from "@/components/solidity-inputs";
 import { getModuleInstalledParams } from "./getModuleInstalledParams";
+import type { InstallModuleForm } from "./ModuleForm";
 
 export type ModuleMeta = {
   moduleName: string;
@@ -20,16 +19,16 @@ export type ModuleMeta = {
 export function useModuleInstallParams(props: {
   module?: ModuleMeta;
   isQueryEnabled: boolean;
+  client: ThirdwebClient;
 }) {
-  const client = useThirdwebClient();
-  const { module, isQueryEnabled } = props;
+  const { module, isQueryEnabled, client } = props;
   return useQuery({
-    queryKey: ["useModuleInstallParams", module],
+    enabled: !!(isQueryEnabled && module),
     queryFn: async () => {
       invariant(module, "module must be defined");
       return await getModuleInstalledParams(module, client);
     },
-    enabled: !!(isQueryEnabled && module),
+    queryKey: ["useModuleInstallParams", module],
     refetchOnWindowFocus: false,
   });
 }
@@ -48,31 +47,25 @@ export function ModuleInstallParams(props: {
           const formFieldKey = `moduleInstallFormParams.${param.name}` as const;
 
           return (
-            <FormControl
+            <FormFieldSetup
               key={formFieldKey}
               isRequired
-              isInvalid={
-                !!form.getFieldState(formFieldKey, form.formState).error
+              label={param.name}
+              errorMessage={
+                form.getFieldState(formFieldKey, form.formState).error?.message
               }
             >
-              <FormLabel> {param.name}</FormLabel>
               <SolidityInput
-                solidityType={param.type}
                 // @ts-expect-error - old types, need to update
                 solidityComponents={
                   "components" in param ? param.components : undefined
                 }
+                solidityType={param.type}
                 variant="filled"
                 {...form.register(formFieldKey)}
                 isDisabled={props.disableInputs}
               />
-              <FormErrorMessage>
-                {
-                  form.getFieldState(formFieldKey, form.formState).error
-                    ?.message
-                }
-              </FormErrorMessage>
-            </FormControl>
+            </FormFieldSetup>
           );
         })}
       </div>

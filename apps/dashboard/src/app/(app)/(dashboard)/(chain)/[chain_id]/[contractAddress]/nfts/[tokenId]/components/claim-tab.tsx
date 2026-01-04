@@ -1,15 +1,43 @@
 "use client";
 
-import { Flex, FormControl, Input } from "@chakra-ui/react";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { useTrack } from "hooks/analytics/useTrack";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { type ThirdwebContract, ZERO_ADDRESS } from "thirdweb";
+import { isAddress, type ThirdwebContract } from "thirdweb";
 import { getApprovalForTransaction } from "thirdweb/extensions/erc20";
 import { claimTo } from "thirdweb/extensions/erc1155";
-import { useActiveAccount, useSendAndConfirmTransaction } from "thirdweb/react";
-import { FormErrorMessage, FormHelperText, FormLabel } from "tw-components";
+import { useActiveAccount } from "thirdweb/react";
+import { z } from "zod";
+import { TransactionButton } from "@/components/tx-button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
+import { parseError } from "@/utils/errorParser";
+
+const claimFormSchema = z.object({
+  to: z
+    .string()
+    .min(1, "To address is required")
+    .refine((val) => {
+      if (isAddress(val)) {
+        return true;
+      }
+      return false;
+    }, "Invalid address"),
+  amount: z.string().refine((value) => {
+    const valueNum = Number(value);
+    return Number.isInteger(valueNum) && valueNum > 0;
+  }, "Amount must be a positive integer"),
+});
+
+type ClaimFormData = z.infer<typeof claimFormSchema>;
 
 interface ClaimTabProps {
   contract: ThirdwebContract;
@@ -22,119 +50,111 @@ const ClaimTabERC1155: React.FC<ClaimTabProps> = ({
   tokenId,
   isLoggedIn,
 }) => {
-  const trackEvent = useTrack();
   const address = useActiveAccount()?.address;
-  const form = useForm<{ to: string; amount: string }>({
+  const form = useForm<ClaimFormData>({
+    resolver: zodResolver(claimFormSchema),
     defaultValues: { amount: "1", to: address },
   });
-  const sendAndConfirmTx = useSendAndConfirmTransaction();
+  const sendAndConfirmTx = useSendAndConfirmTx();
   const account = useActiveAccount();
-  return (
-    <Flex
-      w="full"
-      direction="column"
-      as="form"
-      onSubmit={form.handleSubmit(async (data) => {
-        trackEvent({
-          category: "nft",
-          action: "claim",
-          label: "attempt",
-        });
-        if (!account) {
-          return toast.error("No account detected");
-        }
-        try {
-          const transaction = claimTo({
-            contract,
-            tokenId: BigInt(tokenId),
-            quantity: BigInt(data.amount),
-            to: data.to,
-            from: account.address,
-          });
-          const approveTx = await getApprovalForTransaction({
-            transaction,
-            account,
-          });
-          if (approveTx) {
-            const approvalPromise = sendAndConfirmTx.mutateAsync(approveTx);
-            toast.promise(approvalPromise, {
-              success: "Approved successfully",
-              error: "Failed to approve ERC20",
-            });
-            await approvalPromise;
-          }
-          const promise = sendAndConfirmTx.mutateAsync(transaction);
-          toast.promise(promise, {
-            loading: "Claiming NFT",
-            success: "NFT claimed successfully",
-            error: "Failed to claim NFT",
-          });
-          trackEvent({
-            category: "nft",
-            action: "claim",
-            label: "success",
-          });
-          form.reset();
-        } catch (error) {
-          console.error(error);
-          trackEvent({
-            category: "nft",
-            action: "claim",
-            label: "error",
-            error,
-          });
-        }
-      })}
-    >
-      <Flex gap={3} direction="column">
-        <Flex gap={6} w="100%" direction="column">
-          <FormControl
-            isRequired
-            isInvalid={!!form.getFieldState("to", form.formState).error}
-          >
-            <FormLabel>To Address</FormLabel>
-            <Input placeholder={ZERO_ADDRESS} {...form.register("to")} />
-            <FormHelperText>Enter the address to claim to.</FormHelperText>
-            <FormErrorMessage>
-              {form.getFieldState("to", form.formState).error?.message}
-            </FormErrorMessage>
-          </FormControl>
-          <FormControl
-            isRequired
-            isInvalid={!!form.getFieldState("amount", form.formState).error}
-          >
-            <FormLabel>Amount</FormLabel>
-            <Input
-              type="text"
-              {...form.register("amount", {
-                validate: (value) => {
-                  // must be an integer
-                  const valueNum = Number(value);
-                  if (!Number.isInteger(valueNum)) {
-                    return "Amount must be an integer";
-                  }
-                },
-              })}
-            />
-            <FormHelperText>How many would you like to claim?</FormHelperText>
-            <FormErrorMessage>
-              {form.getFieldState("amount", form.formState).error?.message}
-            </FormErrorMessage>
-          </FormControl>
-        </Flex>
 
-        <TransactionButton
-          isLoggedIn={isLoggedIn}
-          txChainID={contract.chain.id}
-          transactionCount={1}
-          isPending={form.formState.isSubmitting}
-          type="submit"
-          className="self-end"
-        >
-          Claim
-        </TransactionButton>
-      </Flex>
-    </Flex>
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(async (data) => {
+          if (!account) {
+            return toast.error("No account detected");
+          }
+          try {
+            const transaction = claimTo({
+              contract,
+              from: account.address,
+              quantity: BigInt(data.amount),
+              to: data.to,
+              tokenId: BigInt(tokenId),
+            });
+            const approveTx = await getApprovalForTransaction({
+              account,
+              transaction,
+            });
+            if (approveTx) {
+              const approvalPromise = sendAndConfirmTx.mutateAsync(approveTx);
+              toast.promise(approvalPromise, {
+                error: "Failed to approve ERC20",
+                success: "Approved successfully",
+              });
+              await approvalPromise;
+            }
+            const promise = sendAndConfirmTx.mutateAsync(transaction);
+            toast.promise(promise, {
+              error: (error) => {
+                return {
+                  description: parseError(error),
+                  message: "Failed to claim NFT",
+                };
+              },
+              loading: "Claiming NFT",
+              success: "NFT claimed successfully",
+            });
+
+            form.reset();
+          } catch (error) {
+            toast.error("Failed to claim NFT", {
+              description: parseError(error),
+            });
+            console.error(error);
+          }
+        })}
+        className="w-full"
+      >
+        <div className="space-y-5">
+          <FormField
+            control={form.control}
+            name="to"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>To Address</FormLabel>
+                <FormControl>
+                  <Input placeholder="0x..." {...field} className="bg-card" />
+                </FormControl>
+                <p className="text-sm text-muted-foreground">
+                  Enter the address to claim to.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Amount</FormLabel>
+                <FormControl>
+                  <Input type="text" {...field} className="bg-card" />
+                </FormControl>
+                <p className="text-sm text-muted-foreground">
+                  How many would you like to claim?
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <TransactionButton
+            className="self-end"
+            client={contract.client}
+            isLoggedIn={isLoggedIn}
+            isPending={form.formState.isSubmitting}
+            transactionCount={1}
+            txChainID={contract.chain.id}
+            type="submit"
+          >
+            Claim
+          </TransactionButton>
+        </div>
+      </form>
+    </Form>
   );
 };
 

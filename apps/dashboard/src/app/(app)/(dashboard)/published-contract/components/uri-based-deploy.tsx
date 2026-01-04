@@ -1,10 +1,9 @@
-import { getProjects } from "@/api/projects";
-import { getTeams } from "@/api/team";
-import { ChakraProviderSetup } from "@/components/ChakraProviderSetup";
-import { CustomContractForm } from "components/contract-components/contract-deploy-form/custom-contract";
 import type { FetchDeployMetadataResult } from "thirdweb/contract";
-import { getAuthToken } from "../../../api/lib/getAuthToken";
-import { loginRedirect } from "../../../login/loginRedirect";
+import { getUserThirdwebClient } from "@/api/auth-token";
+import { getProjects } from "@/api/project/projects";
+import { getTeams } from "@/api/team/get-team";
+import { loginRedirect } from "@/utils/redirects";
+import { CustomContractForm } from "./custom-contract";
 
 type DeployFormForUriProps = {
   contractMetadata: FetchDeployMetadataResult | null;
@@ -20,38 +19,42 @@ export async function DeployFormForUri(props: DeployFormForUriProps) {
     return <div>Could not fetch metadata</div>;
   }
 
-  const [authToken, teams] = await Promise.all([getAuthToken(), getTeams()]);
+  const [teams, client] = await Promise.all([
+    getTeams(),
+    getUserThirdwebClient({
+      teamId: undefined,
+    }),
+  ]);
 
-  if (!teams || !authToken) {
+  if (!teams) {
     loginRedirect(pathname);
   }
 
   const teamsAndProjects = await Promise.all(
     teams.map(async (team) => ({
-      team: {
-        id: team.id,
-        name: team.name,
-        slug: team.slug,
-        image: team.image,
-      },
       projects: (await getProjects(team.slug)).map((x) => ({
         id: x.id,
-        name: x.name,
         image: x.image,
+        name: x.name,
+        slug: x.slug,
       })),
+      team: {
+        id: team.id,
+        image: team.image,
+        name: team.name,
+        slug: team.slug,
+      },
     })),
   );
 
-  // TODO: remove the `ChakraProviderSetup` wrapper once the form is updated to no longer use chakra
   return (
-    <ChakraProviderSetup>
-      <CustomContractForm
-        metadata={contractMetadata}
-        metadataNoFee={contractMetadataNoFee}
-        modules={modules?.filter((m) => m !== null)}
-        jwt={authToken}
-        teamsAndProjects={teamsAndProjects}
-      />
-    </ChakraProviderSetup>
+    <CustomContractForm
+      client={client}
+      isLoggedIn={true}
+      metadata={contractMetadata}
+      metadataNoFee={contractMetadataNoFee}
+      modules={modules?.filter((m) => m !== null)}
+      teamsAndProjects={teamsAndProjects}
+    />
   );
 }

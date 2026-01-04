@@ -1,10 +1,13 @@
+import { Suspense } from "react";
+import { ResponsiveSuspense } from "responsive-rsc";
 import { getEcosystemWalletUsage } from "@/api/analytics";
-import {
-  type Range,
-  getLastNDaysRange,
-} from "components/analytics/date-range-selector";
-import { RangeSelector } from "components/analytics/range-selector";
-import type { Partner } from "../../../../types";
+import type { Partner } from "@/api/team/ecosystems";
+import type {
+  DurationId,
+  Range,
+} from "@/components/analytics/date-range-selector";
+import { ResponsiveTimeFilters } from "@/components/analytics/responsive-time-filters";
+import type { EcosystemWalletStats } from "@/types/analytics";
 import { EcosystemWalletUsersChartCard } from "./EcosystemWalletUsersChartCard";
 import { EcosystemWalletsSummary } from "./Summary";
 
@@ -14,74 +17,159 @@ export async function EcosystemAnalyticsPage({
   interval,
   range,
   partners,
+  defaultRange,
+  authToken,
 }: {
   ecosystemSlug: string;
   teamId: string;
   interval: "day" | "week";
-  range?: Range;
+  range: Range;
+  defaultRange: DurationId;
   partners: Partner[];
+  authToken: string;
 }) {
-  if (!range) {
-    range = getLastNDaysRange("last-120");
-  }
+  return (
+    <div>
+      <Suspense
+        fallback={
+          <EcosystemWalletsSummary
+            allTimeStats={[]}
+            monthlyStats={[]}
+            isPending={true}
+          />
+        }
+      >
+        <AsyncEcosystemWalletsSummary
+          ecosystemSlug={ecosystemSlug}
+          teamId={teamId}
+          authToken={authToken}
+        />
+      </Suspense>
 
-  const allTimeStatsPromise = getEcosystemWalletUsage({
-    ecosystemSlug,
-    teamId,
-    from: new Date(2022, 0, 1),
-    to: new Date(),
-    period: "all",
-  });
+      <div className="h-6" />
 
-  const monthlyStatsPromise = getEcosystemWalletUsage({
-    ecosystemSlug,
-    teamId,
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    to: new Date(),
-    period: "month",
-  });
+      <ResponsiveTimeFilters defaultRange={defaultRange} />
 
-  const statsPromise = getEcosystemWalletUsage({
-    ecosystemSlug,
-    teamId,
-    from: range.from,
-    to: range.to,
-    period: interval,
-  }).catch(() => null);
+      <div className="h-6" />
 
-  const [allTimeStats, monthlyStats, stats] = await Promise.all([
+      <ResponsiveSuspense
+        searchParamsUsed={["from", "to", "interval"]}
+        fallback={
+          <EcosystemWalletUsersAnalyticsUI
+            ecosystemWalletStats={[]}
+            groupBy="authenticationMethod"
+            isPending={true}
+            partners={partners}
+          />
+        }
+      >
+        <AsyncEcosystemWalletUsersAnalytics
+          ecosystemSlug={ecosystemSlug}
+          interval={interval}
+          partners={partners}
+          range={range}
+          teamId={teamId}
+          authToken={authToken}
+        />
+      </ResponsiveSuspense>
+    </div>
+  );
+}
+
+async function AsyncEcosystemWalletsSummary(props: {
+  ecosystemSlug: string;
+  teamId: string;
+  authToken: string;
+}) {
+  const { ecosystemSlug, teamId, authToken } = props;
+
+  const allTimeStatsPromise = getEcosystemWalletUsage(
+    {
+      ecosystemSlug,
+      from: new Date(2022, 0, 1),
+      period: "all",
+      teamId,
+      to: new Date(),
+    },
+    authToken,
+  );
+
+  const monthlyStatsPromise = getEcosystemWalletUsage(
+    {
+      ecosystemSlug,
+      from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+      period: "month",
+      teamId,
+      to: new Date(),
+    },
+    authToken,
+  );
+
+  const [allTimeStats, monthlyStats] = await Promise.all([
     allTimeStatsPromise,
     monthlyStatsPromise,
-    statsPromise,
   ]);
 
   return (
-    <div>
-      <EcosystemWalletsSummary
-        allTimeStats={allTimeStats ?? []}
-        monthlyStats={monthlyStats ?? []}
+    <EcosystemWalletsSummary
+      allTimeStats={allTimeStats ?? []}
+      monthlyStats={monthlyStats ?? []}
+      isPending={false}
+    />
+  );
+}
+
+async function AsyncEcosystemWalletUsersAnalytics(props: {
+  ecosystemSlug: string;
+  teamId: string;
+  interval: "day" | "week";
+  range: Range;
+  partners: Partner[];
+  authToken: string;
+}) {
+  const { ecosystemSlug, teamId, interval, range, partners, authToken } = props;
+
+  const stats = await getEcosystemWalletUsage(
+    {
+      ecosystemSlug,
+      from: range.from,
+      period: interval,
+      teamId,
+      to: range.to,
+    },
+    authToken,
+  ).catch(() => null);
+
+  return (
+    <EcosystemWalletUsersAnalyticsUI
+      ecosystemWalletStats={stats || []}
+      groupBy="authenticationMethod"
+      isPending={false}
+      partners={partners}
+    />
+  );
+}
+
+function EcosystemWalletUsersAnalyticsUI(props: {
+  ecosystemWalletStats: EcosystemWalletStats[];
+  isPending: boolean;
+  groupBy: "authenticationMethod" | "ecosystemPartnerId";
+  partners: Partner[];
+}) {
+  return (
+    <div className="flex flex-col gap-4 lg:gap-6">
+      <EcosystemWalletUsersChartCard
+        ecosystemWalletStats={props.ecosystemWalletStats || []}
+        groupBy="authenticationMethod"
+        isPending={props.isPending}
+        partners={props.partners}
       />
-
-      <div className="h-6" />
-
-      <RangeSelector range={range} interval={interval} />
-
-      <div className="h-6" />
-
-      <div className="flex flex-col gap-4 lg:gap-6">
-        <EcosystemWalletUsersChartCard
-          ecosystemWalletStats={stats || []}
-          isPending={false}
-          groupBy="authenticationMethod"
-          partners={partners}
-        />
-        <EcosystemWalletUsersChartCard
-          ecosystemWalletStats={stats || []}
-          isPending={false}
-          groupBy="ecosystemPartnerId"
-          partners={partners}
-        />
-      </div>
+      <EcosystemWalletUsersChartCard
+        ecosystemWalletStats={props.ecosystemWalletStats || []}
+        groupBy="ecosystemPartnerId"
+        isPending={props.isPending}
+        partners={props.partners}
+      />
     </div>
   );
 }

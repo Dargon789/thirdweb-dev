@@ -29,7 +29,7 @@ type NativeConnectorOptions = {
 export class InAppNativeConnector implements InAppConnector {
   private client: ThirdwebClient;
   private ecosystem?: Ecosystem;
-  private storage: ClientScopedStorage;
+  public storage: ClientScopedStorage;
   private passkeyDomain?: string;
   private wallet?: IWebWallet;
 
@@ -38,9 +38,9 @@ export class InAppNativeConnector implements InAppConnector {
     this.passkeyDomain = options.passkeyDomain;
     this.ecosystem = options.ecosystem;
     this.storage = new ClientScopedStorage({
-      storage: options.storage ?? nativeLocalStorage,
       clientId: this.client.clientId,
       ecosystem: options.ecosystem,
+      storage: options.storage ?? nativeLocalStorage,
     });
   }
 
@@ -75,9 +75,9 @@ export class InAppNativeConnector implements InAppConnector {
         );
         wallet = await migrateToEnclaveWallet({
           client: this.client,
+          encryptionKey,
           storage: this.storage,
           storedToken: authResult.storedToken,
-          encryptionKey,
         });
       } catch {
         console.warn(
@@ -103,9 +103,9 @@ export class InAppNativeConnector implements InAppConnector {
         "../core/wallet/enclave-wallet.js"
       );
       this.wallet = new EnclaveWallet({
+        address: wallet.address,
         client: this.client,
         ecosystem: this.ecosystem,
-        address: wallet.address,
         storage: this.storage,
       });
     } else {
@@ -165,7 +165,7 @@ export class InAppNativeConnector implements InAppConnector {
         return guestAuthenticate({
           client: this.client,
           ecosystem: params.ecosystem,
-          storage: nativeLocalStorage,
+          storage: this.storage,
         });
       }
       case "backend": {
@@ -174,8 +174,8 @@ export class InAppNativeConnector implements InAppConnector {
         );
         return backendAuthenticate({
           client: this.client,
-          walletSecret: params.walletSecret,
           ecosystem: params.ecosystem,
+          walletSecret: params.walletSecret,
         });
       }
       case "wallet": {
@@ -184,9 +184,9 @@ export class InAppNativeConnector implements InAppConnector {
         );
         return siweAuthenticate({
           client: this.client,
+          ecosystem: params.ecosystem,
           wallet: params.wallet,
           chain: params.chain,
-          ecosystem: params.ecosystem,
         });
       }
       case "github":
@@ -199,13 +199,15 @@ export class InAppNativeConnector implements InAppConnector {
       case "discord":
       case "line":
       case "x":
+      case "tiktok":
+      case "epic":
       case "apple": {
         const { socialAuth } = await import("./auth/native-auth.js");
         const ExpoLinking = require("expo-linking");
         const redirectUrl =
           params.redirectUrl || (ExpoLinking.createURL("") as string);
         return socialAuth({
-          auth: { strategy, redirectUrl },
+          auth: { redirectUrl, strategy },
           client: this.client,
           ecosystem: this.ecosystem,
         });
@@ -215,9 +217,9 @@ export class InAppNativeConnector implements InAppConnector {
       case "jwt": {
         const { customJwt } = await import("../core/authentication/jwt.js");
         return customJwt({
-          jwt: params.jwt,
           client: this.client,
           ecosystem: this.ecosystem,
+          jwt: params.jwt,
         });
       }
       case "auth_endpoint": {
@@ -225,9 +227,9 @@ export class InAppNativeConnector implements InAppConnector {
           "../core/authentication/authEndpoint.js"
         );
         return authEndpoint({
-          payload: params.payload,
           client: this.client,
           ecosystem: this.ecosystem,
+          payload: params.payload,
         });
       }
       default:
@@ -260,9 +262,9 @@ export class InAppNativeConnector implements InAppConnector {
     const account = await this.getAccount();
     return {
       user: {
-        status: "Logged In, Wallet Initialized",
         account,
         authDetails: authResult.storedToken.authDetails,
+        status: "Logged In, Wallet Initialized",
         walletAddress: account.address,
       },
     };
@@ -301,13 +303,13 @@ export class InAppNativeConnector implements InAppConnector {
         authToken = await registerPasskey({
           client,
           ecosystem,
-          username: passkeyName,
           passkeyClient,
-          storage: storeLastUsedPasskey ? storage : undefined,
           rp: {
             id: domain,
             name: domain,
           },
+          storage: storeLastUsedPasskey ? storage : undefined,
+          username: passkeyName,
         });
       } else {
         const { loginWithPasskey } = await import(
@@ -317,11 +319,11 @@ export class InAppNativeConnector implements InAppConnector {
           client,
           ecosystem,
           passkeyClient,
-          storage: storeLastUsedPasskey ? storage : undefined,
           rp: {
             id: domain,
             name: domain,
           },
+          storage: storeLastUsedPasskey ? storage : undefined,
         });
       }
 
@@ -361,21 +363,22 @@ export class InAppNativeConnector implements InAppConnector {
     const { storedToken } = await this.authenticate(args);
     return await linkAccount({
       client: args.client,
-      tokenToLink: storedToken.cookieString,
-      storage: this.storage,
       ecosystem: args.ecosystem || this.ecosystem,
+      storage: this.storage,
+      tokenToLink: storedToken.cookieString,
     });
   }
 
-  async unlinkProfile(profile: Profile) {
+  async unlinkProfile(profile: Profile, allowAccountDeletion?: boolean) {
     const { unlinkAccount } = await import(
       "../core/authentication/linkAccount.js"
     );
     return await unlinkAccount({
+      allowAccountDeletion,
       client: this.client,
       ecosystem: this.ecosystem,
-      storage: this.storage,
       profileToUnlink: profile,
+      storage: this.storage,
     });
   }
 

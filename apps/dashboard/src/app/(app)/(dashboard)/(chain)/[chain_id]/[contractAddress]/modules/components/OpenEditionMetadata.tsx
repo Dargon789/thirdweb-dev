@@ -1,4 +1,13 @@
 "use client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { CircleAlertIcon } from "lucide-react";
+import { useCallback } from "react";
+import { useForm } from "react-hook-form";
+import type { ThirdwebClient } from "thirdweb";
+import { OpenEditionMetadataERC721 } from "thirdweb/modules";
+import { z } from "zod";
+import { TransactionButton } from "@/components/tx-button";
 import {
   Accordion,
   AccordionContent,
@@ -16,24 +25,16 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { useTxNotifications } from "hooks/useTxNotifications";
-import { CircleAlertIcon } from "lucide-react";
-import { useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { sendAndConfirmTransaction } from "thirdweb";
-import { OpenEditionMetadataERC721 } from "thirdweb/modules";
-import { z } from "zod";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
+import { useTxNotifications } from "@/hooks/useTxNotifications";
 import { ModuleCardUI, type ModuleCardUIProps } from "./module-card";
 import type { ModuleInstanceProps } from "./module-instance";
 
 const setSharedMetadataFormSchema = z.object({
-  name: z.string().min(1),
+  animationUri: z.string().optional(),
   description: z.string().min(1),
   imageUri: z.string().optional(),
-  animationUri: z.string().optional(),
+  name: z.string().min(1),
 });
 
 export type SetSharedMetadataFormValues = z.infer<
@@ -42,7 +43,7 @@ export type SetSharedMetadataFormValues = z.infer<
 
 function OpenEditionMetadataModule(props: ModuleInstanceProps) {
   const { contract, ownerAccount } = props;
-
+  const sendAndConfirmTx = useSendAndConfirmTx();
   const setSharedMetadata = useCallback(
     async (values: SetSharedMetadataFormValues) => {
       if (!ownerAccount) {
@@ -52,27 +53,25 @@ function OpenEditionMetadataModule(props: ModuleInstanceProps) {
       const setSharedMetadataTx = OpenEditionMetadataERC721.setSharedMetadata({
         contract,
         metadata: {
-          name: values.name,
+          animationURI: values.animationUri || "",
           description: values.description,
           imageURI: values.imageUri || "",
-          animationURI: values.animationUri || "",
+          name: values.name,
         },
       });
 
-      await sendAndConfirmTransaction({
-        transaction: setSharedMetadataTx,
-        account: ownerAccount,
-      });
+      await sendAndConfirmTx.mutateAsync(setSharedMetadataTx);
     },
-    [contract, ownerAccount],
+    [contract, ownerAccount, sendAndConfirmTx.mutateAsync],
   );
 
   return (
     <OpenEditionMetadataModuleUI
       {...props}
-      setSharedMetadata={setSharedMetadata}
-      isOwnerAccount={!!props.ownerAccount}
+      client={props.contract.client}
       contractChainId={props.contract.chain.id}
+      isOwnerAccount={!!props.ownerAccount}
+      setSharedMetadata={setSharedMetadata}
     />
   );
 }
@@ -88,17 +87,18 @@ export function OpenEditionMetadataModuleUI(
   return (
     <ModuleCardUI {...props}>
       <div className="h-1" />
-      <Accordion type="single" collapsible className="-mx-1">
-        <AccordionItem value="metadata" className="border-none">
+      <Accordion className="-mx-1" collapsible type="single">
+        <AccordionItem className="border-none" value="metadata">
           <AccordionTrigger className="border-border border-t px-1">
             Set Shared Metadata
           </AccordionTrigger>
           <AccordionContent className="px-1">
             {props.isOwnerAccount && (
               <SetSharedMetadataSection
-                setSharedMetadata={props.setSharedMetadata}
+                client={props.client}
                 contractChainId={props.contractChainId}
                 isLoggedIn={props.isLoggedIn}
+                setSharedMetadata={props.setSharedMetadata}
               />
             )}
             {!props.isOwnerAccount && (
@@ -121,16 +121,17 @@ function SetSharedMetadataSection(props: {
   setSharedMetadata: (values: SetSharedMetadataFormValues) => Promise<void>;
   contractChainId: number;
   isLoggedIn: boolean;
+  client: ThirdwebClient;
 }) {
   const form = useForm<SetSharedMetadataFormValues>({
     resolver: zodResolver(setSharedMetadataFormSchema),
+    reValidateMode: "onChange",
     values: {
-      name: "",
+      animationUri: "",
       description: "",
       imageUri: "",
-      animationUri: "",
+      name: "",
     },
-    reValidateMode: "onChange",
   });
 
   const setSharedMetadataNotifications = useTxNotifications(
@@ -140,8 +141,8 @@ function SetSharedMetadataSection(props: {
 
   const setSharedMetadataMutation = useMutation({
     mutationFn: props.setSharedMetadata,
-    onSuccess: setSharedMetadataNotifications.onSuccess,
     onError: setSharedMetadataNotifications.onError,
+    onSuccess: setSharedMetadataNotifications.onSuccess,
   });
 
   const onSubmit = async () => {
@@ -211,14 +212,15 @@ function SetSharedMetadataSection(props: {
 
           <div className="flex justify-end">
             <TransactionButton
-              size="sm"
               className="min-w-24"
+              client={props.client}
               disabled={setSharedMetadataMutation.isPending}
-              type="submit"
+              isLoggedIn={props.isLoggedIn}
               isPending={setSharedMetadataMutation.isPending}
+              size="sm"
               transactionCount={1}
               txChainID={props.contractChainId}
-              isLoggedIn={props.isLoggedIn}
+              type="submit"
             >
               Update
             </TransactionButton>

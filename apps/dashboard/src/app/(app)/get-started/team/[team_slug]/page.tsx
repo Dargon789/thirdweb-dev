@@ -1,10 +1,10 @@
-import { getTeamBySlug } from "@/api/team";
-import { getThirdwebClient } from "@/constants/thirdweb.server";
 import { notFound } from "next/navigation";
-import { getAuthToken } from "../../../api/lib/getAuthToken";
-import { loginRedirect } from "../../../login/loginRedirect";
-import { TeamOnboardingLayout } from "../../../login/onboarding/onboarding-layout";
-import { TeamInfoForm } from "../../../login/onboarding/team-onboarding/team-onboarding";
+import { getAuthToken } from "@/api/auth-token";
+import { getTeamBySlug } from "@/api/team/get-team";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
+import { loginRedirect } from "@/utils/redirects";
+import { TeamOnboardingLayout } from "../../../../login/onboarding/onboarding-layout";
+import { TeamInfoForm } from "../../../../login/onboarding/team-onboarding/team-onboarding";
 
 export default async function Page(props: {
   params: Promise<{ team_slug: string }>;
@@ -23,7 +23,7 @@ export default async function Page(props: {
     notFound();
   }
 
-  const client = getThirdwebClient({
+  const client = getClientThirdwebClient({
     jwt: authToken,
     teamId: team.id,
   });

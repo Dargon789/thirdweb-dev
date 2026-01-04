@@ -2,49 +2,57 @@
 
 import type { ThirdwebContract } from "thirdweb";
 import type { ChainMetadata } from "thirdweb/chains";
-import { Heading } from "tw-components";
+import type { ProjectMeta } from "../../../../../team/[team_slug]/[project_slug]/contract/[chainIdOrSlug]/[contractAddress]/types";
 import { AccountBalance } from "./components/account-balance";
 import { DepositNative } from "./components/deposit-native";
 import { NftsOwned } from "./components/nfts-owned";
 
-interface AccountPageProps {
+export function AccountPage(props: {
   contract: ThirdwebContract;
   chainMetadata: ChainMetadata;
   isLoggedIn: boolean;
   isInsightSupported: boolean;
-}
-
-export const AccountPage: React.FC<AccountPageProps> = ({
-  contract,
-  chainMetadata,
-  isLoggedIn,
-  isInsightSupported,
-}) => {
-  const symbol = chainMetadata.nativeCurrency.symbol || "Native Token";
+  projectMeta: ProjectMeta | undefined;
+}) {
+  const {
+    contract,
+    chainMetadata,
+    isLoggedIn,
+    isInsightSupported,
+    projectMeta,
+  } = props;
+  const symbol = chainMetadata.nativeCurrency.symbol;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-row items-center justify-between">
-        <Heading size="title.sm">Balances</Heading>
-      </div>
-      <AccountBalance contract={contract} />
-      <div className="flex flex-row items-center justify-between">
-        <Heading size="title.sm">Deposit {symbol}</Heading>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight mb-2">Balances</h2>
+        <AccountBalance contract={contract} />
       </div>
 
-      {chainMetadata && (
+      <div>
+        <h3 className="text-lg font-semibold tracking-tight mb-2">
+          Deposit {symbol}
+        </h3>
         <DepositNative
-          isLoggedIn={isLoggedIn}
           address={contract.address}
-          symbol={symbol}
           chain={chainMetadata}
+          client={contract.client}
+          isLoggedIn={isLoggedIn}
+          symbol={symbol}
         />
-      )}
-
-      <div className="flex flex-row items-center justify-between">
-        <Heading size="title.sm">NFTs owned</Heading>
       </div>
-      <NftsOwned contract={contract} isInsightSupported={isInsightSupported} />
+
+      <div>
+        <h3 className="text-lg font-semibold tracking-tight mb-1">
+          NFTs owned
+        </h3>
+        <NftsOwned
+          contract={contract}
+          isInsightSupported={isInsightSupported}
+          projectMeta={projectMeta}
+        />
+      </div>
     </div>
   );
-};
+}

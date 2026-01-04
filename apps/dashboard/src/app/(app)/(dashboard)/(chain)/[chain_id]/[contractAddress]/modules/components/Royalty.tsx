@@ -1,4 +1,14 @@
 "use client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { CircleAlertIcon } from "lucide-react";
+import { useCallback } from "react";
+import { useForm } from "react-hook-form";
+import type { ThirdwebClient } from "thirdweb";
+import { RoyaltyERC721, RoyaltyERC1155 } from "thirdweb/modules";
+import { useReadContract } from "thirdweb/react";
+import { z } from "zod";
+import { TransactionButton } from "@/components/tx-button";
 import {
   Accordion,
   AccordionContent,
@@ -16,24 +26,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { useTxNotifications } from "hooks/useTxNotifications";
-import { CircleAlertIcon } from "lucide-react";
-import { useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { sendAndConfirmTransaction } from "thirdweb";
-import { RoyaltyERC721, RoyaltyERC1155 } from "thirdweb/modules";
-import { useReadContract } from "thirdweb/react";
-import { z } from "zod";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
+import { useTxNotifications } from "@/hooks/useTxNotifications";
 import { addressSchema } from "../zod-schemas";
 import { ModuleCardUI, type ModuleCardUIProps } from "./module-card";
 import type { ModuleInstanceProps } from "./module-instance";
 
 function RoyaltyModule(props: ModuleInstanceProps) {
   const { contract, ownerAccount } = props;
-
+  const sendAndConfirmTx = useSendAndConfirmTx();
   const isErc721 = props.contractInfo.name === "RoyaltyERC721";
 
   const defaultRoyaltyInfoQuery = useReadContract(
@@ -63,19 +64,16 @@ function RoyaltyModule(props: ModuleInstanceProps) {
         ? RoyaltyERC721.setRoyaltyInfoForToken
         : RoyaltyERC1155.setRoyaltyInfoForToken;
       const setRoyaltyForTokenTx = setRoyaltyInfoForToken({
-        contract: contract,
-        recipient: values.recipient,
         // BPS is 10_000 so we need to multiply by 100
         bps: Number(values.percentage) * 100,
+        contract: contract,
+        recipient: values.recipient,
         tokenId: BigInt(values.tokenId),
       });
 
-      await sendAndConfirmTransaction({
-        account: ownerAccount,
-        transaction: setRoyaltyForTokenTx,
-      });
+      await sendAndConfirmTx.mutateAsync(setRoyaltyForTokenTx);
     },
-    [contract, ownerAccount, isErc721],
+    [contract, ownerAccount, isErc721, sendAndConfirmTx.mutateAsync],
   );
 
   const setTransferValidator = useCallback(
@@ -95,13 +93,16 @@ function RoyaltyModule(props: ModuleInstanceProps) {
           validator: values.transferValidator,
         });
 
-        await sendAndConfirmTransaction({
-          account: ownerAccount,
-          transaction: setTransferValidatorTx,
-        });
+        await sendAndConfirmTx.mutateAsync(setTransferValidatorTx);
       }
     },
-    [contract, ownerAccount, transferValidatorQuery.data, isErc721],
+    [
+      contract,
+      ownerAccount,
+      transferValidatorQuery.data,
+      isErc721,
+      sendAndConfirmTx.mutateAsync,
+    ],
   );
 
   const setDefaultRoyaltyInfo = useCallback(
@@ -124,32 +125,36 @@ function RoyaltyModule(props: ModuleInstanceProps) {
 
         const setSaleConfigTx = setDefaultRoyaltyInfo({
           contract: contract,
-          royaltyRecipient: values.recipient,
           royaltyBps: Number(values.percentage) * 100,
+          royaltyRecipient: values.recipient,
         });
 
-        await sendAndConfirmTransaction({
-          account: ownerAccount,
-          transaction: setSaleConfigTx,
-        });
+        await sendAndConfirmTx.mutateAsync(setSaleConfigTx);
       }
     },
-    [contract, ownerAccount, defaultRoyaltyInfoQuery.data, isErc721],
+    [
+      contract,
+      ownerAccount,
+      defaultRoyaltyInfoQuery.data,
+      isErc721,
+      sendAndConfirmTx.mutateAsync,
+    ],
   );
 
   return (
     <RoyaltyModuleUI
       {...props}
+      client={props.contract.client}
+      contractChainId={props.contract.chain.id}
+      defaultRoyaltyInfo={defaultRoyaltyInfoQuery.data}
+      isOwnerAccount={!!ownerAccount}
       isPending={
         transferValidatorQuery.isPending || defaultRoyaltyInfoQuery.isPending
       }
-      transferValidator={transferValidatorQuery.data}
-      defaultRoyaltyInfo={defaultRoyaltyInfoQuery.data}
       setDefaultRoyaltyInfo={setDefaultRoyaltyInfo}
-      setTransferValidator={setTransferValidator}
       setRoyaltyInfoForToken={setRoyaltyInfoForToken}
-      isOwnerAccount={!!ownerAccount}
-      contractChainId={props.contract.chain.id}
+      setTransferValidator={setTransferValidator}
+      transferValidator={transferValidatorQuery.data}
     />
   );
 }
@@ -175,17 +180,18 @@ export function RoyaltyModuleUI(
       {props.isPending && <Skeleton className="h-[74px]" />}
 
       {!props.isPending && (
-        <Accordion type="single" collapsible className="-mx-1">
-          <AccordionItem value="royaltyPerToken" className="border-none">
+        <Accordion className="-mx-1" collapsible type="single">
+          <AccordionItem className="border-none" value="royaltyPerToken">
             <AccordionTrigger className="border-border border-t px-1">
               Royalty Info Per Token
             </AccordionTrigger>
             <AccordionContent className="px-1">
               {props.isOwnerAccount ? (
                 <RoyaltyInfoPerTokenSection
-                  setRoyaltyInfoForToken={props.setRoyaltyInfoForToken}
+                  client={props.client}
                   contractChainId={props.contractChainId}
                   isLoggedIn={props.isLoggedIn}
+                  setRoyaltyInfoForToken={props.setRoyaltyInfoForToken}
                 />
               ) : (
                 <Alert variant="info">
@@ -198,17 +204,18 @@ export function RoyaltyModuleUI(
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="default-royalty-info" className="border-none">
+          <AccordionItem className="border-none" value="default-royalty-info">
             <AccordionTrigger className="border-border border-t px-1">
               Default Royalty Info
             </AccordionTrigger>
             <AccordionContent className="px-1">
               {props.isOwnerAccount ? (
                 <DefaultRoyaltyInfoSection
-                  update={props.setDefaultRoyaltyInfo}
-                  defaultRoyaltyInfo={props.defaultRoyaltyInfo}
+                  client={props.client}
                   contractChainId={props.contractChainId}
+                  defaultRoyaltyInfo={props.defaultRoyaltyInfo}
                   isLoggedIn={props.isLoggedIn}
+                  update={props.setDefaultRoyaltyInfo}
                 />
               ) : (
                 <Alert variant="info">
@@ -221,17 +228,18 @@ export function RoyaltyModuleUI(
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="transfer-validator" className="border-none">
+          <AccordionItem className="border-none" value="transfer-validator">
             <AccordionTrigger className="border-border border-t px-1">
               Transfer Validator
             </AccordionTrigger>
             <AccordionContent className="px-1">
               {props.isOwnerAccount ? (
                 <TransferValidatorSection
-                  update={props.setTransferValidator}
-                  transferValidator={props.transferValidator}
+                  client={props.client}
                   contractChainId={props.contractChainId}
                   isLoggedIn={props.isLoggedIn}
+                  transferValidator={props.transferValidator}
+                  update={props.setTransferValidator}
                 />
               ) : (
                 <Alert variant="info">
@@ -250,17 +258,17 @@ export function RoyaltyModuleUI(
 }
 
 const royaltyInfoFormSchema = z.object({
-  tokenId: z.string().refine((v) => v.length > 0 && Number(v) >= 0, {
-    message: "Invalid tokenId",
-  }),
-
-  recipient: addressSchema,
   percentage: z
     .string()
     .min(1, { message: "Invalid percentage" })
     .refine((v) => Number(v) === 0 || (Number(v) >= 0.01 && Number(v) <= 100), {
       message: "Invalid percentage",
     }),
+
+  recipient: addressSchema,
+  tokenId: z.string().refine((v) => v.length > 0 && Number(v) >= 0, {
+    message: "Invalid tokenId",
+  }),
 });
 
 export type RoyaltyInfoFormValues = z.infer<typeof royaltyInfoFormSchema>;
@@ -269,15 +277,16 @@ function RoyaltyInfoPerTokenSection(props: {
   setRoyaltyInfoForToken: (values: RoyaltyInfoFormValues) => Promise<void>;
   contractChainId: number;
   isLoggedIn: boolean;
+  client: ThirdwebClient;
 }) {
   const form = useForm<RoyaltyInfoFormValues>({
     resolver: zodResolver(royaltyInfoFormSchema),
-    values: {
-      tokenId: "",
-      recipient: "",
-      percentage: "",
-    },
     reValidateMode: "onChange",
+    values: {
+      percentage: "",
+      recipient: "",
+      tokenId: "",
+    },
   });
 
   const setRoyaltyInfoForTokenNotifications = useTxNotifications(
@@ -287,8 +296,8 @@ function RoyaltyInfoPerTokenSection(props: {
 
   const setRoyaltyInfoForTokenMutation = useMutation({
     mutationFn: props.setRoyaltyInfoForToken,
-    onSuccess: setRoyaltyInfoForTokenNotifications.onSuccess,
     onError: setRoyaltyInfoForTokenNotifications.onError,
+    onSuccess: setRoyaltyInfoForTokenNotifications.onSuccess,
   });
 
   const onSubmit = async () => {
@@ -348,14 +357,15 @@ function RoyaltyInfoPerTokenSection(props: {
 
           <div className="mt-4 flex justify-end">
             <TransactionButton
-              isLoggedIn={props.isLoggedIn}
-              size="sm"
               className="min-w-24"
+              client={props.client}
               disabled={setRoyaltyInfoForTokenMutation.isPending}
-              type="submit"
+              isLoggedIn={props.isLoggedIn}
               isPending={setRoyaltyInfoForTokenMutation.isPending}
+              size="sm"
               transactionCount={1}
               txChainID={props.contractChainId}
+              type="submit"
             >
               Update
             </TransactionButton>
@@ -367,13 +377,13 @@ function RoyaltyInfoPerTokenSection(props: {
 }
 
 const defaultRoyaltyFormSchema = z.object({
-  recipient: addressSchema,
   percentage: z
     .string()
     .min(1, { message: "Invalid percentage" })
     .refine((v) => Number(v) === 0 || (Number(v) >= 0.01 && Number(v) <= 100), {
       message: "Invalid percentage",
     }),
+  recipient: addressSchema,
 });
 
 export type DefaultRoyaltyFormValues = z.infer<typeof defaultRoyaltyFormSchema>;
@@ -383,19 +393,20 @@ function DefaultRoyaltyInfoSection(props: {
   update: (values: DefaultRoyaltyFormValues) => Promise<void>;
   contractChainId: number;
   isLoggedIn: boolean;
+  client: ThirdwebClient;
 }) {
   const [defaultRoyaltyRecipient, defaultRoyaltyPercentage] =
     props.defaultRoyaltyInfo || [];
 
   const form = useForm<DefaultRoyaltyFormValues>({
     resolver: zodResolver(defaultRoyaltyFormSchema),
+    reValidateMode: "onChange",
     values: {
-      recipient: defaultRoyaltyRecipient || "",
       percentage: defaultRoyaltyPercentage
         ? String(defaultRoyaltyPercentage / 100)
         : "",
+      recipient: defaultRoyaltyRecipient || "",
     },
-    reValidateMode: "onChange",
   });
 
   const updateNotifications = useTxNotifications(
@@ -405,8 +416,8 @@ function DefaultRoyaltyInfoSection(props: {
 
   const updateMutation = useMutation({
     mutationFn: props.update,
-    onSuccess: updateNotifications.onSuccess,
     onError: updateNotifications.onError,
+    onSuccess: updateNotifications.onSuccess,
   });
 
   const onSubmit = async () => {
@@ -452,14 +463,15 @@ function DefaultRoyaltyInfoSection(props: {
 
           <div className="mt-4 flex justify-end">
             <TransactionButton
-              size="sm"
               className="min-w-24"
+              client={props.client}
               disabled={updateMutation.isPending}
-              type="submit"
-              transactionCount={1}
-              isPending={updateMutation.isPending}
-              txChainID={props.contractChainId}
               isLoggedIn={props.isLoggedIn}
+              isPending={updateMutation.isPending}
+              size="sm"
+              transactionCount={1}
+              txChainID={props.contractChainId}
+              type="submit"
             >
               Update
             </TransactionButton>
@@ -483,13 +495,14 @@ function TransferValidatorSection(props: {
   update: (values: TransferValidatorFormValues) => Promise<void>;
   contractChainId: number;
   isLoggedIn: boolean;
+  client: ThirdwebClient;
 }) {
   const form = useForm<TransferValidatorFormValues>({
     resolver: zodResolver(transferValidatorFormSchema),
+    reValidateMode: "onChange",
     values: {
       transferValidator: props.transferValidator || "",
     },
-    reValidateMode: "onChange",
   });
 
   const updateNotifications = useTxNotifications(
@@ -499,8 +512,8 @@ function TransferValidatorSection(props: {
 
   const updateMutation = useMutation({
     mutationFn: props.update,
-    onSuccess: updateNotifications.onSuccess,
     onError: updateNotifications.onError,
+    onSuccess: updateNotifications.onSuccess,
   });
 
   const onSubmit = async () => {
@@ -530,14 +543,15 @@ function TransferValidatorSection(props: {
 
         <div className="mt-4 flex justify-end">
           <TransactionButton
-            isLoggedIn={props.isLoggedIn}
-            size="sm"
             className="min-w-24 gap-2"
+            client={props.client}
             disabled={updateMutation.isPending}
-            type="submit"
+            isLoggedIn={props.isLoggedIn}
             isPending={updateMutation.isPending}
+            size="sm"
             transactionCount={1}
             txChainID={props.contractChainId}
+            type="submit"
           >
             Update
           </TransactionButton>

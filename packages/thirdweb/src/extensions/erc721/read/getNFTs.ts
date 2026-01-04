@@ -106,8 +106,8 @@ async function getNFTsFromInsight(
 
   const [result, supplyInfo] = await Promise.all([
     getContractNFTs({
-      client: contract.client,
       chains: [contract.chain],
+      client: contract.client,
       contractAddress: contract.address,
       includeOwners: options.includeOwners ?? false,
       queryOptions: {
@@ -132,8 +132,14 @@ async function getNFTsFromInsight(
     ),
   );
   if (result.length < expectedResultLength) {
-    // fresh contracts might be delayed in indexing, so we fallback to RPC
-    return getNFTsFromRPC(options);
+    try {
+      // fresh contracts might be delayed in indexing, so we fallback to RPC
+      // must use await here
+      return await getNFTsFromRPC(options);
+    } catch {
+      // if RPC fails, we return the result from insight
+      return result;
+    }
   }
 
   return result;
@@ -152,8 +158,8 @@ async function getNFTsFromRPC(
     promises.push(
       getNFT({
         ...options,
-        tokenId: i,
         includeOwner: options.includeOwners ?? false,
+        tokenId: i,
         useIndexer: false,
       }),
     );
@@ -189,7 +195,7 @@ async function getSupplyInfo(options: BaseTransactionOptions<GetNFTsParams>) {
   });
 
   return {
-    startTokenId: startTokenId_,
     maxSupply,
+    startTokenId: startTokenId_,
   };
 }

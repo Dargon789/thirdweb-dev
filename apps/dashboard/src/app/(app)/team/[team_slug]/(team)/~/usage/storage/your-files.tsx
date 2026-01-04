@@ -1,9 +1,14 @@
 "use client";
 
-import { PaginationButtons } from "@/components/pagination-buttons";
-import { CopyTextButton } from "@/components/ui/CopyTextButton";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format, formatDistance } from "date-fns";
+import { PinOffIcon } from "lucide-react";
+import { useState } from "react";
+import { useActiveAccount } from "thirdweb/react";
+import { PaginationButtons } from "@/components/blocks/pagination-buttons";
 import { Button } from "@/components/ui/button";
+import { CopyTextButton } from "@/components/ui/CopyTextButton";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   Table,
   TableBody,
@@ -14,14 +19,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ToolTipLabel } from "@/components/ui/tooltip";
-import { DASHBOARD_STORAGE_URL } from "@/constants/env";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { formatDistance } from "date-fns/formatDistance";
-import { PinOffIcon } from "lucide-react";
-import { useState } from "react";
-import { useActiveAccount } from "thirdweb/react";
-import { toSize } from "utils/number";
+import { NEXT_PUBLIC_DASHBOARD_UPLOAD_SERVER } from "@/constants/public-envs";
+import { toSize } from "@/utils/number";
 
 interface PinnedFilesResponse {
   result: PinnedFilesResult;
@@ -56,17 +55,10 @@ function usePinnedFilesQuery({
   const offset = page * pageSize;
 
   return useQuery({
-    queryKey: [
-      PINNED_FILES_QUERY_KEY_ROOT,
-      {
-        userAddress: address,
-        __page_size__: pageSize,
-        __offset__: offset,
-      },
-    ],
+    enabled: !!address,
     queryFn: async () => {
       const res = await fetch(
-        `${DASHBOARD_STORAGE_URL}/ipfs/pinned?limit=${pageSize}${
+        `${NEXT_PUBLIC_DASHBOARD_UPLOAD_SERVER}/ipfs/pinned?limit=${pageSize}${
           offset ? `&offset=${offset}` : ""
         }`,
         {
@@ -77,23 +69,31 @@ function usePinnedFilesQuery({
       );
       return (await res.json()) as PinnedFilesResponse;
     },
-    enabled: !!address,
+    queryKey: [
+      PINNED_FILES_QUERY_KEY_ROOT,
+      {
+        __offset__: offset,
+        __page_size__: pageSize,
+        userAddress: address,
+      },
+    ],
   });
 }
 
-function useUnpinFileMutation(params: {
-  authToken: string;
-}) {
+function useUnpinFileMutation(params: { authToken: string }) {
   const { authToken } = params;
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ cid }: { cid: string }) => {
-      const res = await fetch(`${DASHBOARD_STORAGE_URL}/ipfs/pinned/${cid}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
+      const res = await fetch(
+        `${NEXT_PUBLIC_DASHBOARD_UPLOAD_SERVER}/ipfs/pinned/${cid}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+          method: "DELETE",
         },
-      });
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -115,9 +115,9 @@ const UnpinButton: React.FC<{ cid: string; authToken: string }> = ({
   return (
     <ToolTipLabel label="Unpin File">
       <Button
-        variant="outline"
         onClick={() => unpinMutation.mutateAsync({ cid })}
         size="icon"
+        variant="outline"
       >
         {unpinMutation.isPending ? (
           <Spinner className="size-4" />
@@ -129,35 +129,36 @@ const UnpinButton: React.FC<{ cid: string; authToken: string }> = ({
   );
 };
 
-export const YourFilesSection = (props: {
-  authToken: string;
-}) => {
+export const YourFilesSection = (props: { authToken: string }) => {
   const [page, setPage] = useState(1);
   const pinnedFilesQuery = usePinnedFilesQuery({
+    authToken: props.authToken,
     page: page - 1,
     pageSize: pageSize,
-    authToken: props.authToken,
   });
 
-  const showPagination = pinnedFilesQuery.data
+  const showPagination = pinnedFilesQuery.data?.result
     ? pinnedFilesQuery.data.result.count > pageSize
     : false;
 
-  const totalPages = pinnedFilesQuery.data
+  const totalPages = pinnedFilesQuery.data?.result
     ? Math.ceil(pinnedFilesQuery.data.result.count / pageSize)
     : 0;
 
-  const pinnedFilesToShow = pinnedFilesQuery.data
+  const pinnedFilesToShow = pinnedFilesQuery.data?.result
     ? pinnedFilesQuery.data.result.pinnedFiles
     : undefined;
 
   return (
     <div>
-      <h2 className="font-semibold text-lg tracking-tight">
-        Your Pinned Files
-      </h2>
+      <div>
+        <h2 className="font-semibold text-2xl tracking-tight">Your files</h2>
+        <p className="text-muted-foreground">
+          These files are stored and pinned on the IPFS
+        </p>
+      </div>
 
-      <div className="h-2" />
+      <div className="h-4" />
 
       <TableContainer>
         <Table>
@@ -174,10 +175,10 @@ export const YourFilesSection = (props: {
               <TableRow key={pinnedFile.ipfsHash + pinnedFile.pinnedAt}>
                 <TableCell>
                   <CopyTextButton
-                    textToCopy={pinnedFile.ipfsHash}
-                    textToShow={pinnedFile.ipfsHash}
                     className="-translate-x-2 max-w-[200px] truncate font-mono md:max-w-[350px]"
                     copyIconPosition="left"
+                    textToCopy={pinnedFile.ipfsHash}
+                    textToShow={pinnedFile.ipfsHash}
                     tooltip="Copy IPFS hash (CID)"
                     variant="ghost"
                   />
@@ -199,8 +200,8 @@ export const YourFilesSection = (props: {
                 </TableCell>
                 <TableCell>
                   <UnpinButton
-                    cid={pinnedFile.ipfsHash}
                     authToken={props.authToken}
+                    cid={pinnedFile.ipfsHash}
                   />
                 </TableCell>
               </TableRow>
@@ -208,7 +209,7 @@ export const YourFilesSection = (props: {
           </TableBody>
         </Table>
 
-        {pinnedFilesQuery.data && pinnedFilesQuery.data.result.count === 0 && (
+        {pinnedFilesQuery.data?.result?.count === 0 && (
           <div className="flex min-h-[250px] items-center justify-center rounded-lg">
             No Pinned Files
           </div>
