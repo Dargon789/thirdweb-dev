@@ -4,6 +4,14 @@ import "server-only";
 import { getAuthToken } from "@/api/auth-token";
 import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 
+function assertValidTeamSlug(teamSlug: string): void {
+  // Allow only lowercase letters, numbers, and dashes, with a reasonable length limit.
+  const TEAM_SLUG_REGEX = /^[a-z0-9-]{1,100}$/;
+  if (!TEAM_SLUG_REGEX.test(teamSlug)) {
+    throw new Error("Invalid team slug");
+  }
+}
+
 export type AuditLogEntry = {
   who: {
     text: string;
@@ -43,6 +51,7 @@ type AuditLogApiResponse = {
 };
 
 export async function getAuditLogs(teamSlug: string, cursor?: string) {
+  assertValidTeamSlug(teamSlug);
   const authToken = await getAuthToken();
   if (!authToken) {
     throw new Error("No auth token found");

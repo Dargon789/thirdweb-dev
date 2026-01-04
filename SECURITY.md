@@ -14,6 +14,8 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-Please report security vulnerabilities by emailing our security team at `security@thirdweb.com`. We will do our best to acknowledge your report within 48 hours.
+Use this section to tell people how to report a vulnerability.
 
-We appreciate your efforts to responsibly disclose your findings, and will make every effort to address all security issues in a timely manner.
+Tell them where to go, how often they can expect to get an update on a
+reported vulnerability, what to expect if the vulnerability is accepted or
+declined, etc.

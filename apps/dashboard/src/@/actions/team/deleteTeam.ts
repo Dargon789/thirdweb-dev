@@ -3,11 +3,23 @@ import "server-only";
 import { getAuthToken } from "@/api/auth-token";
 import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 
+function isValidTeamId(teamId: string): boolean {
+  // Allow only URL-safe identifier characters to prevent path traversal or injection
+  return /^[A-Za-z0-9_-]+$/.test(teamId);
+}
+
 export async function deleteTeam(options: { teamId: string }) {
   const token = await getAuthToken();
   if (!token) {
     return {
       errorMessage: "You are not authorized to perform this action.",
+      status: "error",
+    } as const;
+  }
+
+  if (!isValidTeamId(options.teamId)) {
+    return {
+      errorMessage: "Invalid team ID.",
       status: "error",
     } as const;
   }
