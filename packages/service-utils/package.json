@@ -7,7 +7,7 @@
     "@confluentinc/kafka-javascript": "1.4.0",
     "@paralleldrive/cuid2": "^2.2.2",
     "aws4fetch": "1.0.20",
-    "zod": "4.1.13"
+    "zod": "4.2.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.9",
