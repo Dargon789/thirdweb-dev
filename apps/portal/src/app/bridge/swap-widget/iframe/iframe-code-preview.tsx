@@ -28,9 +28,10 @@ export function IframeCodePreview(props: { src: string }) {
       </TabsContent>
       <TabsContent value="preview">
         <iframe
-          title="Bridge widget iframe"
+          title="Swap widget iframe"
           src={getPreviewSrc(props.src)}
           height="750px"
+          className="rounded-xl"
           width="100%"
           style={{ border: 0 }}
         />
