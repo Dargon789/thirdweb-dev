@@ -11,6 +11,7 @@
     "url": "https://github.com/thirdweb-dev/js/issues"
   },
   "dependencies": {
+    "@base-org/account": "2.5.0",
     "@coinbase/wallet-sdk": "4.3.0",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
@@ -21,12 +22,11 @@
     "@radix-ui/react-focus-scope": "1.1.7",
     "@radix-ui/react-icons": "1.3.2",
     "@radix-ui/react-tooltip": "1.2.7",
-    "@storybook/react": "9.0.15",
     "@tanstack/react-query": "5.81.5",
     "@thirdweb-dev/engine": "workspace:*",
     "@thirdweb-dev/insight": "workspace:*",
-    "@walletconnect/sign-client": "2.20.1",
-    "@walletconnect/universal-provider": "2.21.4",
+    "@walletconnect/sign-client": "2.21.8",
+    "@walletconnect/universal-provider": "2.21.8",
     "abitype": "1.0.8",
     "cross-spawn": "7.0.6",
     "fuse.js": "7.1.0",
@@ -36,15 +36,17 @@
     "ora": "8.2.0",
     "ox": "0.7.0",
     "prompts": "2.4.2",
+    "qrcode": "1.5.3",
     "toml": "3.0.0",
     "uqr": "0.1.2",
-    "viem": "2.28.1",
+    "viem": "2.39.0",
+    "x402": "0.7.0",
     "zod": "3.25.75"
   },
   "devDependencies": {
     "@aws-sdk/client-kms": "3.592.0",
     "@aws-sdk/client-lambda": "3.592.0",
-    "@aws-sdk/credential-providers": "3.606.0",
+    "@aws-sdk/credential-providers": "3.592.0",
     "@biomejs/biome": "2.0.6",
     "@chromatic-com/storybook": "4.0.1",
     "@codspeed/vitest-plugin": "4.0.1",
@@ -55,29 +57,32 @@
     "@storybook/addon-docs": "9.0.15",
     "@storybook/addon-links": "9.0.15",
     "@storybook/addon-onboarding": "9.0.15",
+    "@storybook/react": "9.0.15",
     "@storybook/react-vite": "9.0.15",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/cross-spawn": "^6.0.6",
     "@types/prompts": "2.4.9",
-    "@types/react": "19.1.8",
+    "@types/qrcode": "1.5.5",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
     "@viem/anvil": "0.0.10",
-    "@vitejs/plugin-react": "^4.6.0",
+    "@vitejs/plugin-react": "5.0.4",
     "@vitest/coverage-v8": "3.2.4",
     "@vitest/ui": "3.2.4",
     "dotenv-mono": "^1.3.14",
     "ethers5": "npm:ethers@5",
     "ethers6": "npm:ethers@6",
-    "expo-linking": "7.0.5",
-    "expo-web-browser": "14.0.2",
-    "happy-dom": "20.0.2",
+    "expo-linking": "8.0.8",
+    "expo-web-browser": "15.0.9",
+    "happy-dom": "17.4.4",
     "knip": "5.60.2",
     "msw": "2.7.5",
     "prettier": "3.6.2",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-native": "0.81.4",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "react-native": "0.78.1",
     "react-native-aes-gcm-crypto": "0.2.2",
     "react-native-passkey": "3.1.0",
     "react-native-quick-crypto": "0.7.14",
@@ -86,10 +91,11 @@
     "sharp": "^0.34.2",
     "size-limit": "11.2.0",
     "storybook": "9.0.15",
+    "tsup": "^8.5.0",
     "typedoc": "0.27.9",
     "typedoc-better-json": "0.9.4",
     "typescript": "5.8.3",
-    "vite": "7.0.1",
+    "vite": "7.1.7",
     "vitest": "3.2.4"
   },
   "engines": {
@@ -193,6 +199,11 @@
       "import": "./dist/esm/exports/storage.js",
       "default": "./dist/cjs/exports/storage.js"
     },
+    "./tokens": {
+      "types": "./dist/types/exports/tokens.d.ts",
+      "import": "./dist/esm/exports/tokens.js",
+      "default": "./dist/cjs/exports/tokens.js"
+    },
     "./transaction": {
       "types": "./dist/types/exports/transaction.d.ts",
       "import": "./dist/esm/exports/transaction.js",
@@ -219,6 +230,11 @@
       "react-native": "./dist/esm/exports/wallets/in-app.native.js",
       "import": "./dist/esm/exports/wallets/in-app.js",
       "default": "./dist/cjs/exports/wallets/in-app.js"
+    },
+    "./x402": {
+      "types": "./dist/types/exports/x402.d.ts",
+      "import": "./dist/esm/exports/x402.js",
+      "default": "./dist/cjs/exports/x402.js"
     }
   },
   "files": [
@@ -241,10 +257,10 @@
     "@aws-sdk/credential-providers": "^3",
     "@coinbase/wallet-mobile-sdk": "^1",
     "@mobile-wallet-protocol/client": "^1",
-    "@react-native-async-storage/async-storage": "^1 || ^2",
+    "@react-native-async-storage/async-storage": "*",
     "ethers": "^5 || ^6",
-    "expo-linking": "^6 || ^7",
-    "expo-web-browser": "^13 || ^14",
+    "expo-linking": "*",
+    "expo-web-browser": "*",
     "react": "^18 || ^19",
     "react-native": "*",
     "react-native-aes-gcm-crypto": "^0.2",
@@ -310,7 +326,8 @@
   "scripts": {
     "bench": "vitest -c ./test/vitest.config.ts bench",
     "bench:compare": "bun run ./benchmarks/run.ts",
-    "build": "pnpm clean && pnpm build:types && pnpm build:cjs && pnpm build:esm",
+    "build": "pnpm clean && pnpm build:types && pnpm build:cjs && pnpm build:esm && pnpm build:tsup",
+    "build:tsup": "tsup",
     "build-storybook": "storybook build",
     "build:cjs": "tsc --noCheck --project ./tsconfig.build.json --module commonjs --outDir ./dist/cjs --verbatimModuleSyntax false && printf '{\"type\":\"commonjs\"}' > ./dist/cjs/package.json",
     "build:esm": "tsc --noCheck --project ./tsconfig.build.json --module es2020 --outDir ./dist/esm && printf '{\"type\": \"module\",\"sideEffects\":false}' > ./dist/esm/package.json",
@@ -334,6 +351,7 @@
     "test:ui": "NODE_OPTIONS=--max-old-space-size=8192 vitest dev -c ./test/vitest.config.ts --coverage --ui",
     "test:watch": "vitest -c ./test/vitest.config.ts dev",
     "typedoc": "node scripts/typedoc.mjs && node scripts/parse.mjs",
+    "typecheck": "tsc --project ./tsconfig.build.json --module nodenext --moduleResolution nodenext --noEmit",
     "update-version": "node scripts/version.mjs"
   },
   "sideEffects": false,
@@ -389,6 +407,9 @@
       "storage": [
         "./dist/types/exports/storage.d.ts"
       ],
+      "tokens": [
+        "./dist/types/exports/tokens.d.ts"
+      ],
       "transaction": [
         "./dist/types/exports/transaction.d.ts"
       ],
@@ -400,9 +421,15 @@
       ],
       "wallets/*": [
         "./dist/types/exports/wallets/*.d.ts"
+      ],
+      "insight": [
+        "./dist/types/exports/insight.d.ts"
+      ],
+      "x402": [
+        "./dist/types/exports/x402.d.ts"
       ]
     }
   },
   "typings": "./dist/types/exports/thirdweb.d.ts",
-  "version": "5.105.16"
+  "version": "5.118.0"
 }
