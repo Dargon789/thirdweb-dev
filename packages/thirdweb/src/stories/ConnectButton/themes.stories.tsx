@@ -28,11 +28,12 @@ export const Light: Story = {
   },
 };
 
-export const CustomBlack: Story = {
+export const Custom: Story = {
   args: {
     theme: darkTheme({
       colors: {
-        modalBg: "black",
+        modalBg: "#0c0a2e",
+        borderColor: "#2f2987",
       },
     }),
   },

@@ -179,6 +179,42 @@ const baseNextConfig: NextConfig = {
         ],
         source: "/bridge/checkout-widget/:path*",
       },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/swap-widget",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/swap-widget/:path*",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/buy-widget",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/buy-widget/:path*",
+      },
     ];
   },
   images: {
