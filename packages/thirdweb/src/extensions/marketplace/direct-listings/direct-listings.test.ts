@@ -455,7 +455,7 @@ describe.runIf(process.env.TW_SECRET_KEY)("Marketplace Direct Listings", () => {
     const abi = await resolveContractAbi<Abi>(marketplaceContract);
     const selectors = abi
       .filter((f) => f.type === "function")
-      .map((f) => AbiFunction.getSelector(f));
+      .map((f) => toFunctionSelector(f));
     expect(isCreateListingSupported(selectors)).toBe(true);
   });
 });
