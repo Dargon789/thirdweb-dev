@@ -69,7 +69,7 @@ export type SingleStepAuthArgsType =
   | {
       strategy: "wallet";
       wallet: Wallet;
-      chain: Chain;
+      chain?: Chain;
     }
   | {
       strategy: "guest";
@@ -102,6 +102,8 @@ export type AuthProvider =
   | "Discord"
   | "Coinbase"
   | "X"
+  | "TikTok"
+  | "Epic"
   | "Line"
   | "Twitch"
   | "Steam"

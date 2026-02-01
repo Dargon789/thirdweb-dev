@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getContractMetadata } from "thirdweb/extensions/common";
 import { isAddress, isContractDeployed } from "thirdweb/utils";
-import { getProjects } from "@/api/projects";
-import { getTeams } from "@/api/team";
-import type { MinimalTeamsAndProjects } from "@/components/contract-components/contract-deploy-form/add-to-project-card";
+import { getProjects } from "@/api/project/projects";
+import { getTeams } from "@/api/team/get-team";
+import type { MinimalTeamsAndProjects } from "@/components/contracts/import-contract/types";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
 import { resolveFunctionSelectors } from "@/lib/selectors";
+import { supportedERCs } from "@/utils/supportedERCs";
 import { shortenIfAddress } from "@/utils/usedapp-external";
 import type { ProjectMeta } from "../../../../team/[team_slug]/[project_slug]/contract/[chainIdOrSlug]/[contractAddress]/types";
 import { TeamHeader } from "../../../../team/components/TeamHeader/team-header";
@@ -14,7 +15,6 @@ import { ConfigureCustomChain } from "./_layout/ConfigureCustomChain";
 import { getContractMetadataHeaderData } from "./_layout/contract-metadata";
 import { ContractPageLayout } from "./_layout/contract-page-layout";
 import { ContractPageLayoutClient } from "./_layout/contract-page-layout.client";
-import { supportedERCs } from "./_utils/detectedFeatures/supportedERCs";
 import { getContractPageParamsInfo } from "./_utils/getContractFromParams";
 import { getContractPageMetadata } from "./_utils/getContractPageMetadata";
 import { getContractPageSidebarLinks } from "./_utils/getContractPageSidebarLinks";
@@ -190,25 +190,37 @@ export async function generateContractLayoutMetadata(params: {
       .replace("Testnet", "")
       .trim();
 
-    const title = `${contractDisplayName} | ${cleanedChainName} Smart Contract`;
+    let title = `${contractDisplayName} | ${cleanedChainName} Smart Contract`;
     let description = "";
 
     if (isERC721 || isERC1155) {
       description = `View tokens, source code, transactions, balances, and analytics for the ${contractDisplayName} smart contract on ${cleanedChainName}.`;
     } else if (isERC20) {
-      description = `View ERC20 tokens, transactions, balances, source code, and analytics for the ${contractDisplayName} smart contract on ${cleanedChainName}`;
+      title = `${contractMetadata.name} (${contractMetadata.symbol}) on ${cleanedChainName} | Buy, Swap, Bridge & Price`;
+      description = `Buy, swap & bridge ${contractMetadata.name} (${contractMetadata.symbol}) on ${cleanedChainName} with thirdweb Bridge. View contract address, holders, analytics, transactions and live price.`;
     } else {
-      description = `View tokens, transactions, balances, source code, and analytics for the ${contractDisplayName} smart contract  on ${cleanedChainName}`;
+      description = `View tokens, transactions, balances, source code, and analytics for the ${contractMetadata.name} smart contract  on ${cleanedChainName}`;
     }
 
     return {
       description: description,
       title: title,
+      openGraph: {
+        description: description,
+        title: title,
+      },
     };
   } catch {
+    const fallbackTitle = `${shortenIfAddress(params.contractAddress)} | ${params.chainIdOrSlug}`;
+    const fallbackDescription = `View tokens, transactions, balances, source code, and analytics for the smart contract  on Chain ID ${params.chainIdOrSlug}`;
+
     return {
-      description: `View tokens, transactions, balances, source code, and analytics for the smart contract  on Chain ID ${params.chainIdOrSlug}`,
-      title: `${shortenIfAddress(params.contractAddress)} | ${params.chainIdOrSlug}`,
+      description: fallbackDescription,
+      title: fallbackTitle,
+      openGraph: {
+        description: fallbackDescription,
+        title: fallbackTitle,
+      },
     };
   }
 }

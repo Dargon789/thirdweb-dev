@@ -32,6 +32,7 @@ import {
   APPLE_ICON,
   COINBASE_ICON,
   DISCORD_ICON,
+  EPIC_ICON,
   FACEBOOK_ICON,
   FARCASTER_ICON,
   GITHUB_ICON,
@@ -39,6 +40,7 @@ import {
   LINE_ICON,
   STEAM_ICON,
   TELEGRAM_ICON,
+  TIKTOK_ICON,
   TWITCH_ICON,
   X_ICON,
 } from "../icons/svgs.js";
@@ -67,6 +69,8 @@ const socialIcons = {
   telegram: TELEGRAM_ICON,
   twitch: TWITCH_ICON,
   x: X_ICON,
+  tiktok: TIKTOK_ICON,
+  epic: EPIC_ICON,
 };
 
 type InAppWalletFormUIProps = {

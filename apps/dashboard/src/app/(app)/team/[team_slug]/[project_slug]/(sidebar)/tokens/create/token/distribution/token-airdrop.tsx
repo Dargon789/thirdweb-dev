@@ -11,11 +11,12 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import type { ThirdwebClient } from "thirdweb";
+import { DownloadFileButton } from "@/components/blocks/download-file-button";
 import { DropZone } from "@/components/blocks/drop-zone/drop-zone";
 import { Button } from "@/components/ui/button";
 import { DynamicHeight } from "@/components/ui/DynamicHeight";
 import { InlineCode } from "@/components/ui/inline-code";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   Sheet,
   SheetContent,
@@ -37,7 +38,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useCsvUpload } from "@/hooks/useCsvUpload";
 import { cn } from "@/lib/utils";
-import { DownloadFileButton } from "../../_common/download-file-button";
 import type { TokenDistributionForm } from "../_common/form";
 
 type AirdropAddressInput = {
@@ -66,10 +66,10 @@ export function TokenAirdropSection(props: {
 
   return (
     <DynamicHeight>
-      <div className="relative border-t border-dashed">
-        <div className="flex items-center justify-between gap-3 px-6 py-5">
+      <div className="relative border-t border-dashed px-4 py-8 md:px-6">
+        <div className="flex items-center justify-between gap-3 ">
           <div>
-            <h2 className="font-semibold text-lg">Airdrop</h2>
+            <h2 className="font-semibold text-xl tracking-tight">Airdrop</h2>
             <p className="text-muted-foreground text-sm">
               Airdrop tokens to a list of addresses with each address receiving
               a specific quantity
@@ -88,7 +88,7 @@ export function TokenAirdropSection(props: {
         </div>
 
         {isEnabled && (
-          <div className="flex justify-start px-6 pb-6">
+          <div className="flex justify-start mt-4 fade-in-0 duration-300 animate-in">
             {airdropAddresses.length > 0 ? (
               <div className="flex w-full flex-col gap-4 rounded-lg border bg-background p-4 md:flex-row lg:items-center lg:justify-between">
                 {/* left */}
@@ -262,8 +262,13 @@ const AirdropUpload: React.FC<AirdropUploadProps> = ({
 
   if (csvUpload.normalizeQuery.isPending) {
     return (
-      <div className="flex h-[300px] w-full grow items-center justify-center rounded-lg border border-border">
+      <div className="flex min-h-[400px] w-full flex-col grow items-center justify-center">
         <Spinner className="size-10" />
+        <p className="text-base text-foreground mt-5">Resolving ENS</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          {csvUpload.normalizeProgress.current} /{" "}
+          {csvUpload.normalizeProgress.total}
+        </p>
       </div>
     );
   }

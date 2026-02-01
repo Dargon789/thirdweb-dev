@@ -2,8 +2,8 @@
 import { toast } from "sonner";
 import type { ThirdwebContract } from "thirdweb";
 import { cancelAuction, cancelListing } from "thirdweb/extensions/marketplace";
-import { useSendAndConfirmTransaction } from "thirdweb/react";
 import { TransactionButton } from "@/components/tx-button";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
 
 interface CancelTabProps {
   id: string;
@@ -21,31 +21,29 @@ export const CancelTab: React.FC<CancelTabProps> = ({
   const transaction = isAuction
     ? cancelAuction({ auctionId: BigInt(id), contract })
     : cancelListing({ contract, listingId: BigInt(id) });
-  const cancelQuery = useSendAndConfirmTransaction();
+  const sendAndConfirmTx = useSendAndConfirmTx();
   return (
-    <div className="flex flex-col gap-3 pt-3">
-      <TransactionButton
-        className="self-end"
-        client={contract.client}
-        isLoggedIn={isLoggedIn}
-        isPending={cancelQuery.isPending}
-        onClick={() => {
-          const promise = cancelQuery.mutateAsync(transaction, {
-            onError: (error) => {
-              console.error(error);
-            },
-          });
-          toast.promise(promise, {
-            error: "Failed to cancel",
-            loading: `Cancelling ${isAuction ? "auction" : "listing"}`,
-            success: "Item cancelled successfully",
-          });
-        }}
-        transactionCount={1}
-        txChainID={contract.chain.id}
-      >
-        Cancel {isAuction ? "Auction" : "Listing"}
-      </TransactionButton>
-    </div>
+    <TransactionButton
+      className="self-end"
+      client={contract.client}
+      isLoggedIn={isLoggedIn}
+      isPending={sendAndConfirmTx.isPending}
+      onClick={() => {
+        const promise = sendAndConfirmTx.mutateAsync(transaction, {
+          onError: (error) => {
+            console.error(error);
+          },
+        });
+        toast.promise(promise, {
+          error: "Failed to cancel",
+          loading: `Cancelling ${isAuction ? "auction" : "listing"}`,
+          success: "Item cancelled successfully",
+        });
+      }}
+      transactionCount={1}
+      txChainID={contract.chain.id}
+    >
+      Cancel {isAuction ? "Auction" : "Listing"}
+    </TransactionButton>
   );
 };

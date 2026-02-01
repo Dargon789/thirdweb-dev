@@ -12,7 +12,8 @@ const tagsToGroup = {
   "@account": "Account",
   "@appURI": "App URI",
   "@auth": "Auth",
-  "@bridge": "Universal Bridge",
+  "@bridge": "Payments",
+  "@x402": "x402",
   "@chain": "Chain",
   "@claimConditions": "Claim Conditions",
   "@client": "Client",
@@ -64,6 +65,7 @@ const sidebarGroupOrder: TagKey[] = [
   "@transaction",
   "@insight",
   "@engine",
+  "@x402",
   "@bridge",
   "@nebula",
   "@social",
@@ -258,12 +260,10 @@ export function getSidebarLinkGroups(doc: TransformedDoc, path: string) {
       const bridgeGroups = bridge.reduce(
         (acc, d) => {
           const [, moduleName] = getCustomTag(d) || [];
-          if (moduleName) {
-            if (!acc[moduleName]) {
-              acc[moduleName] = [];
-            }
-            acc[moduleName]?.push(d);
+          if (!acc[moduleName ?? "common"]) {
+            acc[moduleName ?? "common"] = [];
           }
+          acc[moduleName ?? "common"]?.push(d);
           return acc;
         },
         {} as Record<string, SomeDoc[]>,
@@ -303,13 +303,13 @@ export function getSidebarLinkGroups(doc: TransformedDoc, path: string) {
         linkGroups.push({
           href: getLink(`${path}/${key}`),
           isCollapsible: false,
-          links: [{ links: bridgeLinkGroups, name: "Universal Bridge" }],
+          links: [{ links: bridgeLinkGroups, name: "Payments" }],
           name: name,
         });
       } else {
         linkGroups
           .find((group) => group.name === name)
-          ?.links.push({ links: bridgeLinkGroups, name: "Universal Bridge" });
+          ?.links.push({ links: bridgeLinkGroups, name: "Payments" });
       }
     }
 

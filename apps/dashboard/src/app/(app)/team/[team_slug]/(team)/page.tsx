@@ -1,12 +1,11 @@
 import { subDays } from "date-fns";
 import { redirect } from "next/navigation";
-import { getWalletConnections } from "@/api/analytics";
-import { getProjects, type Project } from "@/api/projects";
-import { getTeamBySlug } from "@/api/team";
-import { DismissibleAlert } from "@/components/blocks/dismissible-alert";
+import { getInAppWalletUsage } from "@/api/analytics";
+import { getAuthToken } from "@/api/auth-token";
+import { getProjects, type Project } from "@/api/project/projects";
+import { getTeamBySlug } from "@/api/team/get-team";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
-import { getAuthToken } from "../../../../../@/api/auth-token";
-import { loginRedirect } from "../../../login/loginRedirect";
+import { loginRedirect } from "@/utils/redirects";
 import { Changelog } from "./_components/Changelog";
 import { FreePlanUpsellBannerUI } from "./_components/FreePlanUpsellBannerUI";
 import { InviteTeamMembersButton } from "./_components/invite-team-members-button";
@@ -38,7 +37,10 @@ export default async function Page(props: {
   });
 
   const projects = await getProjects(params.team_slug);
-  const projectsWithTotalWallets = await getProjectsWithAnalytics(projects);
+  const projectsWithTotalWallets = await getProjectsWithAnalytics(
+    projects,
+    authToken,
+  );
 
   return (
     <div className="flex grow flex-col">
@@ -60,14 +62,8 @@ export default async function Page(props: {
           team={team}
         />
 
-        {team.billingPlan === "free" ? (
+        {team.billingPlan === "free" && (
           <FreePlanUpsellBannerUI highlightPlan="growth" teamSlug={team.slug} />
-        ) : (
-          <DismissibleAlert
-            description="Engines, contracts, project settings, and more are now managed within projects. Open or create a project to access them."
-            localStorageId={`${team.id}-engines-alert`}
-            title="Looking for Engines?"
-          />
         )}
 
         <Changelog />
@@ -78,6 +74,7 @@ export default async function Page(props: {
 
 async function getProjectsWithAnalytics(
   projects: Project[],
+  authToken: string,
 ): Promise<Array<ProjectWithAnalytics>> {
   return Promise.all(
     projects.map(async (project) => {
@@ -85,13 +82,17 @@ async function getProjectsWithAnalytics(
         const today = new Date();
         const thirtyDaysAgo = subDays(today, 30);
 
-        const data = await getWalletConnections({
-          from: thirtyDaysAgo,
-          period: "all",
-          projectId: project.id,
-          teamId: project.teamId,
-          to: today,
-        });
+        // TODO (stats): also add the external wallet usage?
+        const data = await getInAppWalletUsage(
+          {
+            from: thirtyDaysAgo,
+            period: "all",
+            projectId: project.id,
+            teamId: project.teamId,
+            to: today,
+          },
+          authToken,
+        );
 
         let uniqueWalletsConnected = 0;
         for (const d of data) {

@@ -9,7 +9,7 @@ import { ApiError } from "./types/Errors.js";
 import type { PreparedQuote, Quote } from "./types/Quote.js";
 
 /**
- * Retrieves a Universal Bridge quote for the provided sell intent. The quote will specify the expected `destinationAmount` that will be received in exchange for the specified `originAmount`, which is specified with the `sellAmountWei` option.
+ * Retrieves a Bridge quote for the provided sell intent. The quote will specify the expected `destinationAmount` that will be received in exchange for the specified `originAmount`, which is specified with the `sellAmountWei` option.
  *
  * @example
  * ```typescript
@@ -154,17 +154,40 @@ export async function quote(options: quote.Options): Promise<quote.Result> {
   };
 }
 
+/**
+ * Namespace containing types for the sell quote function.
+ * @namespace quote
+ * @bridge Sell
+ */
 export declare namespace quote {
+  /**
+   * Options for getting a sell quote.
+   * @interface Options
+   * @bridge Sell
+   */
   type Options = {
+    /** The origin chain ID */
     originChainId: number;
+    /** The origin token address */
     originTokenAddress: ox__Address.Address;
+    /** The destination chain ID */
     destinationChainId: number;
+    /** The destination token address */
     destinationTokenAddress: ox__Address.Address;
+    /** The amount to sell in wei */
     amount: bigint;
+    /** Your thirdweb client */
     client: ThirdwebClient;
+    /** Maximum number of steps in the route */
     maxSteps?: number;
   };
 
+  /**
+   * Result returned from getting a sell quote.
+   * Contains quote details and intent information.
+   * @interface Result
+   * @bridge Sell
+   */
   type Result = Quote & {
     intent: {
       originChainId: number;
@@ -177,7 +200,7 @@ export declare namespace quote {
 }
 
 /**
- * Prepares a **finalized** Universal Bridge quote for the provided sell request with transaction data. This function will return everything `quote` does, with the addition of a series of prepared transactions and the associated expiration timestamp.
+ * Prepares a **finalized** Bridge quote for the provided sell request with transaction data. This function will return everything `quote` does, with the addition of a series of prepared transactions and the associated expiration timestamp.
  *
  * @example
  * ```typescript
@@ -329,6 +352,7 @@ export async function prepare(
     purchaseData,
     maxSteps,
     paymentLinkId,
+    slippageToleranceBps,
   } = options;
 
   const clientFetch = getClientFetch(client);
@@ -347,6 +371,7 @@ export async function prepare(
       receiver,
       sellAmountWei: amount.toString(),
       sender,
+      slippageToleranceBps,
     }),
     headers: {
       "Content-Type": "application/json",
@@ -393,24 +418,52 @@ export async function prepare(
   };
 }
 
+/**
+ * Namespace containing types for the sell prepare function.
+ * @namespace prepare
+ * @bridge Sell
+ */
 export declare namespace prepare {
+  /**
+   * Options for preparing a sell transaction.
+   * @interface Options
+   * @bridge Sell
+   */
   type Options = {
+    /** The origin chain ID */
     originChainId: number;
+    /** The origin token address */
     originTokenAddress: ox__Address.Address;
+    /** The destination chain ID */
     destinationChainId: number;
+    /** The destination token address */
     destinationTokenAddress: ox__Address.Address;
+    /** The amount to sell in wei */
     amount: bigint;
+    /** The sender address */
     sender: ox__Address.Address;
+    /** The receiver address */
     receiver: ox__Address.Address;
+    /** Your thirdweb client */
     client: ThirdwebClient;
+    /** Arbitrary purchase data */
     purchaseData?: PurchaseData;
+    /** Maximum number of steps in the route */
     maxSteps?: number;
+    /** The maximum slippage in basis points (bps) allowed for the transaction. */
+    slippageToleranceBps?: number;
     /**
      * @hidden
      */
     paymentLinkId?: string;
   };
 
+  /**
+   * Result returned from preparing a sell transaction.
+   * Contains prepared quote with transaction data and intent information.
+   * @interface Result
+   * @bridge Sell
+   */
   type Result = PreparedQuote & {
     intent: {
       originChainId: number;

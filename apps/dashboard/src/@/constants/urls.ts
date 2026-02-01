@@ -1,6 +1,5 @@
-export const THIRDWEB_EWS_API_HOST =
-  process.env.NEXT_PUBLIC_THIRDWEB_EWS_API_HOST ||
-  "https://in-app-wallet.thirdweb.com";
+export const THIRDWEB_API_HOST =
+  process.env.NEXT_PUBLIC_THIRDWEB_API_HOST || "https://api.thirdweb-dev.com";
 
 export const THIRDWEB_PAY_DOMAIN =
   process.env.NEXT_PUBLIC_PAY_URL || "pay.thirdweb-dev.com";
@@ -26,3 +25,6 @@ export const THIRDWEB_INSIGHT_API_DOMAIN =
 
 export const THIRDWEB_BRIDGE_URL =
   process.env.NEXT_PUBLIC_BRIDGE_URL || "bridge.thirdweb-dev.com";
+
+export const THIRDWEB_ENGINE_CLOUD_URL =
+  process.env.NEXT_PUBLIC_ENGINE_CLOUD_URL || "https://engine.thirdweb-dev.com";

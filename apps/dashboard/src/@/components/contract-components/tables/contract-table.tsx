@@ -6,7 +6,7 @@ import Link from "next/link";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { ThirdwebClient } from "thirdweb";
-import type { ProjectContract } from "@/api/getProjectContracts";
+import type { ProjectContract } from "@/api/project/getProjectContracts";
 import { PaginationButtons } from "@/components/blocks/pagination-buttons";
 import { NetworkSelectDropdown } from "@/components/contract-components/tables/NetworkSelectDropdown";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { SkeletonContainer } from "@/components/ui/skeleton";
 import {
   Table,
@@ -32,6 +32,8 @@ import { useAllChainsData } from "@/hooks/chains/allChains";
 import { removeContractFromProject } from "@/hooks/project-contracts";
 import { ChainIconClient } from "@/icons/ChainIcon";
 import { cn } from "@/lib/utils";
+import { revalidateCacheTagAction } from "../../../actions/revalidate";
+import { projectContractsCacheTag } from "../../../api/project/cache-tag";
 import {
   ContractNameCell,
   ContractTypeCell,
@@ -57,6 +59,8 @@ export function ContractTable(props: {
       client={props.client}
       contracts={props.contracts}
       pageSize={props.pageSize}
+      projectId={props.projectId}
+      teamId={props.teamId}
       projectSlug={props.projectSlug}
       removeContractFromProject={async (contractId) => {
         await removeContractFromProject({
@@ -77,6 +81,8 @@ export function ContractTableUI(props: {
   removeContractFromProject: (contractId: string) => Promise<void>;
   client: ThirdwebClient;
   variant: "asset" | "contract";
+  teamId: string;
+  projectId: string;
   teamSlug: string;
   projectSlug: string;
 }) {
@@ -243,6 +249,13 @@ export function ContractTableUI(props: {
                     <ContractActionsCell
                       contractId={contract.id}
                       onContractRemoved={() => {
+                        revalidateCacheTagAction(
+                          projectContractsCacheTag({
+                            teamId: props.teamId,
+                            projectId: props.projectId,
+                          }),
+                        );
+
                         setDeletedContractIds((v) => {
                           return [...v, contract.id];
                         });
@@ -300,6 +313,7 @@ const contractTypeToAssetTypeRecord: Record<string, string | undefined> = {
   DropERC20: "Coin",
   DropERC721: "NFT Collection",
   DropERC1155: "NFT Collection",
+  ERC20Asset: "Coin",
 };
 
 const NetworkFilterCell = React.memo(function NetworkFilterCell({

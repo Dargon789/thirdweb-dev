@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import Link from "next/link";
 import { useMemo } from "react";
-import type { Project } from "@/api/projects";
+import type { Project } from "@/api/project/projects";
 import { ThirdwebBarChart } from "@/components/blocks/charts/bar-chart";
 import { ExportToCSVButton } from "@/components/blocks/ExportToCSVButton";
 import { Button } from "@/components/ui/button";
@@ -108,10 +108,10 @@ export function TransactionsChartCardUI(props: {
       customHeader={
         <div className="relative px-6 pt-6">
           <h3 className="mb-0.5 font-semibold text-xl tracking-tight">
-            Daily Transactions
+            Transactions
           </h3>
           <p className="text-muted-foreground text-sm">
-            Amount of daily transactions by chain.
+            transactions broken down by chain
           </p>
 
           <div className="top-6 right-6 mb-8 grid grid-cols-2 items-center gap-2 md:absolute md:mb-0 md:flex">
@@ -184,7 +184,7 @@ function EmptyChartContent(props: {
             <Button
               onClick={() => {
                 router.push(
-                  `/team/${props.teamSlug}/${props.project.slug}/vault`,
+                  `/team/${props.teamSlug}/${props.project.slug}/wallets/server-wallets/configuration`,
                 );
               }}
               variant="primary"
@@ -194,13 +194,7 @@ function EmptyChartContent(props: {
           </div>
         </>
       ) : (
-        <p className="flex items-center gap-2 rounded-full border bg-background px-3.5 py-1.5 text-sm">
-          <span className="!pointer-events-auto relative flex size-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
-            <span className="relative inline-flex size-2 rounded-full bg-primary" />
-          </span>
-          Waiting for transactions...
-        </p>
+        <p className="text-sm text-muted-foreground">No transactions found</p>
       )}
     </div>
   );

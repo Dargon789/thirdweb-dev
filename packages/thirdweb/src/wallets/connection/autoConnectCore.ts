@@ -28,7 +28,6 @@ type AutoConnectCoreProps = {
   connectOverride?: (
     walletOrFn: Wallet | (() => Promise<Wallet>),
   ) => Promise<Wallet | null>;
-  getInstalledWallets?: () => Wallet[];
   setLastAuthProvider?: (
     authProvider: AuthArgsType["strategy"],
     storage: AsyncStorage,
@@ -69,7 +68,6 @@ const _autoConnectCore = async ({
   createWalletFn,
   manager,
   connectOverride,
-  getInstalledWallets,
   setLastAuthProvider,
 }: AutoConnectCoreProps): Promise<boolean> => {
   const { wallets, onConnect } = props;
@@ -120,7 +118,13 @@ const _autoConnectCore = async ({
   // in that case, we default to the passed chain to connect to
   const lastConnectedChain =
     (await getLastConnectedChain(storage)) || props.chain;
-  const availableWallets = [...wallets, ...(getInstalledWallets?.() ?? [])];
+  const availableWallets = lastConnectedWalletIds.map((id) => {
+    const specifiedWallet = wallets.find((w) => w.id === id);
+    if (specifiedWallet) {
+      return specifiedWallet;
+    }
+    return createWalletFn(id as WalletId);
+  });
   const activeWallet =
     lastActiveWalletId &&
     (availableWallets.find((w) => w.id === lastActiveWalletId) ||
@@ -148,22 +152,12 @@ const _autoConnectCore = async ({
 
     try {
       // connected wallet could be activeWallet or smart wallet
-      const connectedWallet = await (connectOverride
+      await (connectOverride
         ? connectOverride(activeWallet)
         : manager.connect(activeWallet, {
             accountAbstraction: props.accountAbstraction,
             client: props.client,
           }));
-      if (connectedWallet) {
-        autoConnected = true;
-        try {
-          onConnect?.(connectedWallet);
-        } catch {
-          // ignore
-        }
-      } else {
-        manager.activeWalletConnectionStatusStore.setValue("disconnected");
-      }
     } catch (e) {
       if (e instanceof Error) {
         console.warn("Error auto connecting wallet:", e.message);
@@ -212,6 +206,20 @@ const _autoConnectCore = async ({
     });
   }
   manager.isAutoConnecting.setValue(false);
+
+  const connectedActiveWallet = manager.activeWalletStore.getValue();
+  const allConnectedWallets = manager.connectedWallets.getValue();
+  if (connectedActiveWallet) {
+    autoConnected = true;
+    try {
+      onConnect?.(connectedActiveWallet, allConnectedWallets);
+    } catch (e) {
+      console.error("Error calling onConnect callback:", e);
+    }
+  } else {
+    manager.activeWalletConnectionStatusStore.setValue("disconnected");
+  }
+
   return autoConnected; // useQuery needs a return value
 };
 

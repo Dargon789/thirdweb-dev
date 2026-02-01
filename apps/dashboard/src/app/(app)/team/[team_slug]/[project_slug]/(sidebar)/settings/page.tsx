@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
-import { getProject } from "@/api/projects";
-import { getTeams } from "@/api/team";
-import { getMemberByAccountId } from "@/api/team-members";
+import { getValidAccount } from "@/api/account/get-account";
+import { getAuthToken } from "@/api/auth-token";
+import { getProject } from "@/api/project/projects";
+import { getTeams } from "@/api/team/get-team";
+import { getMemberByAccountId } from "@/api/team/team-members";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
-import { getAuthToken } from "../../../../../../../@/api/auth-token";
-import { getValidAccount } from "../../../../../account/settings/getAccount";
-import { loginRedirect } from "../../../../../login/loginRedirect";
+import { loginRedirect } from "@/utils/redirects";
 import { ProjectGeneralSettingsPage } from "./ProjectGeneralSettingsPage";
 
 export default async function Page(props: {

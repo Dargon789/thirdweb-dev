@@ -8,17 +8,28 @@ export type {
 } from "../react/core/design-system/index.js";
 // theme
 export { darkTheme, lightTheme } from "../react/core/design-system/index.js";
+// auth
+export type { SiweAuthOptions } from "../react/core/hooks/auth/useSiweAuth.js";
+export { useSiweAuth } from "../react/core/hooks/auth/useSiweAuth.js";
 export type {
   ConnectButton_connectButtonOptions,
   ConnectButton_connectModalOptions,
   ConnectButton_detailsButtonOptions,
   ConnectButton_detailsModalOptions,
   ConnectButtonProps,
+  DirectPaymentOptions,
+  FundWalletOptions,
+  PaymentInfo,
+  PayUIOptions,
+  TransactionOptions,
 } from "../react/core/hooks/connection/ConnectButtonProps.js";
+export type { ConnectEmbedProps } from "../react/core/hooks/connection/ConnectEmbedProps.js";
+export type { OnConnectCallback } from "../react/core/hooks/connection/types.js";
 export { useContractEvents } from "../react/core/hooks/contract/useContractEvents.js";
 // contract
 export { useReadContract } from "../react/core/hooks/contract/useReadContract.js";
 export { useWaitForReceipt } from "../react/core/hooks/contract/useWaitForReceipt.js";
+export { useInvalidateBalances } from "../react/core/hooks/others/useInvalidateBalances.js";
 export { useInvalidateContractQuery } from "../react/core/hooks/others/useInvalidateQueries.js";
 export { useWalletBalance } from "../react/core/hooks/others/useWalletBalance.js";
 export {
@@ -56,7 +67,7 @@ export {
 export type { TransactionButtonProps } from "../react/core/hooks/transaction/transaction-button-utils.js";
 export { useEstimateGas } from "../react/core/hooks/transaction/useEstimateGas.js";
 export { useEstimateGasCost } from "../react/core/hooks/transaction/useEstimateGasCost.js";
-export { useSendAndConfirmTransaction } from "../react/core/hooks/transaction/useSendAndConfirmTransaction.js";
+export { useSendAndConfirmTransactionCore as useSendAndConfirmTransaction } from "../react/core/hooks/transaction/useSendAndConfirmTransaction.js";
 export { useSendBatchTransaction } from "../react/core/hooks/transaction/useSendBatchTransaction.js";
 // transaction
 export type {
@@ -69,6 +80,7 @@ export { useActiveAccount } from "../react/core/hooks/wallets/useActiveAccount.j
 export { useActiveWallet } from "../react/core/hooks/wallets/useActiveWallet.js";
 export { useActiveWalletChain } from "../react/core/hooks/wallets/useActiveWalletChain.js";
 export { useActiveWalletConnectionStatus } from "../react/core/hooks/wallets/useActiveWalletConnectionStatus.js";
+export { useAddConnectedWallet } from "../react/core/hooks/wallets/useAddConnectedWallet.js";
 export { useAdminWallet } from "../react/core/hooks/wallets/useAdminWallet.js";
 export { useAuthToken } from "../react/core/hooks/wallets/useAuthToken.js";
 // eip5792
@@ -102,6 +114,11 @@ export { useAutoConnect } from "../react/native/hooks/wallets/useAutoConnect.js"
 export { useLinkProfile } from "../react/native/hooks/wallets/useLinkProfile.js";
 export { useProfiles } from "../react/native/hooks/wallets/useProfiles.js";
 export { useUnlinkProfile } from "../react/native/hooks/wallets/useUnlinkProfile.js";
+// x402
+export {
+  type UseFetchWithPaymentOptions,
+  useFetchWithPayment,
+} from "../react/native/hooks/x402/useFetchWithPayment.js";
 export { ThirdwebProvider } from "../react/native/providers/thirdweb-provider.js";
 // Components
 export { AutoConnect } from "../react/native/ui/AutoConnect/AutoConnect.js";

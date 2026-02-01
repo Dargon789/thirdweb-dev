@@ -8,10 +8,11 @@ import { getContractMetadata } from "../../../../../../extensions/common/read/ge
 import { getNFT } from "../../../../../../extensions/erc1155/read/getNFT.js";
 import type { PreparedTransaction } from "../../../../../../transaction/prepare-transaction.js";
 import type { BaseTransactionOptions } from "../../../../../../transaction/types.js";
+import { isString } from "../../../../../../utils/type-guards.js";
 import type { Account } from "../../../../../../wallets/interfaces/wallet.js";
 import { useReadContract } from "../../../../../core/hooks/contract/useReadContract.js";
-import { useSendAndConfirmTransaction } from "../../../../../core/hooks/transaction/useSendAndConfirmTransaction.js";
 import { useActiveAccount } from "../../../../../core/hooks/wallets/useActiveAccount.js";
+import { useSendAndConfirmTransaction } from "../../../../hooks/transaction/useSendAndConfirmTransaction.js";
 import { TransactionButton } from "../../../TransactionButton/index.js";
 import type {
   ClaimButtonProps,
@@ -126,7 +127,15 @@ export function ClaimButton(props: ClaimButtonProps) {
     tokenId: claimParams.type === "ERC1155" ? claimParams.tokenId : undefined,
   });
   const account = useActiveAccount();
-  const { mutateAsync } = useSendAndConfirmTransaction();
+  const { mutateAsync } = useSendAndConfirmTransaction({
+    payModal:
+      typeof payModal === "object"
+        ? {
+            ...payModal,
+            metadata: payModal.metadata || payMetadata,
+          }
+        : payModal,
+  });
   return (
     <TransactionButton
       payModal={{
@@ -183,8 +192,10 @@ async function getPayMetadata(
     };
   }
   return {
-    image: contractMetadata?.image,
-    name: contractMetadata?.name,
+    image: isString(contractMetadata?.image)
+      ? contractMetadata.image
+      : undefined,
+    name: isString(contractMetadata?.name) ? contractMetadata.name : undefined,
   };
 }
 

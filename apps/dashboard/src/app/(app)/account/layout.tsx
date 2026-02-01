@@ -1,20 +1,17 @@
 import type React from "react";
 import type { ThirdwebClient } from "thirdweb";
-import { getProjects } from "@/api/projects";
-import { getTeams, type Team } from "@/api/team";
+import { getValidAccount } from "@/api/account/get-account";
+import { getAuthToken, getAuthTokenWalletAddress } from "@/api/auth-token";
+import { getProjects } from "@/api/project/projects";
+import { getTeams, type Team } from "@/api/team/get-team";
 import { AppFooter } from "@/components/footers/app-footer";
 import { AnnouncementBanner } from "@/components/misc/AnnouncementBanner";
 import { TabPathLinks } from "@/components/ui/tabs";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
 import type { Account } from "@/hooks/useApi";
-import {
-  getAuthToken,
-  getAuthTokenWalletAddress,
-} from "../../../@/api/auth-token";
+import { loginRedirect } from "@/utils/redirects";
 import { TWAutoConnect } from "../components/autoconnect";
-import { loginRedirect } from "../login/loginRedirect";
 import { AccountHeader } from "./components/AccountHeader";
-import { getValidAccount } from "./settings/getAccount";
 
 export default async function AccountLayout(props: {
   children: React.ReactNode;
@@ -80,6 +77,10 @@ async function HeaderAndNav(props: {
             exactMatch: true,
             name: "Overview",
             path: "/account",
+          },
+          {
+            name: "Rewind",
+            path: "/account/rewind",
           },
           {
             name: "Settings",

@@ -61,7 +61,7 @@ export type ConnectWalletSelectUIState =
       };
     };
 
-const defaultAuthOptions: AuthOption[] = [
+export const defaultAuthOptions: AuthOption[] = [
   "email",
   "phone",
   "google",
@@ -118,6 +118,8 @@ export const ConnectWalletSocialOptions = (
     telegram: "Telegram",
     twitch: "Twitch",
     x: "X",
+    tiktok: "TikTok",
+    epic: "Epic",
   };
 
   const { data: ecosystemAuthOptions, isLoading } = useQuery({
@@ -357,6 +359,7 @@ export const ConnectWalletSocialOptions = (
                 })();
                 return (
                   <SocialButton
+                    className="tw-social-button"
                     aria-label={`Login with ${loginMethod}`}
                     data-variant={showOnlyIcons ? "icon" : "full"}
                     disabled={props.disabled}
@@ -393,6 +396,7 @@ export const ConnectWalletSocialOptions = (
       {isEmailEnabled &&
         (inputMode === "email" ? (
           <InputSelectionUI
+            className="tw-input-container tw-input-container__email"
             disabled={props.disabled}
             emptyErrorMessage={emptyErrorMessage}
             errorMessage={(input) => {
@@ -413,6 +417,7 @@ export const ConnectWalletSocialOptions = (
           />
         ) : (
           <WalletTypeRowButton
+            className="tw-select-button tw-select-button__email"
             client={props.client}
             disabled={props.disabled}
             icon={EmailIcon}
@@ -425,6 +430,7 @@ export const ConnectWalletSocialOptions = (
       {isPhoneEnabled &&
         (inputMode === "phone" ? (
           <InputSelectionUI
+            className="tw-input-container tw-input-container__phone"
             allowedSmsCountryCodes={
               wallet.getConfig()?.auth?.allowedSmsCountryCodes
             }
@@ -457,6 +463,7 @@ export const ConnectWalletSocialOptions = (
           />
         ) : (
           <WalletTypeRowButton
+            className="tw-select-button tw-select-button__phone"
             client={props.client}
             disabled={props.disabled}
             icon={PhoneIcon}
@@ -469,6 +476,7 @@ export const ConnectWalletSocialOptions = (
 
       {passKeyEnabled && (
         <WalletTypeRowButton
+          className="tw-select-button tw-select-button__passkey"
           client={props.client}
           disabled={props.disabled}
           icon={FingerPrintIcon}
@@ -482,6 +490,7 @@ export const ConnectWalletSocialOptions = (
       {/* SIWE login */}
       {siweEnabled && !props.isLinking && (
         <WalletTypeRowButton
+          className="tw-select-button tw-select-button__link-wallet"
           client={props.client}
           icon={OutlineWalletIcon}
           onClick={() => {
@@ -494,6 +503,7 @@ export const ConnectWalletSocialOptions = (
       {/* Guest login */}
       {guestEnabled && (
         <WalletTypeRowButton
+          className="tw-select-button tw-select-button__guest"
           client={props.client}
           disabled={props.disabled}
           icon={GuestIcon}
@@ -506,6 +516,7 @@ export const ConnectWalletSocialOptions = (
 
       {props.isLinking && (
         <WalletTypeRowButton
+          className="tw-select-button tw-select-button__link-wallet"
           client={props.client}
           icon={OutlineWalletIcon}
           onClick={() => {

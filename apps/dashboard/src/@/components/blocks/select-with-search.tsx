@@ -10,7 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollShadow } from "@/components/ui/ScrollShadow/ScrollShadow";
+import { ScrollShadow } from "@/components/ui/ScrollShadow";
 import { useShowMore } from "@/hooks/useShowMore";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +22,7 @@ interface SelectWithSearchProps
   }[];
   value: string | undefined;
   onValueChange: (value: string) => void;
-  placeholder: string;
+  placeholder: string | React.ReactNode;
   searchPlaceholder?: string;
   className?: string;
   overrideSearchFn?: (
@@ -125,7 +125,7 @@ export const SelectWithSearch = React.forwardRef<
                   ? renderOption(selectedOption)
                   : selectedOption?.label || placeholder}
               </span>
-              <ChevronDownIcon className="size-4 cursor-pointer text-muted-foreground" />
+              <ChevronDownIcon className="size-3.5 cursor-pointer text-muted-foreground shrink-0" />
             </div>
           </Button>
         </PopoverTrigger>

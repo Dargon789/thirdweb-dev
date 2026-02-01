@@ -6,8 +6,8 @@ import { EllipsisIcon, MailIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { ThirdwebClient } from "thirdweb";
-import type { Team } from "@/api/team";
-import type { TeamInvite } from "@/api/team-invites";
+import type { Team } from "@/api/team/get-team";
+import type { TeamInvite } from "@/api/team/team-invites";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { BASE_URL } from "@/constants/env-utils";
 import {
   FiltersSection,

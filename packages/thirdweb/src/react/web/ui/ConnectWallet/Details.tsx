@@ -179,6 +179,7 @@ export const ConnectedWalletDetails: React.FC<{
         supportedNFTs={props.supportedNFTs}
         supportedTokens={props.supportedTokens}
         theme={props.theme}
+        showBalanceInFiat={props.detailsButton?.showBalanceInFiat}
       />,
     );
   }
@@ -571,6 +572,7 @@ export function DetailsModal(props: {
           <Container px="lg">
             {/* Send, Receive, Swap */}
             <Container
+              className="tw-highlight-buttons"
               style={{
                 display: "flex",
                 gap: spacing.xs,
@@ -578,6 +580,7 @@ export function DetailsModal(props: {
             >
               {!hideSendFunds && (
                 <Button
+                  className="tw-highlight-button__send"
                   onClick={() => {
                     setScreen("send");
                   }}
@@ -607,6 +610,7 @@ export function DetailsModal(props: {
 
               {!hideReceiveFunds && (
                 <Button
+                  className="tw-highlight-button__receive"
                   onClick={() => {
                     setScreen("receive");
                   }}
@@ -631,6 +635,7 @@ export function DetailsModal(props: {
                 chainMetadataQuery.data &&
                 !chainMetadataQuery.data.testnet && (
                   <Button
+                    className="tw-highlight-button__buy"
                     onClick={() => {
                       trackPayEvent({
                         client: client,
@@ -681,6 +686,7 @@ export function DetailsModal(props: {
 
           {/* Transactions */}
           <MenuButton
+            className="tw-view-transactions-button"
             onClick={() => {
               setScreen("transactions");
             }}
@@ -698,6 +704,7 @@ export function DetailsModal(props: {
           {/* Hide the View Funds button if the assetTabs props is set to an empty array */}
           {(props.assetTabs === undefined || props.assetTabs.length > 0) && (
             <MenuButton
+              className="tw-view-assets-button"
               onClick={() => {
                 setScreen("view-assets");
               }}
@@ -712,6 +719,7 @@ export function DetailsModal(props: {
 
           {/* Manage Wallet */}
           <MenuButton
+            className="tw-manage-wallet-button"
             onClick={() => {
               setScreen("manage-wallet");
             }}
@@ -728,6 +736,7 @@ export function DetailsModal(props: {
             (chainFaucetsQuery.faucets.length > 0 ||
               walletChain?.id === LocalhostChainId) && (
               <MenuLink
+                className="tw-request-testnet-funds-button"
                 as="a"
                 href={
                   chainFaucetsQuery.faucets ? chainFaucetsQuery.faucets[0] : "#"
@@ -758,6 +767,7 @@ export function DetailsModal(props: {
           <Spacer y="sm" />
           <Container px="md">
             <MenuButton
+              className="tw-disconnect-wallet-button"
               data-variant="danger"
               onClick={() => {
                 if (activeWallet && activeAccount) {
@@ -898,6 +908,7 @@ export function DetailsModal(props: {
         onBack={() => {
           setScreen("main");
         }}
+        manageWallet={props.detailsModal?.manageWallet}
         setScreen={setScreen}
       />
     );
@@ -974,7 +985,7 @@ export function DetailsModal(props: {
         chain={getCachedChain(requestedChainId)}
         client={client}
         hiddenWallets={props.detailsModal?.hiddenWallets}
-        locale={locale.id}
+        connectOptions={props.connectOptions}
         onCancel={() => setScreen("main")}
         onSuccess={() => setScreen("main")}
         supportedTokens={props.supportedTokens}
@@ -997,7 +1008,12 @@ export function DetailsModal(props: {
       <WalletUIStatesProvider isOpen={false} theme={props.theme}>
         <ScreenSetupContext.Provider value={screenSetup}>
           <Modal
+            className="tw-modal__wallet-details"
+            title="Manage Wallet"
             open={isOpen}
+            crossContainerStyles={{
+              display: screen === "buy" ? "none" : "block",
+            }}
             setOpen={(_open) => {
               if (!_open) {
                 closeModal();
@@ -1039,7 +1055,7 @@ export function NetworkSwitcherButton(props: {
   }
   return (
     <MenuButton
-      className="tw-internal-network-switcher-button"
+      className="tw-internal-network-switcher-button tw-switch-network-button"
       data-variant="primary"
       disabled={disableSwitchChain}
       onClick={() => {
@@ -1153,12 +1169,12 @@ export function NetworkSwitcherButton(props: {
 const WalletInfoButton = /* @__PURE__ */ StyledButton((_) => {
   const theme = useCustomTheme();
   return {
+    all: "unset",
     "&:hover": {
       background: theme.colors.connectedButtonBgHover,
       transition: "background 250ms ease",
     },
     alignItems: "center",
-    all: "unset",
     animation: `${fadeInAnimation} 300ms ease`,
     background: theme.colors.connectedButtonBg,
     border: `1px solid ${theme.colors.borderColor}`,
@@ -1594,6 +1610,26 @@ export type UseWalletDetailsModalOptions = {
 
   /**
    * Render custom UI at the bottom of the Details Modal
+   * @param props - props passed to the footer component which includes a function to close the modal
+   * @example
+   * ```tsx
+   * function Example() {
+   *   const detailsModal = useWalletDetailsModal();
+   *
+   *   return (
+   *     <button onClick={() => detailsModal.open({
+   *       client,
+   *       footer: CustomFooter,
+   *     })}>
+   *         wallet details
+   *     </button>
+   *   )
+   * }
+   *
+   * function CustomFooter(props: { close: () => void }) {
+   *   return <div> ... </div>
+   * }
+   * ```
    */
   footer?: (props: { close: () => void }) => JSX.Element;
 
@@ -1654,6 +1690,11 @@ export type UseWalletDetailsModalOptions = {
   hideBuyFunds?: boolean;
 
   /**
+   * All wallet IDs included in this array will be hidden from wallet selection when connected.
+   */
+  hiddenWallets?: WalletId[];
+
+  /**
    * When you click on "View Assets", by default the "Tokens" tab is shown first.
    * If you want to show the "NFTs" tab first, change the order of the asset tabs to: ["nft", "token"]
    * Note: If an empty array is passed, the [View Funds] button will be hidden
@@ -1665,6 +1706,18 @@ export type UseWalletDetailsModalOptions = {
    * Note: Not all tokens are resolvable to a fiat value. In that case, nothing will be shown.
    */
   showBalanceInFiat?: SupportedFiatCurrency;
+
+  /**
+   * Configure options for managing the connected wallet.
+   */
+  manageWallet?: {
+    /**
+     * Allow linking other profiles to the connected wallet.
+     *
+     * By default it is `true`.
+     */
+    allowLinkingProfiles?: boolean;
+  };
 
   /**
    * The callback function for when the modal is closed
@@ -1729,6 +1782,9 @@ export function useWalletDetailsModal() {
             closeModal={closeModal}
             connectOptions={props.connectOptions}
             detailsModal={{
+              showBalanceInFiat: props.showBalanceInFiat,
+              hiddenWallets: props.hiddenWallets,
+              manageWallet: props.manageWallet,
               assetTabs: props.assetTabs,
               connectedAccountAvatarUrl: props.connectedAccountAvatarUrl,
               connectedAccountName: props.connectedAccountName,

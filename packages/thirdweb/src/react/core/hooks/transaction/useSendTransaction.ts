@@ -6,10 +6,14 @@ import * as Bridge from "../../../../bridge/index.js";
 import type { Chain } from "../../../../chains/types.js";
 import type { BuyWithCryptoStatus } from "../../../../pay/buyWithCrypto/getStatus.js";
 import type { BuyWithFiatStatus } from "../../../../pay/buyWithFiat/getStatus.js";
+import type { SupportedFiatCurrency } from "../../../../pay/convert/type.js";
 import type { PurchaseData } from "../../../../pay/types.js";
 import type { FiatProvider } from "../../../../pay/utils/commonTypes.js";
 import type { GaslessOptions } from "../../../../transaction/actions/gasless/types.js";
-import { sendTransaction } from "../../../../transaction/actions/send-transaction.js";
+import {
+  type SendTransactionOptions,
+  sendTransaction,
+} from "../../../../transaction/actions/send-transaction.js";
 import type { WaitForReceiptOptions } from "../../../../transaction/actions/wait-for-tx-receipt.js";
 import type { PreparedTransaction } from "../../../../transaction/prepare-transaction.js";
 import { getTransactionGasCost } from "../../../../transaction/utils.js";
@@ -87,6 +91,15 @@ export type SendTransactionPayModalConfig =
             },
       ) => void;
       showThirdwebBranding?: boolean;
+      /**
+       * The user's ISO 3166 alpha-2 country code. This is used to determine onramp provider support.
+       */
+      country?: string;
+      /**
+       * The currency to use for showing the fiat values
+       * @default "USD"
+       */
+      currency?: SupportedFiatCurrency;
     }
   | false;
 
@@ -132,7 +145,11 @@ export function useSendTransactionCore(args: {
   gasless?: GaslessOptions;
   wallet: Wallet | undefined;
   switchChain: (chain: Chain) => Promise<void>;
-}): UseMutationResult<WaitForReceiptOptions, Error, PreparedTransaction> {
+}): UseMutationResult<
+  WaitForReceiptOptions,
+  Error,
+  SendTransactionOptions["transaction"]
+> {
   const { showPayModal, gasless, wallet, switchChain } = args;
   let _account = wallet?.getAccount();
 
@@ -143,6 +160,11 @@ export function useSendTransactionCore(args: {
         await switchChain(tx.chain);
         // in smart wallet case, account may change after chain switch
         _account = wallet.getAccount();
+
+        // ensure that the account has switched to the correct chain
+        if (wallet.getChain()?.id !== tx.chain.id) {
+          throw new Error(`Could not switch to chain ${tx.chain.id}`);
+        }
       }
 
       const account = _account;
@@ -231,10 +253,10 @@ export function useSendTransactionCore(args: {
               (nativeCost > 0n && nativeBalance.value < nativeCost);
 
             if (shouldShowModal) {
-              const supportedDestinations = await Bridge.routes({
+              const tokens = await Bridge.tokens({
                 client: tx.client,
-                destinationChainId: tx.chain.id,
-                destinationTokenAddress: _erc20Value?.tokenAddress,
+                chainId: tx.chain.id,
+                tokenAddress: _erc20Value?.tokenAddress,
               }).catch((err) => {
                 trackPayEvent({
                   client: tx.client,
@@ -247,11 +269,8 @@ export function useSendTransactionCore(args: {
                 return null;
               });
 
-              if (
-                !supportedDestinations ||
-                supportedDestinations.length === 0
-              ) {
-                // not a supported destination -> show deposit screen
+              if (!tokens || tokens.length === 0) {
+                // not a supported token -> show deposit screen
                 trackPayEvent({
                   client: tx.client,
                   error: JSON.stringify({

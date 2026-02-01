@@ -34,12 +34,20 @@ function AccountAbstractionSummaryInner(props: {
 
 async function AsyncAccountAbstractionSummary(props: {
   teamId: string;
-  projectId: string;
+  projectId?: string;
+  authToken: string;
+  from?: Date;
+  to?: Date;
 }) {
-  const aggregateUserOpStats = await getAggregateUserOpUsage({
-    projectId: props.projectId,
-    teamId: props.teamId,
-  });
+  const aggregateUserOpStats = await getAggregateUserOpUsage(
+    {
+      projectId: props.projectId,
+      teamId: props.teamId,
+      from: props.from,
+      to: props.to,
+    },
+    props.authToken,
+  );
 
   return (
     <AccountAbstractionSummaryInner
@@ -51,7 +59,10 @@ async function AsyncAccountAbstractionSummary(props: {
 
 export function AccountAbstractionSummary(props: {
   teamId: string;
-  projectId: string;
+  projectId?: string;
+  authToken: string;
+  from?: Date;
+  to?: Date;
 }) {
   return (
     <Suspense
@@ -65,6 +76,9 @@ export function AccountAbstractionSummary(props: {
       <AsyncAccountAbstractionSummary
         projectId={props.projectId}
         teamId={props.teamId}
+        authToken={props.authToken}
+        from={props.from}
+        to={props.to}
       />
     </Suspense>
   );

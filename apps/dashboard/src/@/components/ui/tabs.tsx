@@ -6,7 +6,7 @@ import { useCallback, useRef, useState } from "react";
 import { useIsomorphicLayoutEffect } from "@/lib/useIsomorphicLayoutEffect";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
-import { ScrollShadow } from "./ScrollShadow/ScrollShadow";
+import { ScrollShadow } from "./ScrollShadow";
 import { ToolTipLabel } from "./tooltip";
 
 export type TabLink = {
@@ -56,7 +56,7 @@ export function TabLinks(props: {
                 <Link
                   aria-disabled={tab.isDisabled}
                   className={cn(
-                    "relative h-auto rounded-lg px-3 font-normal text-muted-foreground text-sm hover:bg-accent lg:text-sm",
+                    "relative inline-flex h-auto items-center gap-1.5 rounded-lg font-medium hover:bg-accent !px-3",
                     !tab.isActive && !tab.isDisabled && "hover:text-foreground",
                     tab.isDisabled && "pointer-events-none",
                     tab.isActive && "!text-foreground",
@@ -98,6 +98,7 @@ export function TabButtons(props: {
   shadowColor?: string;
   tabIconClassName?: string;
   hideBottomLine?: boolean;
+  bottomLineClassName?: string;
 }) {
   const { containerRef, lineRef, activeTabRef } =
     useUnderline<HTMLButtonElement>();
@@ -106,7 +107,12 @@ export function TabButtons(props: {
     <div className={cn("relative", props.containerClassName)}>
       {/* Bottom line */}
       {!props.hideBottomLine && (
-        <div className="absolute right-0 bottom-0 left-0 h-[1px] bg-border" />
+        <div
+          className={cn(
+            "absolute right-0 bottom-0 left-0 h-[1px] bg-border",
+            props.bottomLineClassName,
+          )}
+        />
       )}
 
       <ScrollShadow
@@ -125,7 +131,7 @@ export function TabButtons(props: {
               >
                 <Button
                   className={cn(
-                    "relative inline-flex h-auto items-center gap-1.5 rounded-lg px-2 font-medium text-sm hover:bg-accent lg:px-3 lg:text-base",
+                    "relative inline-flex h-auto items-center gap-1.5 rounded-lg font-medium hover:bg-accent !px-3",
                     !tab.isActive &&
                       "text-muted-foreground hover:text-foreground",
                     tab.isDisabled && "cursor-not-allowed opacity-50",
@@ -210,14 +216,16 @@ function useUnderline<El extends HTMLElement>() {
   return { activeTabRef, containerRef, lineRef };
 }
 
+export type TabPathLink = {
+  name: React.ReactNode;
+  path: string;
+  exactMatch?: boolean;
+  isDisabled?: boolean;
+  isActive?: (pathname: string) => boolean;
+};
+
 export function TabPathLinks(props: {
-  links: {
-    name: React.ReactNode;
-    path: string;
-    exactMatch?: boolean;
-    isDisabled?: boolean;
-    isActive?: (pathname: string) => boolean;
-  }[];
+  links: TabPathLink[];
   className?: string;
   tabContainerClassName?: string;
   shadowColor?: string;

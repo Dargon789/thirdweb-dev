@@ -1,9 +1,13 @@
-import type { EIP1193Provider } from "viem";
+import * as ox__Authorization from "ox/Authorization";
+import * as ox__Signature from "ox/Signature";
 import {
+  type EIP1193Provider,
   getTypesForEIP712Domain,
   type SignTypedDataParameters,
   serializeTypedData,
+  stringify,
   validateTypedData,
+  withTimeout,
 } from "viem";
 import { isInsufficientFundsError } from "../../analytics/track/helpers.js";
 import {
@@ -13,6 +17,7 @@ import {
 import type { Chain } from "../../chains/types.js";
 import { getCachedChain, getChainMetadata } from "../../chains/utils.js";
 import type { ThirdwebClient } from "../../client/client.js";
+import type { AuthorizationRequest } from "../../transaction/actions/eip7702/authorization.js";
 import { getAddress } from "../../utils/address.js";
 import {
   type Hex,
@@ -22,6 +27,10 @@ import {
 } from "../../utils/encoding/hex.js";
 import { parseTypedData } from "../../utils/signatures/helpers/parse-typed-data.js";
 import type { InjectedSupportedWalletIds } from "../__generated__/wallet-ids.js";
+import { toGetCallsStatusResponse } from "../eip5792/get-calls-status.js";
+import { toGetCapabilitiesResult } from "../eip5792/get-capabilities.js";
+import { toProviderCallParams } from "../eip5792/send-calls.js";
+import type { GetCallsStatusRawResponse } from "../eip5792/types.js";
 import type { Account, SendTransactionOption } from "../interfaces/wallet.js";
 import type { DisconnectFn, SwitchChainFn } from "../types.js";
 import { getValidPublicRPCUrl } from "../utils/chains.js";
@@ -180,7 +189,7 @@ function createAccount({
     async sendTransaction(tx: SendTransactionOption) {
       const gasFees = tx.gasPrice
         ? {
-            gasPrice: tx.gasPrice ? numberToHex(tx.gasPrice) : undefined,
+            gasPrice: numberToHex(tx.gasPrice),
           }
         : {
             maxFeePerGas: tx.maxFeePerGas
@@ -193,13 +202,16 @@ function createAccount({
       const params = [
         {
           ...gasFees,
-          accessList: tx.accessList,
-          data: tx.data,
           from: this.address,
           gas: tx.gas ? numberToHex(tx.gas) : undefined,
           nonce: tx.nonce ? numberToHex(tx.nonce) : undefined,
           to: tx.to ? getAddress(tx.to) : undefined,
+          data: tx.data,
           value: tx.value ? numberToHex(tx.value) : undefined,
+          authorizationList: tx.authorizationList
+            ? ox__Authorization.toRpcList(tx.authorizationList)
+            : undefined,
+          accessList: tx.accessList,
           ...tx.eip712,
         },
       ];
@@ -260,6 +272,28 @@ function createAccount({
         params: [messageToSign, getAddress(account.address)],
       });
     },
+    async signAuthorization(authorization: AuthorizationRequest) {
+      const payload = ox__Authorization.getSignPayload(authorization);
+      let signature: Hex | undefined;
+      try {
+        signature = await provider.request({
+          method: "eth_sign",
+          params: [getAddress(account.address), payload],
+        });
+      } catch {
+        // fallback to secp256k1_sign, some providers don't support eth_sign
+        signature = await provider.request({
+          // @ts-expect-error - overriding types here
+          method: "secp256k1_sign",
+          params: [payload],
+        });
+      }
+      if (!signature) {
+        throw new Error("Failed to sign authorization");
+      }
+      const parsedSignature = ox__Signature.fromHex(signature as Hex);
+      return { ...authorization, ...parsedSignature };
+    },
     async signTypedData(typedData) {
       if (!provider || !account.address) {
         throw new Error("Provider not setup");
@@ -300,6 +334,67 @@ function createAccount({
       );
       return result;
     },
+    async sendCalls(options) {
+      try {
+        const { callParams, chain } = await toProviderCallParams(
+          options,
+          account,
+        );
+        const callId = await provider.request({
+          method: "wallet_sendCalls",
+          params: callParams,
+        });
+        if (callId && typeof callId === "object" && "id" in callId) {
+          return { chain, client, id: callId.id };
+        }
+        return { chain, client, id: callId };
+      } catch (error) {
+        if (/unsupport|not support/i.test((error as Error).message)) {
+          throw new Error(
+            `${id} errored calling wallet_sendCalls, with error: ${error instanceof Error ? error.message : stringify(error)}`,
+          );
+        }
+        throw error;
+      }
+    },
+    async getCallsStatus(options) {
+      try {
+        const rawResponse = (await provider.request({
+          method: "wallet_getCallsStatus",
+          params: [options.id],
+        })) as GetCallsStatusRawResponse;
+        return toGetCallsStatusResponse(rawResponse);
+      } catch (error) {
+        if (/unsupport|not support/i.test((error as Error).message)) {
+          throw new Error(
+            `${id} does not support wallet_getCallsStatus, reach out to them directly to request EIP-5792 support.`,
+          );
+        }
+        throw error;
+      }
+    },
+    async getCapabilities(options) {
+      const chainIdFilter = options.chainId;
+      try {
+        const result = await provider.request({
+          method: "wallet_getCapabilities",
+          params: [
+            getAddress(account.address),
+            chainIdFilter ? [numberToHex(chainIdFilter)] : undefined,
+          ],
+        });
+        return toGetCapabilitiesResult(result, chainIdFilter);
+      } catch (error: unknown) {
+        if (
+          /unsupport|not support|not available/i.test((error as Error).message)
+        ) {
+          return {
+            message: `${id} does not support wallet_getCapabilities, reach out to them directly to request EIP-5792 support.`,
+          };
+        }
+        throw error;
+      }
+    },
   };
 
   return account;
@@ -329,6 +424,20 @@ async function onConnect({
     provider.removeListener("accountsChanged", onAccountsChanged);
     provider.removeListener("chainChanged", onChainChanged);
     provider.removeListener("disconnect", onDisconnect);
+
+    // Experimental support for MetaMask disconnect
+    // https://github.com/MetaMask/metamask-improvement-proposals/blob/main/MIPs/mip-2.md
+    try {
+      // Adding timeout as not all wallets support this method and can hang
+      await withTimeout(
+        () =>
+          provider.request({
+            method: "wallet_revokePermissions",
+            params: [{ eth_accounts: {} }],
+          }),
+        { timeout: 100 },
+      );
+    } catch {}
   }
 
   async function onDisconnect() {

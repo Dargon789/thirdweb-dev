@@ -1,6 +1,6 @@
-import type { Project } from "@/api/projects";
-import type { Team } from "@/api/team";
-import type { TeamSubscription } from "@/api/team-subscription";
+import type { Project } from "@/api/project/projects";
+import type { Team } from "@/api/team/get-team";
+import type { TeamSubscription } from "@/api/team/team-subscription";
 import type { Account } from "@/hooks/useApi";
 
 export function projectStub(id: string, teamId: string) {
@@ -30,6 +30,7 @@ export function teamStub(id: string, billingPlan: Team["billingPlan"]): Team {
     billingPlan: billingPlan,
     billingStatus: "validPayment",
     canCreatePublicChains: null,
+    isLegacyPlan: false,
     capabilities: {
       bundler: {
         enabled: true,
@@ -57,7 +58,10 @@ export function teamStub(id: string, billingPlan: Team["billingPlan"]): Team {
       },
       nebula: {
         enabled: true,
-        rateLimit: 1000,
+        rateLimit: {
+          perSecond: 1000,
+          perMinute: 1000,
+        },
       },
       pay: {
         enabled: true,
@@ -71,6 +75,12 @@ export function teamStub(id: string, billingPlan: Team["billingPlan"]): Team {
       rpc: {
         enabled: true,
         rateLimit: 1000,
+        websockets: {
+          enabled: false,
+          reasonCode: "enterprise_plan_required",
+          maxConnections: 0,
+          maxSubscriptions: 0,
+        },
       },
       storage: {
         download: {
@@ -81,6 +91,14 @@ export function teamStub(id: string, billingPlan: Team["billingPlan"]): Team {
           rateLimit: 1000,
           totalFileSizeBytesLimit: 1_000_000_000,
         },
+      },
+      mcp: {
+        enabled: true,
+        rateLimit: 10,
+      },
+      gateway: {
+        enabled: true,
+        rateLimit: 1000,
       },
     },
     createdAt: new Date().toISOString(),
@@ -231,7 +249,7 @@ export function teamSubscriptionsStub(
           // In-App Wallets
           {
             amount: usage.inAppWalletAmount?.amount || 0,
-            description: `${usage.inAppWalletAmount?.quantity || 0} x In-App Wallets (Tier 1 at $0.00 / month)`,
+            description: `${usage.inAppWalletAmount?.quantity || 0} x User Wallets (Tier 1 at $0.00 / month)`,
             thirdwebSku: "usage:in_app_wallet",
           },
           // AA Sponsorship
@@ -261,4 +279,33 @@ export function newAccountStub(overrides?: Partial<Account>): Account {
     name: undefined,
     ...overrides,
   };
+}
+
+export function randomLorem(length: number) {
+  const loremWords = [
+    "lorem",
+    "ipsum",
+    "dolor",
+    "sit",
+    "amet",
+    "consectetur",
+    "adipiscing",
+    "elit",
+    "sed",
+    "do",
+    "eiusmod",
+    "tempor",
+    "incididunt",
+    "ut",
+    "labore",
+    "et",
+    "dolore",
+    "magna",
+    "aliqua",
+  ];
+
+  return Array.from({ length }, () => {
+    const randomIndex = Math.floor(Math.random() * loremWords.length);
+    return loremWords[randomIndex];
+  }).join(" ");
 }

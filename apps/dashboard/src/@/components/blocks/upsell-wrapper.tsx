@@ -1,9 +1,9 @@
 "use client";
 
-import { CrownIcon, LockIcon, SparklesIcon } from "lucide-react";
+import { CrownIcon, LockIcon } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
-import type { Team } from "@/api/team";
+import type { Team } from "@/api/team/get-team";
 import { TeamPlanBadge } from "@/components/blocks/TeamPlanBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ interface UpsellWrapperProps {
   isLocked?: boolean;
   requiredPlan: Team["billingPlan"];
   currentPlan?: Team["billingPlan"];
+  isLegacyPlan?: boolean;
   featureName: string;
   featureDescription: string;
   benefits?: {
@@ -41,6 +42,7 @@ export function UpsellWrapper({
   featureDescription,
   benefits = [],
   className,
+  isLegacyPlan = false,
 }: UpsellWrapperProps) {
   if (!isLocked) {
     return <>{children}</>;
@@ -66,6 +68,7 @@ export function UpsellWrapper({
           featureDescription={featureDescription}
           featureName={featureName}
           requiredPlan={requiredPlan}
+          isLegacyPlan={isLegacyPlan}
           teamSlug={teamSlug}
         />
       </div>
@@ -79,6 +82,7 @@ export function UpsellContent(props: {
   featureDescription: string;
   requiredPlan: Team["billingPlan"];
   currentPlan: Team["billingPlan"];
+  isLegacyPlan: boolean;
   benefits?: {
     description: string;
     status: "available" | "soon";
@@ -96,6 +100,7 @@ export function UpsellContent(props: {
             plan={props.requiredPlan}
             postfix=" Feature"
             teamSlug={props.teamSlug}
+            isLegacyPlan={props.isLegacyPlan}
           />
           <div className="space-y-1">
             <CardTitle className="font-bold text-2xl text-foreground md:text-3xl">
@@ -111,18 +116,15 @@ export function UpsellContent(props: {
       <CardContent className="space-y-6">
         {props.benefits && props.benefits.length > 0 && (
           <div className="space-y-3">
-            <h4 className="font-semibold text-muted-foreground text-sm uppercase tracking-wide">
-              What you'll get:
+            <h4 className="font-semibold text-foreground text-sm capitalize text-center">
+              What you'll get
             </h4>
-            <div className="grid gap-2">
+            <div className="grid gap-1.5">
               {props.benefits.map((benefit) => (
                 <div
-                  className="flex items-center gap-3"
+                  className="flex items-center justify-center gap-3 text-center text-balance"
                   key={benefit.description}
                 >
-                  <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-accent">
-                    <SparklesIcon className="h-3 w-3 text-success-text" />
-                  </div>
                   <span className="text-sm">{benefit.description}</span>
                   {benefit.status === "soon" && (
                     <Badge className="text-xs" variant="secondary">

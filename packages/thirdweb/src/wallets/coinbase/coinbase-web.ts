@@ -14,8 +14,16 @@ import {
   stringToHex,
   uint8ArrayToHex,
 } from "../../utils/encoding/hex.js";
+import { stringify } from "../../utils/json.js";
 import { parseTypedData } from "../../utils/signatures/helpers/parse-typed-data.js";
 import { COINBASE } from "../constants.js";
+import { toGetCallsStatusResponse } from "../eip5792/get-calls-status.js";
+import { toGetCapabilitiesResult } from "../eip5792/get-capabilities.js";
+import { toProviderCallParams } from "../eip5792/send-calls.js";
+import type {
+  GetCallsStatusRawResponse,
+  WalletCapabilities,
+} from "../eip5792/types.js";
 import type {
   Account,
   SendTransactionOption,
@@ -180,7 +188,17 @@ function createAccount({
     onTransactionRequested: async () => {
       // make sure to show the coinbase popup BEFORE doing any transaction preprocessing
       // otherwise the popup might get blocked in safari
-      await showCoinbasePopup(provider);
+      // but only if using cb smart wallet (web based)
+      if (window.localStorage) {
+        // this is the local storage key for the signer type in the cb web sdk
+        // value can be "scw" (web) or "walletlink" (mobile wallet)
+        const signerType = window.localStorage.getItem(
+          "-CBWSDK:SignerConfigurator:SignerType",
+        );
+        if (signerType === "scw") {
+          await showCoinbasePopup(provider);
+        }
+      }
     },
     async sendTransaction(tx: SendTransactionOption) {
       const transactionHash = (await provider.request({
@@ -268,6 +286,64 @@ function createAccount({
         throw new Error("Invalid signed payload returned");
       }
       return res;
+    },
+    sendCalls: async (options) => {
+      try {
+        const { callParams, chain } = await toProviderCallParams(
+          options,
+          account,
+        );
+        const callId = await provider.request({
+          method: "wallet_sendCalls",
+          params: callParams,
+        });
+        if (callId && typeof callId === "object" && "id" in callId) {
+          return { chain, client, id: callId.id as string };
+        }
+        return { chain, client, id: callId as string };
+      } catch (error) {
+        if (/unsupport|not support/i.test((error as Error).message)) {
+          throw new Error(
+            `${COINBASE} errored calling wallet_sendCalls, with error: ${error instanceof Error ? error.message : stringify(error)}`,
+          );
+        }
+        throw error;
+      }
+    },
+    async getCallsStatus(options) {
+      try {
+        const rawResponse = (await provider.request({
+          method: "wallet_getCallsStatus",
+          params: [options.id],
+        })) as GetCallsStatusRawResponse;
+        return toGetCallsStatusResponse(rawResponse);
+      } catch (error) {
+        if (/unsupport|not support/i.test((error as Error).message)) {
+          throw new Error(
+            `${COINBASE} does not support wallet_getCallsStatus, reach out to them directly to request EIP-5792 support.`,
+          );
+        }
+        throw error;
+      }
+    },
+    async getCapabilities(options) {
+      const chainId = options.chainId;
+      try {
+        const result = (await provider.request({
+          method: "wallet_getCapabilities",
+          params: [getAddress(account.address)],
+        })) as Record<string, WalletCapabilities>;
+        return toGetCapabilitiesResult(result, chainId);
+      } catch (error: unknown) {
+        if (
+          /unsupport|not support|not available/i.test((error as Error).message)
+        ) {
+          return {
+            message: `${COINBASE} does not support wallet_getCapabilities, reach out to them directly to request EIP-5792 support.`,
+          };
+        }
+        throw error;
+      }
     },
   };
 
@@ -398,6 +474,16 @@ async function switchChainCoinbaseWalletSDK(
   provider: ProviderInterface,
   chain: Chain,
 ) {
+  // check if chain is already connected
+  const connectedChainId = (await provider.request({
+    method: "eth_chainId",
+  })) as string | number;
+  const connectedChain = getCachedChain(normalizeChainId(connectedChainId));
+  if (connectedChain?.id === chain.id) {
+    // chain is already connected, no need to switch
+    return;
+  }
+
   const chainIdHex = numberToHex(chain.id);
 
   try {

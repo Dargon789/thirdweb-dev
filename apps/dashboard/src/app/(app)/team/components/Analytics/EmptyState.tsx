@@ -22,10 +22,10 @@ export function EmptyState() {
         <AnimatedIcons />
         <div className="flex flex-col gap-0.5 text-center">
           <h3 className="font-semibold text-2xl text-foreground">
-            Get Started with the Connect SDK
+            Get Started with the TypeScript SDK
           </h3>
           <p className="text-base text-muted-foreground">
-            Add the Connect SDK to your app to start collecting analytics.
+            Add the TypeScript SDK to your app to start collecting analytics.
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -64,7 +64,7 @@ export function EmptyState() {
       <div className="flex gap-2">
         <Button asChild className="min-w-36" variant="primary">
           <Link
-            href="https://portal.thirdweb.com/connect"
+            href="https://portal.thirdweb.com/wallets"
             rel="noopener noreferrer"
             target="_blank"
           >

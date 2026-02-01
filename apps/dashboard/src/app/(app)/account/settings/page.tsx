@@ -1,9 +1,9 @@
-import { getDefaultTeam } from "@/api/team";
+import { getValidAccount } from "@/api/account/get-account";
+import { getAuthToken } from "@/api/auth-token";
+import { getDefaultTeam } from "@/api/team/get-team";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
-import { getAuthToken } from "../../../../@/api/auth-token";
-import { loginRedirect } from "../../login/loginRedirect";
+import { loginRedirect } from "@/utils/redirects";
 import { AccountSettingsPage } from "./AccountSettingsPage";
-import { getValidAccount } from "./getAccount";
 
 export default async function Page() {
   const pagePath = "/account";

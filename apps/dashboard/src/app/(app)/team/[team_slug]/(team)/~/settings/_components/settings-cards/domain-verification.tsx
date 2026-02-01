@@ -7,13 +7,13 @@ import {
   checkDomainVerification,
   createDomainVerification,
   type VerifiedDomainResponse,
-} from "@/api/verified-domain";
+} from "@/api/team/verified-domain";
 import { SettingsCard } from "@/components/blocks/SettingsCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface DomainVerificationFormProps {
   teamId: string;

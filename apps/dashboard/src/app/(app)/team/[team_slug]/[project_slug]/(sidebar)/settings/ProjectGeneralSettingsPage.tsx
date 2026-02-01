@@ -10,9 +10,9 @@ import {
 import { format } from "date-fns";
 import {
   CircleAlertIcon,
-  ExternalLinkIcon,
   RefreshCcwIcon,
   TriangleAlertIcon,
+  WrenchIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -27,8 +27,8 @@ import type { ThirdwebClient } from "thirdweb";
 import { upload } from "thirdweb/storage";
 import { z } from "zod";
 import { apiServerProxy } from "@/actions/proxies";
-import type { Project } from "@/api/projects";
-import type { Team } from "@/api/team";
+import type { Project } from "@/api/project/projects";
+import type { Team } from "@/api/team/get-team";
 import { GradientAvatar } from "@/components/blocks/avatar/gradient-avatar";
 import { DangerSettingCard } from "@/components/blocks/DangerSettingCard";
 import { FileInput } from "@/components/blocks/FileInput";
@@ -48,7 +48,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   Select,
   SelectContent,
@@ -220,10 +220,10 @@ export function ProjectGeneralSettingsPageUI(props: {
   const projectLayout = `/team/${props.teamSlug}/${props.project.slug}`;
 
   const paths = {
-    aaConfig: `${projectLayout}/account-abstraction/settings`,
+    aaConfig: `${projectLayout}/wallets/sponsored-gas/configuration`,
     afterDeleteRedirectTo: `/team/${props.teamSlug}`,
-    inAppConfig: `${projectLayout}/wallets/settings`,
-    payConfig: `${projectLayout}/universal-bridge/settings`,
+    inAppConfig: `${projectLayout}/wallets/user-wallets/configuration`,
+    payConfig: `${projectLayout}/bridge/configuration`,
   };
 
   const { project } = props;
@@ -539,7 +539,12 @@ function AllowedDomainsSetting(props: {
 
   return (
     <SettingsCard
-      bottomText="This is only applicable for web applications"
+      bottomText={
+        <>
+          This is only applicable for web applications. Changes to domain
+          restrictions may take up to 5 minutes to take effect
+        </>
+      }
       errorText={form.getFieldState("domains", form.formState).error?.message}
       header={{
         description:
@@ -784,8 +789,7 @@ function EnabledServicesSetting(props: {
                         variant="outline"
                       >
                         <Link href={configurationLink}>
-                          Configure
-                          <ExternalLinkIcon className="size-3 text-muted-foreground" />
+                          <WrenchIcon className="size-3" /> Configure
                         </Link>
                       </Button>
                     </div>

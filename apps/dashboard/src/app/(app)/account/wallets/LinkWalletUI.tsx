@@ -7,7 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { ThirdwebClient } from "thirdweb";
 import { apiServerProxy } from "@/actions/proxies";
-import type { LinkedWallet } from "@/api/linked-wallets";
+import type { LinkedWallet } from "@/api/account/linked-wallets";
 import { WalletAddress } from "@/components/blocks/wallet-address";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   Table,
   TableBody,

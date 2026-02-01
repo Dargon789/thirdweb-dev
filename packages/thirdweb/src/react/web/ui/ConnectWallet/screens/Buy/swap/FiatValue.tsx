@@ -36,6 +36,7 @@ export function FiatValue(
       props.chain.id,
       getTokenAddress(props.token),
       deferredTokenAmount,
+      props.currency,
     ],
   });
 
@@ -44,7 +45,7 @@ export function FiatValue(
   }
 
   return cryptoToFiatQuery.data?.result ? (
-    <Text {...props}>
+    <Text {...props} trackingTight>
       {formatCurrencyAmount(
         props.currency || "USD",
         cryptoToFiatQuery.data.result,

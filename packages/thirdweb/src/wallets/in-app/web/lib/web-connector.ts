@@ -337,6 +337,8 @@ export class InAppWebConnector implements InAppConnector {
       case "farcaster":
       case "line":
       case "x":
+      case "tiktok":
+      case "epic":
       case "steam":
       case "coinbase":
       case "discord": {
@@ -364,10 +366,10 @@ export class InAppWebConnector implements InAppConnector {
       }
       case "wallet": {
         return siweAuthenticate({
-          chain: args.chain,
           client: this.client,
           ecosystem: this.ecosystem,
           wallet: args.wallet,
+          chain: args.chain,
         });
       }
     }
@@ -410,6 +412,8 @@ export class InAppWebConnector implements InAppConnector {
       case "github":
       case "line":
       case "x":
+      case "tiktok":
+      case "epic":
       case "guest":
       case "coinbase":
       case "twitch":

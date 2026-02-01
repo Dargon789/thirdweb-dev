@@ -8,7 +8,6 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { verifyContract } from "app/(app)/(dashboard)/(chain)/[chain_id]/[contractAddress]/sources/ContractSourcesPage";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -19,7 +18,6 @@ import {
   getRpcClient,
   prepareContractCall,
   prepareTransaction,
-  sendAndConfirmTransaction,
   type ThirdwebClient,
 } from "thirdweb";
 import type {
@@ -33,11 +31,7 @@ import {
 import { useActiveAccount, useSwitchActiveWalletChain } from "thirdweb/react";
 import { concatHex, padHex } from "thirdweb/utils";
 import { z } from "zod";
-import {
-  type DeployModalStep,
-  DeployStatusModal,
-  useDeployStatusModal,
-} from "@/components/contract-components/contract-deploy-form/deploy-context-modal";
+import { verifyContract } from "@/api/contract/verify-contract";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -57,8 +51,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ToolTipLabel } from "@/components/ui/tooltip";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
 import { useTxNotifications } from "@/hooks/useTxNotifications";
 import type { ProjectMeta } from "../../../../../team/[team_slug]/[project_slug]/contract/[chainIdOrSlug]/[contractAddress]/types";
+import {
+  type DeployModalStep,
+  DeployStatusModal,
+  useDeployStatusModal,
+} from "../../../../published-contract/[publisher]/[contract_id]/components/contract-deploy-form/deploy-context-modal";
 import { buildContractPagePath } from "../_utils/contract-page-path";
 import { SingleNetworkSelector } from "./single-network-selector";
 
@@ -178,6 +178,8 @@ export function DataTable({
     return Array.from(chainMap.values());
   }, [data, customChainData]);
 
+  const sendAndConfirmTx = useSendAndConfirmTx();
+
   const form = useForm<FormSchema>({
     defaultValues: {
       amounts: {
@@ -216,10 +218,7 @@ export function DataTable({
       ],
     });
 
-    await sendAndConfirmTransaction({
-      account: activeAccount,
-      transaction: sendErc20Tx,
-    });
+    await sendAndConfirmTx.mutateAsync(sendErc20Tx);
   };
 
   const crossChainTransferNotifications = useTxNotifications(
@@ -368,10 +367,7 @@ export function DataTable({
           to: "0x4e59b44847b379578588920cA78FbF26c0B4956C",
         });
 
-        await sendAndConfirmTransaction({
-          account: activeAccount,
-          transaction: tx,
-        });
+        await sendAndConfirmTx.mutateAsync(tx);
 
         const code = await eth_getCode(
           getRpcClient({

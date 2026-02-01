@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { hexToNumber, isHex, type ThirdwebClient, toEther } from "thirdweb";
 import { stringify } from "thirdweb/utils";
-import type { Project } from "@/api/projects";
+import type { Project } from "@/api/project/projects";
 import { WalletAddress } from "@/components/blocks/wallet-address";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,8 @@ import { TabButtons } from "@/components/ui/tabs";
 import { ToolTipLabel } from "@/components/ui/tooltip";
 import { useAllChainsData } from "@/hooks/chains/allChains";
 import { ChainIconClient } from "@/icons/ChainIcon";
-import { statusDetails } from "../../analytics/tx-table/tx-table-ui";
 import type { Transaction } from "../../analytics/tx-table/types";
+import { statusDetails } from "../../analytics/tx-table/types";
 import type { ActivityLogEntry } from "../../lib/analytics";
 import type { DecodedTransactionData, DecodedTransactionResult } from "./page";
 
@@ -384,7 +384,6 @@ function TransactionParametersCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <TabButtons
-          tabClassName="!text-sm"
           tabs={[
             {
               isActive: activeTab === "decoded",

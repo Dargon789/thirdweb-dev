@@ -2,13 +2,13 @@
 import type { ThirdwebClient } from "thirdweb";
 import { useActiveWallet, useDisconnect } from "thirdweb/react";
 import { upload } from "thirdweb/storage";
-import { confirmEmailWithOTP } from "@/actions/confirmEmail";
+import { confirmEmailWithOTP } from "@/actions/account/confirmEmail";
+import { updateAccount } from "@/actions/account/updateAccount";
+import { doLogout } from "@/actions/auth-actions";
 import { apiServerProxy } from "@/actions/proxies";
-import { updateAccount } from "@/actions/updateAccount";
 import { resetAnalytics } from "@/analytics/reset";
 import type { Account } from "@/hooks/useApi";
 import { useDashboardRouter } from "@/lib/DashboardRouter";
-import { doLogout } from "../../login/auth-actions";
 import { AccountSettingsPageUI } from "./AccountSettingsPageUI";
 
 export function AccountSettingsPage(props: {

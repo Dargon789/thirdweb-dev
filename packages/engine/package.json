@@ -1,6 +1,6 @@
 {
   "name": "@thirdweb-dev/engine",
-  "version": "3.2.0",
+  "version": "3.4.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thirdweb-dev/js.git#main"
@@ -16,7 +16,7 @@
     "url": "https://github.com/thirdweb-dev/js/issues"
   },
   "dependencies": {
-    "@hey-api/client-fetch": "0.10.0"
+    "@hey-api/client-fetch": "0.13.1"
   },
   "engines": {
     "node": ">=18"

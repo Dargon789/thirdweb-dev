@@ -1,7 +1,8 @@
 import { format, parseISO } from "date-fns";
 import { InfoIcon } from "lucide-react";
 import { redirect } from "next/navigation";
-import { getTeamBySlug } from "@/api/team";
+import { getValidAccount } from "@/api/account/get-account";
+import { getTeamBySlug } from "@/api/team/get-team";
 import { getBilledUsage } from "@/api/usage/billing-preview";
 import { UpsellContent } from "@/components/blocks/upsell-wrapper";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -14,7 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getValidTeamPlan } from "@/utils/getValidTeamPlan";
-import { getValidAccount } from "../../../../../account/settings/getAccount";
 import {
   formatPrice,
   UsageCategoryDetails,
@@ -43,7 +43,8 @@ export default async function Page(props: {
       <div className="grow flex flex-col justify-center items-center">
         <UpsellContent
           currentPlan={team.billingPlan}
-          featureDescription="View RPC, Wallet, Storage, Account Abstraction, Engine Cloud, Webhooks usage and more"
+          isLegacyPlan={team.isLegacyPlan}
+          featureDescription="View RPC, Wallet, Storage, Gas Sponsorship, Engine Cloud, Webhooks usage and more"
           featureName="Usage"
           requiredPlan="starter"
           teamSlug={params.team_slug}

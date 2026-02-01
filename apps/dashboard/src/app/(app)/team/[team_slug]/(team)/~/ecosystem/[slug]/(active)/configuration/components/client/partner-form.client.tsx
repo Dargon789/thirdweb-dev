@@ -6,7 +6,7 @@ import { useId } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import type { ThirdwebClient } from "thirdweb";
 import type { z } from "zod";
-import type { Partner } from "@/api/ecosystems";
+import type { Partner } from "@/api/team/ecosystems";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { partnerFormSchema } from "../../constants";

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { trackPayEvent } from "../../../../analytics/track/pay.js";
 import type { Chain } from "../../../../chains/types.js";
 import type { ThirdwebClient } from "../../../../client/client.js";
@@ -9,14 +9,14 @@ import { Container } from "../components/basic.js";
 import { Spacer } from "../components/Spacer.js";
 import { Text } from "../components/text.js";
 
-export interface UnsupportedTokenScreenProps {
+type UnsupportedTokenScreenProps = {
   /**
    * The chain the token is on
    */
   chain: Chain;
   client: ThirdwebClient;
-  tokenAddress?: string;
-}
+  tokenAddress: string;
+};
 
 /**
  * Screen displayed when a specified token is not supported by the Bridge API
@@ -27,17 +27,17 @@ export function UnsupportedTokenScreen(props: UnsupportedTokenScreenProps) {
 
   const { data: chainMetadata } = useChainMetadata(chain);
 
-  useQuery({
-    queryFn: () => {
-      trackPayEvent({
-        chainId: chain.id,
-        client,
-        event: "ub:ui:unsupported_token",
-        fromToken: tokenAddress,
-      });
-    },
-    queryKey: ["unsupported_token"],
-  });
+  const hasFiredUnsupportedEvent = useRef(false);
+  useEffect(() => {
+    if (hasFiredUnsupportedEvent.current) return;
+    hasFiredUnsupportedEvent.current = true;
+    trackPayEvent({
+      chainId: chain.id,
+      client,
+      event: "ub:ui:unsupported_token",
+      fromToken: tokenAddress,
+    });
+  }, [chain.id, client, tokenAddress]);
 
   if (chainMetadata?.testnet) {
     return (
@@ -64,7 +64,7 @@ export function UnsupportedTokenScreen(props: UnsupportedTokenScreenProps) {
           size="sm"
           style={{ lineHeight: 1.5, maxWidth: "280px" }}
         >
-          The Universal Bridge does not support testnets at this time.
+          Bridge does not support testnets at this time.
         </Text>
       </Container>
     );
@@ -94,7 +94,7 @@ export function UnsupportedTokenScreen(props: UnsupportedTokenScreenProps) {
         size="sm"
         style={{ lineHeight: 1.5, maxWidth: "280px" }}
       >
-        This token or chain is not supported by the Universal Bridge.
+        This token or chain is not supported by the Bridge
       </Text>
     </Container>
   );

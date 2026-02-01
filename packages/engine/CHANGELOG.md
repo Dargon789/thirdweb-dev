@@ -1,5 +1,29 @@
 # @thirdweb-dev/engine
 
+## 3.4.0
+
+### Minor Changes
+
+- [#8371](https://github.com/thirdweb-dev/js/pull/8371) [`ad68969`](https://github.com/thirdweb-dev/js/commit/ad68969559a80a5f188a647ef0e1c04f0003a0ad) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Reworked Solana Sign Transaction API that accepts more flexible inputs
+
+## 3.3.0
+
+### Minor Changes
+
+- [#8238](https://github.com/thirdweb-dev/js/pull/8238) [`9545b43`](https://github.com/thirdweb-dev/js/commit/9545b4367598408dbb88c63d8a8fe21305f870b5) Thanks [@d4mr](https://github.com/d4mr)! - Add Solana endpoints
+
+## 3.2.2
+
+### Patch Changes
+
+- [#8218](https://github.com/thirdweb-dev/js/pull/8218) [`f630912`](https://github.com/thirdweb-dev/js/commit/f630912b9b0e1d8ebe22b0b52c650f5e40e12baf) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update to latest API spec
+
+## 3.2.1
+
+### Patch Changes
+
+- [#7652](https://github.com/thirdweb-dev/js/pull/7652) [`620e294`](https://github.com/thirdweb-dev/js/commit/620e294f8ce59e8ec217e3984177ac6dd6d48772) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update to latest API
+
 ## 3.2.0
 
 ### Minor Changes

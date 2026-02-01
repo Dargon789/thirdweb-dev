@@ -11,10 +11,11 @@ import {
   createListing,
 } from "../../../../../../extensions/marketplace/direct-listings/write/createListing.js";
 import type { BaseTransactionOptions } from "../../../../../../transaction/types.js";
+import { isString } from "../../../../../../utils/type-guards.js";
 import { useReadContract } from "../../../../../core/hooks/contract/useReadContract.js";
 import type { TransactionButtonProps } from "../../../../../core/hooks/transaction/transaction-button-utils.js";
-import { useSendAndConfirmTransaction } from "../../../../../core/hooks/transaction/useSendAndConfirmTransaction.js";
 import { useActiveAccount } from "../../../../../core/hooks/wallets/useActiveAccount.js";
+import { useSendAndConfirmTransaction } from "../../../../hooks/transaction/useSendAndConfirmTransaction.js";
 import { TransactionButton } from "../../../TransactionButton/index.js";
 
 export type CreateDirectListingButtonProps = Omit<
@@ -88,7 +89,15 @@ export function CreateDirectListingButton(
     },
     tokenId,
   });
-  const { mutateAsync } = useSendAndConfirmTransaction();
+  const { mutateAsync } = useSendAndConfirmTransaction({
+    payModal:
+      typeof payModal === "object"
+        ? {
+            ...payModal,
+            metadata: payModal.metadata || payMetadata,
+          }
+        : payModal,
+  });
 
   const prepareTransaction = useCallback(async () => {
     if (!account) {
@@ -220,7 +229,9 @@ async function getPayMetadata(
   }
 
   return {
-    image: contractMetadata?.image,
-    name: contractMetadata?.name,
+    image: isString(contractMetadata?.image)
+      ? contractMetadata.image
+      : undefined,
+    name: isString(contractMetadata?.name) ? contractMetadata.name : undefined,
   };
 }

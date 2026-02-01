@@ -9,13 +9,18 @@ const ContentSecurityPolicy = `
   img-src * data: blob:;
   media-src * data: blob:;
   object-src 'none';
-  style-src 'self' 'unsafe-inline' vercel.live;
+  style-src 'self' 'unsafe-inline' vercel.live us.posthog.com;
   font-src 'self' vercel.live assets.vercel.com framerusercontent.com fonts.gstatic.com;
   frame-src * data:;
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' 'wasm-unsafe-eval' 'inline-speculation-rules' *.thirdweb.com *.thirdweb-dev.com vercel.live js.stripe.com framerusercontent.com events.framer.com challenges.cloudflare.com googletagmanager.com us-assets.i.posthog.com edit.framer.com;
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' 'wasm-unsafe-eval' 'inline-speculation-rules' *.thirdweb.com *.thirdweb-dev.com vercel.live js.stripe.com framerusercontent.com events.framer.com challenges.cloudflare.com googletagmanager.com us-assets.i.posthog.com edit.framer.com framer.com googletagmanager.com;
   connect-src * data: blob:;
   worker-src 'self' blob:;
   block-all-mixed-content;
+`;
+
+const EmbedContentSecurityPolicy = `
+  ${ContentSecurityPolicy}
+  frame-ancestors *;
 `;
 
 const securityHeaders = [
@@ -115,9 +120,7 @@ const SENTRY_OPTIONS: SentryBuildOptions = {
 const FRAMER_ADDITIONAL_LANGUAGES = ["es"];
 
 const baseNextConfig: NextConfig = {
-  compiler: {
-    emotion: true,
-  },
+  transpilePackages: ["@workspace/ui"],
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -139,6 +142,78 @@ const baseNextConfig: NextConfig = {
         ],
         // Apply these headers to all routes in your application.
         source: "/(.*)",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/widget",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/widget/:path*",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/checkout-widget",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/checkout-widget/:path*",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/swap-widget",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/swap-widget/:path*",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/buy-widget",
+      },
+      {
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: EmbedContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+          },
+        ],
+        source: "/bridge/buy-widget/:path*",
       },
     ];
   },
@@ -199,7 +274,6 @@ const baseNextConfig: NextConfig = {
       ]),
     ];
   },
-  serverExternalPackages: ["pino-pretty"],
 };
 
 function getConfig(): NextConfig {

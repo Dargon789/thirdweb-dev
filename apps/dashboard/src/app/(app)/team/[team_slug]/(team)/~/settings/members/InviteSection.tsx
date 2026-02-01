@@ -15,8 +15,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { ThirdwebClient } from "thirdweb";
 import { z } from "zod";
-import type { Team } from "@/api/team";
-import type { TeamAccountRole } from "@/api/team-members";
+import type { Team } from "@/api/team/get-team";
+import type { TeamAccountRole } from "@/api/team/team-members";
 import { GradientAvatar } from "@/components/blocks/avatar/gradient-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +28,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   Select,
   SelectContent,
@@ -37,8 +37,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { getValidTeamPlan } from "@/utils/getValidTeamPlan";
 import { resolveSchemeWithErrorHandler } from "@/utils/resolveSchemeWithErrorHandler";
-import { getValidTeamPlan } from "../../../../../../../../@/utils/getValidTeamPlan";
 
 const inviteFormSchema = z.object({
   invites: z

@@ -35,7 +35,7 @@ export function ReceiveFunds(props: {
   const locale = connectLocale.receiveFundsScreen;
 
   return (
-    <Container p="lg">
+    <Container p="lg" className="tw-receive-funds-screen">
       <ModalHeader onBack={props.onBack} title={locale.title} />
 
       <Spacer y="xl" />
@@ -52,14 +52,17 @@ export function ReceiveFunds(props: {
             )
           }
           qrCodeUri={address}
-          size={310}
+          size={350}
         />
       </Container>
       <Spacer y="xl" />
 
-      <WalletAddressContainer onClick={onCopy}>
+      <WalletAddressContainer
+        onClick={onCopy}
+        className="tw-copy-address-button"
+      >
         <Text color="primaryText" size="md">
-          {shortenString(address || "")}
+          {shortenString(address || "", false)}
         </Text>
         <CopyIcon
           hasCopied={hasCopied}
@@ -73,6 +76,7 @@ export function ReceiveFunds(props: {
       <Text
         balance
         center
+        size="sm"
         className="receive_fund_screen_instruction"
         multiline
       >
@@ -85,10 +89,10 @@ export function ReceiveFunds(props: {
 const WalletAddressContainer = /* @__PURE__ */ StyledButton((_) => {
   const theme = useCustomTheme();
   return {
+    all: "unset",
     "&:hover": {
       borderColor: theme.colors.accentText,
     },
-    all: "unset",
     border: `1px solid ${theme.colors.borderColor}`,
     borderRadius: radius.md,
     boxSizing: "border-box",

@@ -1,22 +1,60 @@
 "use client";
 
-import { encrypt } from "@thirdweb-dev/service-utils";
+import { decrypt, encrypt } from "@thirdweb-dev/service-utils";
 import {
   createAccessToken,
+  createEoa,
   createServiceAccount,
   createVaultClient,
   rotateServiceAccount,
   type VaultClient,
 } from "@thirdweb-dev/vault-sdk";
-import type { Project } from "@/api/projects";
+import { engineCloudProxy } from "@/actions/proxies";
+import type { Project } from "@/api/project/projects";
 import { NEXT_PUBLIC_THIRDWEB_VAULT_URL } from "@/constants/public-envs";
 import { updateProjectClient } from "@/hooks/useApi";
+import { getProjectWalletLabel } from "@/lib/project-wallet";
 
 const SERVER_WALLET_ACCESS_TOKEN_PURPOSE =
   "Access Token for All Server Wallets";
 
 export const SERVER_WALLET_MANAGEMENT_ACCESS_TOKEN_PURPOSE =
   "Management Token for Dashboard";
+
+/**
+ * Retry a function with exponential backoff.
+ */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: { maxAttempts?: number; baseDelayMs?: number } = {},
+): Promise<T> {
+  const { maxAttempts = 3, baseDelayMs = 1000 } = options;
+  if (!Number.isInteger(maxAttempts) || maxAttempts < 1) {
+    throw new Error("maxAttempts must be at least 1");
+  }
+  if (!Number.isFinite(baseDelayMs) || baseDelayMs < 0) {
+    throw new Error("baseDelayMs must be a non-negative number");
+  }
+  let lastError: Error | undefined;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < maxAttempts) {
+        // Exponential backoff with cap at 30s and jitter to prevent thundering herd
+        const delay = Math.min(baseDelayMs * 2 ** (attempt - 1), 30_000);
+        const jitter = Math.floor(Math.random() * Math.min(250, delay));
+        await new Promise<void>((resolve) =>
+          setTimeout(resolve, delay + jitter),
+        );
+      }
+    }
+  }
+
+  throw lastError ?? new Error("withRetry failed without capturing an error");
+}
 
 let vc: VaultClient | null = null;
 
@@ -44,6 +82,20 @@ export async function rotateVaultAccountAndAccessToken(props: {
     throw new Error("No rotation code found");
   }
 
+  // IMPORTANT: Validate secret key BEFORE rotating to prevent bricking the project.
+  // If we rotate first and then secret key validation fails, the old rotation code
+  // is consumed but we can't save the new one, leaving the project unrecoverable.
+  if (props.projectSecretKey) {
+    const projectSecretKeyHash = await hashSecretKey(props.projectSecretKey);
+    const secretKeysHashed = [
+      ...props.project.secretKeys,
+      ...(props.projectSecretHash ? [{ hash: props.projectSecretHash }] : []),
+    ];
+    if (!secretKeysHashed.some((key) => key?.hash === projectSecretKeyHash)) {
+      throw new Error("Invalid project secret key");
+    }
+  }
+
   const rotateServiceAccountRes = await rotateServiceAccount({
     client: vaultClient,
     request: {
@@ -66,6 +118,9 @@ export async function rotateVaultAccountAndAccessToken(props: {
       vaultClient,
       adminKey,
       rotationCode,
+      // Skip wallet creation on rotation - preserve the existing project wallet
+      skipWalletCreation: true,
+      existingProjectWalletAddress: service?.projectWalletAddress ?? undefined,
     });
 
   return {
@@ -126,6 +181,92 @@ export async function createVaultAccountAndAccessToken(props: {
   }
 }
 
+export async function createProjectServerWallet(props: {
+  project: Project;
+  managementAccessToken: string;
+  label?: string;
+  setAsProjectWallet?: boolean;
+}) {
+  const vaultClient = await initVaultClient();
+
+  const walletLabel = props.label?.trim()
+    ? props.label.trim()
+    : getProjectWalletLabel(props.project.name);
+
+  const eoa = await createEoa({
+    client: vaultClient,
+    request: {
+      auth: {
+        accessToken: props.managementAccessToken,
+      },
+      options: {
+        metadata: {
+          label: walletLabel,
+          projectId: props.project.id,
+          teamId: props.project.teamId,
+          type: "server-wallet",
+        },
+      },
+    },
+  });
+
+  if (!eoa.success) {
+    throw new Error(eoa.error?.message || "Failed to create server wallet");
+  }
+
+  engineCloudProxy({
+    body: JSON.stringify({
+      signerAddress: eoa.data.address,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      "x-client-id": props.project.publishableKey,
+      "x-team-id": props.project.teamId,
+    },
+    method: "POST",
+    pathname: "/cache/smart-account",
+  }).catch((err) => {
+    console.warn("failed to cache server wallet", err);
+  });
+
+  if (props.setAsProjectWallet) {
+    await updateDefaultProjectWallet({
+      project: props.project,
+      projectWalletAddress: eoa.data.address,
+    });
+  }
+
+  return eoa.data;
+}
+
+export async function updateDefaultProjectWallet(props: {
+  project: Project;
+  projectWalletAddress: string;
+}) {
+  const services = props.project.services.filter(
+    (service) => service.name !== "engineCloud",
+  );
+  const engineCloudService = props.project.services.find(
+    (service) => service.name === "engineCloud",
+  );
+  if (engineCloudService) {
+    const engineCloudServiceWithProjectWallet = {
+      ...engineCloudService,
+      projectWalletAddress: props.projectWalletAddress,
+    };
+
+    await updateProjectClient(
+      {
+        projectId: props.project.id,
+        teamId: props.project.teamId,
+      },
+      {
+        services: [...services, engineCloudServiceWithProjectWallet],
+      },
+    );
+  }
+}
+
 async function createAndEncryptVaultAccessTokens(props: {
   project: Project;
   vaultClient: VaultClient;
@@ -133,9 +274,19 @@ async function createAndEncryptVaultAccessTokens(props: {
   projectSecretHash?: string;
   adminKey: string;
   rotationCode: string;
+  skipWalletCreation?: boolean;
+  existingProjectWalletAddress?: string;
 }) {
-  const { project, projectSecretKey, vaultClient, adminKey, rotationCode } =
-    props;
+  const {
+    project,
+    projectSecretKey,
+    projectSecretHash,
+    vaultClient,
+    adminKey,
+    rotationCode,
+    skipWalletCreation,
+    existingProjectWalletAddress,
+  } = props;
 
   const [managementTokenResult, walletTokenResult] = await Promise.all([
     createManagementAccessToken({ project, adminKey, vaultClient }),
@@ -157,67 +308,77 @@ async function createAndEncryptVaultAccessTokens(props: {
   const managementToken = managementTokenResult.data;
   const walletToken = walletTokenResult.data;
 
+  // CRITICAL: Save credentials IMMEDIATELY after creating tokens.
+  // This prevents a broken state if wallet creation or other operations fail.
+  // The rotationCode is consumed when rotating, so if we don't save the new one,
+  // the project becomes unrecoverable.
+  let encryptedAdminKey: string | null = null;
+  let encryptedWalletAccessToken: string | null = null;
+
   if (projectSecretKey) {
     // verify that the project secret key is valid
     const projectSecretKeyHash = await hashSecretKey(projectSecretKey);
     const secretKeysHashed = [
       ...project.secretKeys,
       // for newly rotated secret keys, we don't have the secret key in the project secret keys yet
-      ...(props.projectSecretHash ? [{ hash: props.projectSecretHash }] : []),
+      ...(projectSecretHash ? [{ hash: projectSecretHash }] : []),
     ];
     if (!secretKeysHashed.some((key) => key?.hash === projectSecretKeyHash)) {
       throw new Error("Invalid project secret key");
     }
 
     // encrypt admin key and wallet token with project secret key
-    const [encryptedAdminKey, encryptedWalletAccessToken] = await Promise.all([
+    [encryptedAdminKey, encryptedWalletAccessToken] = await Promise.all([
       encrypt(adminKey, projectSecretKey),
       encrypt(walletToken.accessToken, projectSecretKey),
     ]);
-
-    await updateProjectClient(
-      {
-        projectId: props.project.id,
-        teamId: props.project.teamId,
-      },
-      {
-        services: [
-          ...props.project.services,
-          {
-            name: "engineCloud",
-            actions: [],
-            managementAccessToken: managementToken.accessToken,
-            maskedAdminKey: maskSecret(adminKey),
-            encryptedAdminKey,
-            encryptedWalletAccessToken,
-            rotationCode: rotationCode,
-          },
-        ],
-      },
-    );
-  } else {
-    // no secret key, only store the management token, remove any encrypted keys
-    await updateProjectClient(
-      {
-        projectId: props.project.id,
-        teamId: props.project.teamId,
-      },
-      {
-        services: [
-          ...props.project.services,
-          {
-            name: "engineCloud",
-            actions: [],
-            managementAccessToken: managementToken.accessToken,
-            maskedAdminKey: maskSecret(adminKey),
-            encryptedAdminKey: null,
-            encryptedWalletAccessToken: null,
-            rotationCode: rotationCode,
-          },
-        ],
-      },
-    );
   }
+
+  // For rotation, preserve existing wallet address. For new creation, create a default wallet.
+  let projectWalletAddress: string | null | undefined =
+    existingProjectWalletAddress ??
+    project.services.find((s) => s.name === "engineCloud")
+      ?.projectWalletAddress;
+
+  // Only create a new wallet if we don't have one (initial setup, not rotation)
+  if (!skipWalletCreation && !projectWalletAddress) {
+    const defaultProjectServerWallet = await createProjectServerWallet({
+      project,
+      managementAccessToken: managementToken.accessToken,
+      label: getProjectWalletLabel(project.name),
+    });
+    projectWalletAddress = defaultProjectServerWallet.address;
+  }
+
+  // Save credentials with retry - this is critical because if rotation succeeded
+  // but this save fails, the new rotation code is lost and project becomes unrecoverable
+  await withRetry(
+    () =>
+      updateProjectClient(
+        {
+          projectId: project.id,
+          teamId: project.teamId,
+        },
+        {
+          services: [
+            ...project.services.filter(
+              (service) => service.name !== "engineCloud",
+            ),
+            {
+              name: "engineCloud",
+              actions: [],
+              managementAccessToken: managementToken.accessToken,
+              maskedAdminKey: maskSecret(adminKey),
+              encryptedAdminKey,
+              encryptedWalletAccessToken,
+              rotationCode: rotationCode,
+              projectWalletAddress: projectWalletAddress ?? null,
+            },
+          ],
+        },
+      ),
+    { maxAttempts: 3, baseDelayMs: 1000 },
+  );
 
   return {
     managementToken,
@@ -413,6 +574,29 @@ export async function createWalletAccessToken(props: {
             type: "eoa:signStructuredMessage",
           },
           {
+            requiredMetadataPatterns: [
+              {
+                key: "projectId",
+                rule: {
+                  pattern: props.project.id,
+                },
+              },
+              {
+                key: "teamId",
+                rule: {
+                  pattern: props.project.teamId,
+                },
+              },
+              {
+                key: "type",
+                rule: {
+                  pattern: "server-wallet",
+                },
+              },
+            ],
+            type: "eoa:create",
+          },
+          {
             metadataPatterns: [
               {
                 key: "projectId",
@@ -433,7 +617,7 @@ export async function createWalletAccessToken(props: {
                 },
               },
             ],
-            type: "eoa:read",
+            type: "solana:read",
           },
           {
             requiredMetadataPatterns: [
@@ -456,7 +640,53 @@ export async function createWalletAccessToken(props: {
                 },
               },
             ],
-            type: "eoa:create",
+            type: "solana:create",
+          },
+          {
+            metadataPatterns: [
+              {
+                key: "projectId",
+                rule: {
+                  pattern: props.project.id,
+                },
+              },
+              {
+                key: "teamId",
+                rule: {
+                  pattern: props.project.teamId,
+                },
+              },
+              {
+                key: "type",
+                rule: {
+                  pattern: "server-wallet",
+                },
+              },
+            ],
+            type: "solana:signTransaction",
+          },
+          {
+            metadataPatterns: [
+              {
+                key: "projectId",
+                rule: {
+                  pattern: props.project.id,
+                },
+              },
+              {
+                key: "teamId",
+                rule: {
+                  pattern: props.project.teamId,
+                },
+              },
+              {
+                key: "type",
+                rule: {
+                  pattern: "server-wallet",
+                },
+              },
+            ],
+            type: "solana:signMessage",
           },
         ],
       },
@@ -545,6 +775,52 @@ async function createManagementAccessToken(props: {
                   pattern: props.project.teamId,
                 },
               },
+              {
+                key: "type",
+                rule: {
+                  pattern: "server-wallet",
+                },
+              },
+            ],
+            type: "solana:read",
+          },
+          {
+            requiredMetadataPatterns: [
+              {
+                key: "projectId",
+                rule: {
+                  pattern: props.project.id,
+                },
+              },
+              {
+                key: "teamId",
+                rule: {
+                  pattern: props.project.teamId,
+                },
+              },
+              {
+                key: "type",
+                rule: {
+                  pattern: "server-wallet",
+                },
+              },
+            ],
+            type: "solana:create",
+          },
+          {
+            metadataPatterns: [
+              {
+                key: "projectId",
+                rule: {
+                  pattern: props.project.id,
+                },
+              },
+              {
+                key: "teamId",
+                rule: {
+                  pattern: props.project.teamId,
+                },
+              },
             ],
             revealSensitive: false,
             type: "accessToken:read",
@@ -553,6 +829,187 @@ async function createManagementAccessToken(props: {
       },
     },
   });
+}
+
+/**
+ * Upgrades existing access tokens to include Solana permissions
+ * This is needed when a project was created before Solana support was added
+ *
+ * Returns an object with success/error instead of throwing for Next.js server actions
+ */
+export async function upgradeAccessTokensForSolana(props: {
+  project: Project;
+  projectSecretKey?: string;
+}): Promise<{
+  success: boolean;
+  error?: string;
+  data?: {
+    managementToken: string;
+    walletToken?: string;
+  };
+}> {
+  const { project, projectSecretKey } = props;
+
+  try {
+    // Find the engineCloud service
+    const engineCloudService = project.services.find(
+      (service) => service.name === "engineCloud",
+    );
+
+    if (!engineCloudService) {
+      return {
+        success: false,
+        error: "No engineCloud service found on project",
+      };
+    }
+
+    const vaultClient = await initVaultClient();
+    const hasEncryptedAdminKey = !!engineCloudService.encryptedAdminKey;
+
+    // Check if this is an ejected vault (no encrypted admin key stored)
+    if (!hasEncryptedAdminKey) {
+      // For ejected vaults, we only need to update the management token
+      // User manages their own admin key, so we can't create wallet tokens
+
+      // We need the admin key from the user
+      if (!projectSecretKey) {
+        return {
+          success: false,
+          error: "Admin key required. Please enter your vault admin key.",
+        };
+      }
+
+      // For ejected vault, the "secret key" parameter is actually the admin key
+      const managementTokenResult = await createManagementAccessToken({
+        project,
+        adminKey: projectSecretKey,
+        vaultClient,
+      });
+
+      if (!managementTokenResult.success) {
+        return {
+          success: false,
+          error: `Failed to create management token: ${managementTokenResult.error}`,
+        };
+      }
+
+      // Update only the management token for ejected vaults
+      // Keep everything else the same (no encrypted keys to update)
+      await updateProjectClient(
+        {
+          projectId: project.id,
+          teamId: project.teamId,
+        },
+        {
+          services: [
+            ...project.services.filter(
+              (service) => service.name !== "engineCloud",
+            ),
+            {
+              ...engineCloudService,
+              managementAccessToken: managementTokenResult.data.accessToken,
+            },
+          ],
+        },
+      );
+
+      return {
+        success: true,
+        data: {
+          managementToken: managementTokenResult.data.accessToken,
+        },
+      };
+    }
+
+    // For non-ejected vaults (with encrypted admin key)
+    if (!projectSecretKey) {
+      return {
+        success: false,
+        error: "Project secret key is required to upgrade tokens",
+      };
+    }
+
+    // Verify the project secret key
+    const projectSecretKeyHash = await hashSecretKey(projectSecretKey);
+    if (!project.secretKeys.some((key) => key?.hash === projectSecretKeyHash)) {
+      return {
+        success: false,
+        error: "Invalid project secret key",
+      };
+    }
+
+    // Decrypt the admin key (we know it exists from the hasEncryptedAdminKey check)
+    const adminKey = await decrypt(
+      engineCloudService.encryptedAdminKey as string,
+      projectSecretKey,
+    );
+
+    // Create new tokens with Solana permissions
+    const [managementTokenResult, walletTokenResult] = await Promise.all([
+      createManagementAccessToken({ project, adminKey, vaultClient }),
+      createWalletAccessToken({ project, adminKey, vaultClient }),
+    ]);
+
+    if (!managementTokenResult.success) {
+      return {
+        success: false,
+        error: `Failed to create management token: ${managementTokenResult.error}`,
+      };
+    }
+
+    if (!walletTokenResult.success) {
+      return {
+        success: false,
+        error: `Failed to create wallet token: ${walletTokenResult.error}`,
+      };
+    }
+
+    const managementToken = managementTokenResult.data;
+    const walletToken = walletTokenResult.data;
+
+    // Encrypt the new wallet token
+    const [encryptedAdminKey, encryptedWalletAccessToken] = await Promise.all([
+      encrypt(adminKey, projectSecretKey),
+      encrypt(walletToken.accessToken, projectSecretKey),
+    ]);
+
+    // Update the project with new tokens
+    await updateProjectClient(
+      {
+        projectId: project.id,
+        teamId: project.teamId,
+      },
+      {
+        services: [
+          ...project.services.filter(
+            (service) => service.name !== "engineCloud",
+          ),
+          {
+            ...engineCloudService,
+            managementAccessToken: managementToken.accessToken,
+            encryptedAdminKey,
+            encryptedWalletAccessToken,
+          },
+        ],
+      },
+    );
+
+    return {
+      success: true,
+      data: {
+        managementToken: managementToken.accessToken,
+        walletToken: walletToken.accessToken,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to upgrade access tokens",
+    };
+  }
 }
 
 export function maskSecret(secret: string) {

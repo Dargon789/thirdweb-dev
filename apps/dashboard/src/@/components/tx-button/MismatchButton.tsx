@@ -1,6 +1,5 @@
 "use client";
 
-import { getFaucetClaimAmount } from "@app/api/testnet-faucet/claim/claim-amount";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FaucetButton } from "app/(app)/(dashboard)/(chain)/[chain_id]/(chainPage)/components/client/FaucetButton";
 import { GiftIcon } from "app/(app)/(dashboard)/(chain)/[chain_id]/(chainPage)/components/icons/GiftIcon";
@@ -13,13 +12,14 @@ import { forwardRef, useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   prepareTransaction,
+  // eslint-disable-next-line no-restricted-imports
   sendTransaction,
   type ThirdwebClient,
   toWei,
 } from "thirdweb";
 import { type Chain, type ChainMetadata, localhost } from "thirdweb/chains";
 import {
-  PayEmbed,
+  BuyWidget,
   useActiveAccount,
   useActiveWallet,
   useActiveWalletChain,
@@ -30,7 +30,6 @@ import {
 import { privateKeyToAccount, type Wallet } from "thirdweb/wallets";
 import { apiServerProxy } from "@/actions/proxies";
 import { Button } from "@/components/ui/button";
-import { DynamicHeight } from "@/components/ui/DynamicHeight";
 import {
   Dialog,
   DialogContent,
@@ -43,12 +42,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { LOCAL_NODE_PKEY } from "@/constants/misc";
 import { useAllChainsData } from "@/hooks/chains/allChains";
 import { useV5DashboardChain } from "@/hooks/chains/v5-adapter";
 import { cn } from "@/lib/utils";
 import type { ChainMetadataWithServices, ChainServices } from "@/types/chain";
+import { getFaucetClaimAmount } from "@/utils/faucet";
 import { getSDKTheme } from "@/utils/sdk-component-theme";
 
 const GAS_FREE_CHAINS = [
@@ -251,39 +251,32 @@ export const MismatchButton = forwardRef<
       >
         <DialogContent
           className={cn(
-            "gap-0 p-0",
-            dialog === "no-funds" && "md:!max-w-[480px]",
-            dialog === "pay" && "md:!max-w-[360px] border-none bg-transparent",
+            "gap-0 p-0 md:!max-w-[480px]",
+            dialog === "pay" && "border-none bg-transparent",
           )}
           dialogCloseClassName="focus:ring-0"
         >
-          <DynamicHeight>
-            {dialog === "no-funds" && (
-              <NoFundsDialogContent
-                chain={txChain}
-                client={props.client}
-                isLoggedIn={props.isLoggedIn}
-                onCloseModal={() => setDialog(undefined)}
-                openPayModal={() => {
-                  setDialog("pay");
-                }}
-              />
-            )}
+          {dialog === "no-funds" && (
+            <NoFundsDialogContent
+              chain={txChain}
+              client={props.client}
+              isLoggedIn={props.isLoggedIn}
+              onCloseModal={() => setDialog(undefined)}
+              openPayModal={() => {
+                setDialog("pay");
+              }}
+            />
+          )}
 
-            {dialog === "pay" && (
-              <PayEmbed
-                className="!w-auto"
-                client={props.client}
-                payOptions={{
-                  prefillBuy: {
-                    amount: "0.01",
-                    chain: txChain,
-                  },
-                }}
-                theme={getSDKTheme(theme === "dark" ? "dark" : "light")}
-              />
-            )}
-          </DynamicHeight>
+          {dialog === "pay" && (
+            <BuyWidget
+              className="!w-full"
+              client={props.client}
+              chain={txChain}
+              amount="0.01"
+              theme={getSDKTheme(theme === "dark" ? "dark" : "light")}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>
@@ -362,11 +355,7 @@ function NoFundsDialogContent(props: {
                 (x) => x.enabled && x.service === "pay",
               ) ? (
               // pay case
-              <Button
-                className="w-full"
-                onClick={props.openPayModal}
-                variant="primary"
-              >
+              <Button className="w-full" onClick={props.openPayModal}>
                 Buy Funds
               </Button>
             ) : // no funds options available

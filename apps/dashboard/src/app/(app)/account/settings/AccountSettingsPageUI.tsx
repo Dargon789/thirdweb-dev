@@ -41,7 +41,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import type { Account } from "@/hooks/useApi";
 import { cn } from "@/lib/utils";
 import { resolveSchemeWithErrorHandler } from "@/utils/resolveSchemeWithErrorHandler";
@@ -285,7 +285,7 @@ function DeleteAccountCard(props: {
                         variant="outline"
                       >
                         <Link
-                          href="/support/create-ticket"
+                          href="/team/~/~/support"
                           rel="noopener noreferrer"
                           target="_blank"
                         >

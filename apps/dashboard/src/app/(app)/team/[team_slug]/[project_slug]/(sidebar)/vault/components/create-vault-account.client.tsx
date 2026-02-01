@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { Project } from "@/api/projects";
+import type { Project } from "@/api/project/projects";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CopyTextButton } from "@/components/ui/CopyTextButton";
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { useDashboardRouter } from "@/lib/DashboardRouter";
 import { cn } from "@/lib/utils";
 import {

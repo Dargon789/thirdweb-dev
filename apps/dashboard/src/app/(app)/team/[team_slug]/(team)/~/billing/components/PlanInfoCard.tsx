@@ -9,12 +9,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import type { Team } from "@/api/team";
-import type { TeamSubscription } from "@/api/team-subscription";
+import type { Team } from "@/api/team/get-team";
+import type { TeamSubscription } from "@/api/team/team-subscription";
 import { BillingPortalButton } from "@/components/billing/billing";
-import { CancelPlanButton } from "@/components/billing/CancelPlanModal/CancelPlanModal";
-import { BillingPricing } from "@/components/billing/Pricing";
-import { RenewSubscriptionButton } from "@/components/billing/renew-subscription/renew-subscription-button";
+import { RenewSubscriptionButton } from "@/components/billing/renew-subscription-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -27,6 +25,8 @@ import {
 import { ToolTipLabel } from "@/components/ui/tooltip";
 import { UnderlineLink } from "@/components/ui/UnderlineLink";
 import { getValidTeamPlan } from "@/utils/getValidTeamPlan";
+import { CancelPlanButton } from "./CancelPlanModal";
+import { BillingPricing } from "./Pricing";
 
 export function PlanInfoCardUI(props: {
   subscriptions: TeamSubscription[];
@@ -73,21 +73,24 @@ export function PlanInfoCardUI(props: {
               <h3 className="font-semibold text-2xl capitalize tracking-tight">
                 {validPlan === "growth_legacy" ? "Growth" : validPlan} Plan
               </h3>
-              {validPlan.includes("legacy") && (
+              {props.team.isLegacyPlan && (
                 <Badge variant="warning">Legacy</Badge>
               )}
               {trialEndsInFuture && <Badge variant="default">Trial</Badge>}
             </div>
 
-            {validPlan.includes("legacy") && (
+            {props.team.isLegacyPlan && (
               <p className="text-sm text-yellow-600">
-                You are on the legacy plan. You may save by upgrading to new
-                plan.{" "}
+                Legacy plans will be upgraded to new plans automatically on
+                January 1st, 2026.
+                <br />
                 <UnderlineLink
                   className="decoration-yellow-600/50"
-                  href="/pricing"
+                  href="https://blog.thirdweb.com/retiring-legacy-pricing-plans-on-january-1st-2026"
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
-                  Learn More
+                  Learn more about changes to legacy plans
                 </UnderlineLink>
               </p>
             )}

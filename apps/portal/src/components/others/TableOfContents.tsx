@@ -113,25 +113,33 @@ export function TableOfContentsSideBar(props: {
     };
   }, [filterHeading, pathname]);
 
+  if (nodes.length === 0) {
+    return null;
+  }
+
   return (
     <nav
       className={cn(
-        "hrink-0 hidden pt-6 text-sm xl:block",
+        "shrink-0 hidden pt-6 text-sm xl:block animate-in fade-in-0",
         "styled-scrollbar sticky top-sticky-top-height h-sidebar-height flex-col overflow-y-auto",
       )}
       style={{
         visibility: hideNav ? "hidden" : "visible",
       }}
     >
-      <div className="mb-5 font-semibold text-base">On this page</div>
-      <div
-        ref={tocRef}
-        style={{
-          opacity: nodes.length > 0 ? 1 : 0,
-          transition: "opacity 0.5s ease",
-        }}
-      >
-        <TableOfContents linkClassName={props.linkClassName} nodes={nodes} />
+      <div className="text-sm">
+        <div className="font-medium mb-4 text-foreground text-base">
+          On this page
+        </div>
+        <div
+          ref={tocRef}
+          style={{
+            opacity: nodes.length > 0 ? 1 : 0,
+            transition: "opacity 0.5s ease",
+          }}
+        >
+          <TableOfContents linkClassName={props.linkClassName} nodes={nodes} />
+        </div>
       </div>
     </nav>
   );
@@ -177,7 +185,7 @@ function TOCLink(props: {
   return (
     <Link
       className={cn(
-        "block overflow-hidden text-ellipsis font-medium text-muted-foreground transition-colors hover:text-foreground data-[active='true']:text-foreground",
+        "block overflow-hidden text-ellipsis text-muted-foreground transition-colors hover:text-foreground data-[active='true']:text-foreground",
         props.linkClassName,
       )}
       href={props.href}

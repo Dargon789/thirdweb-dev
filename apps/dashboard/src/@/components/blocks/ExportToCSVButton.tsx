@@ -3,7 +3,7 @@ import { DownloadIcon } from "lucide-react";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "../../lib/utils";
 
 export function ExportToCSVButton(props: {
@@ -34,7 +34,8 @@ export function ExportToCSVButton(props: {
 
   return (
     <Button
-      className={cn("flex items-center gap-2 border text-xs", props.className)}
+      className={cn("gap-2 rounded-full", props.className)}
+      size="sm"
       disabled={props.disabled || exportMutation.isPending}
       onClick={async () => {
         exportMutation.mutate();
@@ -42,16 +43,11 @@ export function ExportToCSVButton(props: {
       variant="outline"
     >
       {exportMutation.isPending ? (
-        <>
-          Downloading
-          <Spinner className="size-3" />
-        </>
+        <Spinner className="size-3.5 text-muted-foreground" />
       ) : (
-        <>
-          <DownloadIcon className="size-3" />
-          Export as CSV
-        </>
+        <DownloadIcon className="size-3.5 text-muted-foreground" />
       )}
+      Export
     </Button>
   );
 }

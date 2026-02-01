@@ -7,12 +7,12 @@ import {
 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getAuthToken } from "@/api/auth-token";
-import { getTeamBySlug } from "@/api/team";
+import { getTeamBySlug } from "@/api/team/get-team";
 import { getLast24HoursRPCUsage } from "@/api/usage/rpc";
 import { TeamPlanBadge } from "@/components/blocks/TeamPlanBadge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { loginRedirect } from "../../../../../../login/loginRedirect";
+import { loginRedirect } from "@/utils/redirects";
 import { CountGraph } from "./components/count-graph";
 import { RateGraph } from "./components/rate-graph";
 
@@ -33,7 +33,6 @@ export default async function RPCUsage(props: {
     redirect("/team");
   }
 
-  const currentPlan = team.billingPlan;
   const currentRateLimit = team.capabilities.rpc.rateLimit;
 
   const apiData = await getLast24HoursRPCUsage({
@@ -102,7 +101,11 @@ export default async function RPCUsage(props: {
                 <div className="font-bold text-2xl capitalize">
                   {currentRateLimit.toLocaleString()} RPS
                 </div>
-                <TeamPlanBadge plan={currentPlan} teamSlug={team.slug} />
+                <TeamPlanBadge
+                  plan={team.billingPlan}
+                  teamSlug={team.slug}
+                  isLegacyPlan={team.isLegacyPlan}
+                />
               </div>
             </CardContent>
           </Card>

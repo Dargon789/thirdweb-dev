@@ -8,10 +8,19 @@
   ],
   "ignoreBinaries": ["only-allow"],
   "ignoreDependencies": [
+    "@thirdweb-dev/api",
     "@thirdweb-dev/service-utils",
     "@thirdweb-dev/vault-sdk",
+    "thirdweb",
     "@types/color",
-    "fast-xml-parser"
+    "fast-xml-parser",
+    "@workspace/ui",
+    "tailwindcss-animate",
+    "@radix-ui/react-tooltip",
+    "shiki",
+    "react-children-utilities",
+    "react-markdown",
+    "remark-gfm"
   ],
   "next": true,
   "project": ["src/**"]

@@ -1,8 +1,7 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { trackPayEvent } from "../../../../../analytics/track/pay.js";
-import type { Token } from "../../../../../bridge/types/Token.js";
+import type { TokenWithPrices } from "../../../../../bridge/types/Token.js";
 import { defineChain } from "../../../../../chains/utils.js";
 import type { ThirdwebClient } from "../../../../../client/client.js";
 import type { SupportedFiatCurrency } from "../../../../../pay/convert/type.js";
@@ -12,21 +11,22 @@ import type { Wallet } from "../../../../../wallets/interfaces/wallet.js";
 import { usePaymentMethods } from "../../../../core/hooks/usePaymentMethods.js";
 import { useActiveWallet } from "../../../../core/hooks/wallets/useActiveWallet.js";
 import { useConnectedWallets } from "../../../../core/hooks/wallets/useConnectedWallets.js";
-import type { PaymentMethod } from "../../../../core/machines/paymentMachine.js";
+import type { SupportedTokens } from "../../../../core/utils/defaultTokens.js";
 import type { ConnectLocale } from "../../ConnectWallet/locale/types.js";
 import { WalletSwitcherConnectionScreen } from "../../ConnectWallet/screens/WalletSwitcherConnectionScreen.js";
 import { Container, ModalHeader } from "../../components/basic.js";
 import { Spacer } from "../../components/Spacer.js";
 import type { PayEmbedConnectOptions } from "../../PayEmbed.js";
+import type { PaymentMethod } from "../types.js";
 import { FiatProviderSelection } from "./FiatProviderSelection.js";
 import { TokenSelection } from "./TokenSelection.js";
 import { WalletFiatSelection } from "./WalletFiatSelection.js";
 
-export interface PaymentSelectionProps {
+type PaymentSelectionProps = {
   /**
    * The destination token to bridge to
    */
-  destinationToken: Token;
+  destinationToken: TokenWithPrices;
 
   /**
    * The destination amount to bridge
@@ -36,7 +36,7 @@ export interface PaymentSelectionProps {
   /**
    * The receiver address
    */
-  receiverAddress?: Address;
+  receiverAddress: Address;
 
   /**
    * ThirdwebClient for API calls
@@ -56,12 +56,12 @@ export interface PaymentSelectionProps {
   /**
    * Called when user wants to go back
    */
-  onBack?: () => void;
+  onBack: () => void;
 
   /**
    * Connect options for wallet connection
    */
-  connectOptions?: PayEmbedConnectOptions;
+  connectOptions: PayEmbedConnectOptions | undefined;
 
   /**
    * Locale for connect UI
@@ -69,27 +69,28 @@ export interface PaymentSelectionProps {
   connectLocale: ConnectLocale;
 
   /**
-   * Whether to include the destination token in the payment methods
-   */
-  includeDestinationToken?: boolean;
-
-  /**
    * Allowed payment methods
-   * @default ["crypto", "card"]
    */
-  paymentMethods?: ("crypto" | "card")[];
+  paymentMethods: ("crypto" | "card")[];
 
   /**
    * Fee payer
    */
-  feePayer?: "sender" | "receiver";
+  feePayer: "sender" | "receiver" | undefined;
 
   /**
    * The currency to use for the payment.
    * @default "USD"
    */
-  currency?: SupportedFiatCurrency;
-}
+  currency: SupportedFiatCurrency;
+
+  /**
+   * The user's ISO 3166 alpha-2 country code. This is used to determine onramp provider support.
+   */
+  country: string | undefined;
+
+  supportedTokens: SupportedTokens | undefined;
+};
 
 type Step =
   | { type: "walletSelection" }
@@ -107,30 +108,25 @@ export function PaymentSelection({
   onBack,
   connectOptions,
   connectLocale,
-  includeDestinationToken,
-  paymentMethods = ["crypto", "card"],
+  paymentMethods,
+  supportedTokens,
   feePayer,
   currency,
+  country,
 }: PaymentSelectionProps) {
   const connectedWallets = useConnectedWallets();
   const activeWallet = useActiveWallet();
 
-  const [currentStep, setCurrentStep] = useState<Step>({
-    type: "walletSelection",
-  });
+  const initialStep =
+    paymentMethods.length === 1 && paymentMethods[0] === "card"
+      ? {
+          type: "fiatProviderSelection" as const,
+        }
+      : {
+          type: "walletSelection" as const,
+        };
 
-  useQuery({
-    queryFn: () => {
-      trackPayEvent({
-        client,
-        event: "payment_selection",
-        toChainId: destinationToken.chainId,
-        toToken: destinationToken.address,
-      });
-      return true;
-    },
-    queryKey: ["payment_selection"],
-  });
+  const [currentStep, setCurrentStep] = useState<Step>(initialStep);
 
   const payerWallet =
     currentStep.type === "tokenSelection"
@@ -144,11 +140,8 @@ export function PaymentSelection({
     client,
     destinationAmount,
     destinationToken,
-    includeDestinationToken:
-      includeDestinationToken ||
-      receiverAddress?.toLowerCase() !==
-        payerWallet?.getAccount()?.address?.toLowerCase(),
     payerWallet,
+    supportedTokens,
   });
 
   // Handle error from usePaymentMethods
@@ -167,6 +160,10 @@ export function PaymentSelection({
   };
 
   const handleWalletSelected = (wallet: Wallet) => {
+    trackPayEvent({
+      client,
+      event: "ub:ui:token_selection",
+    });
     setCurrentStep({ selectedWallet: wallet, type: "tokenSelection" });
   };
 
@@ -175,6 +172,10 @@ export function PaymentSelection({
   };
 
   const handleFiatSelected = () => {
+    trackPayEvent({
+      client,
+      event: "ub:ui:fiat_provider_selection",
+    });
     setCurrentStep({ type: "fiatProviderSelection" });
   };
 
@@ -185,15 +186,17 @@ export function PaymentSelection({
   const handleOnrampProviderSelected = (
     provider: "coinbase" | "stripe" | "transak",
   ) => {
-    if (!payerWallet) {
-      onError(new Error("No wallet available for fiat payment"));
+    const recipientAddress =
+      receiverAddress || payerWallet?.getAccount()?.address;
+    if (!recipientAddress) {
+      onError(new Error("No recipient address available for fiat payment"));
       return;
     }
 
     const fiatPaymentMethod: PaymentMethod = {
-      currency: "USD",
+      currency: currency || "USD",
       onramp: provider,
-      payerWallet, // Default to USD for now
+      payerWallet,
       type: "fiat",
     };
     handlePaymentMethodSelected(fiatPaymentMethod);
@@ -213,6 +216,9 @@ export function PaymentSelection({
   };
 
   const getBackHandler = () => {
+    if (paymentMethods.length === 1 && paymentMethods[0] === "card") {
+      return onBack;
+    }
     switch (currentStep.type) {
       case "walletSelection":
         return onBack;
@@ -257,12 +263,11 @@ export function PaymentSelection({
   }
 
   return (
-    <Container flex="column" p="lg">
+    <Container flex="column" px="md" pt="md+">
       <ModalHeader onBack={getBackHandler()} title={getStepTitle()} />
+      <Spacer y="lg" />
 
-      <Spacer y="xl" />
-
-      <Container flex="column">
+      <Container flex="column" style={{ minHeight: "300px" }}>
         {currentStep.type === "walletSelection" && (
           <WalletFiatSelection
             client={client}
@@ -287,14 +292,18 @@ export function PaymentSelection({
             onPaymentMethodSelected={handlePaymentMethodSelected}
             paymentMethods={suitableTokenPaymentMethods}
             paymentMethodsLoading={paymentMethodsLoading}
+            currency={currency}
           />
         )}
 
         {currentStep.type === "fiatProviderSelection" && (
           <FiatProviderSelection
+            country={country}
             client={client}
             onProviderSelected={handleOnrampProviderSelected}
-            toAddress={receiverAddress || ""}
+            toAddress={
+              receiverAddress || payerWallet?.getAccount()?.address || ""
+            }
             toAmount={destinationAmount}
             toChainId={destinationToken.chainId}
             toTokenAddress={destinationToken.address}

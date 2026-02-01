@@ -1,14 +1,19 @@
 "use client";
 
 import {
+  ArrowLeftIcon,
   ArrowRightIcon,
   ArrowUpFromLineIcon,
   ImageOffIcon,
+  RefreshCcwIcon,
+  ShoppingBagIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { useMemo, useRef, useState } from "react";
-import { defineChain, type ThirdwebClient } from "thirdweb";
+import type { ThirdwebClient } from "thirdweb";
 import {
+  BuyWidget,
   TokenProvider,
   TokenSymbol,
   useActiveAccount,
@@ -18,7 +23,8 @@ import {
   reportAssetCreationFailed,
   reportAssetCreationSuccessful,
 } from "@/analytics/report";
-import type { Team } from "@/api/team";
+import type { Team } from "@/api/team/get-team";
+import { FilePreview } from "@/components/blocks/file-preview";
 import { GatedSwitch } from "@/components/blocks/GatedSwitch";
 import type { MultiStepState } from "@/components/blocks/multi-step-status/multi-step-status";
 import { MultiStepStatus } from "@/components/blocks/multi-step-status/multi-step-status";
@@ -34,9 +40,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useV5DashboardChain } from "@/hooks/chains/v5-adapter";
 import { parseError } from "@/utils/errorParser";
+import { getSDKTheme } from "@/utils/sdk-component-theme";
 import { ChainOverview } from "../../_common/chain-overview";
-import { FilePreview } from "../../_common/file-preview";
 import { StepCard } from "../../_common/step-card";
 import { StorageErrorPlanUpsell } from "../../_common/storage-error-upsell";
 import type {
@@ -62,6 +69,7 @@ export function LaunchNFT(props: {
   teamSlug: string;
   projectSlug: string;
   teamPlan: Team["billingPlan"];
+  isLegacyPlan: boolean;
 }) {
   const formValues = props.values;
   const [steps, setSteps] = useState<MultiStepState<StepId>[]>([]);
@@ -70,6 +78,10 @@ export function LaunchNFT(props: {
   const walletRequiresApproval = activeWallet?.id !== "inApp";
   const account = useActiveAccount();
   const contractAddressRef = useRef<string | null>(null);
+  const { theme } = useTheme();
+  const chainMeta = useV5DashboardChain(
+    Number(formValues.collectionInfo.chain),
+  );
 
   function updateStatus(
     index: number,
@@ -155,10 +167,22 @@ export function LaunchNFT(props: {
     return shouldDeployERC721 ? "erc721" : "erc1155";
   }, [formValues.nfts]);
 
-  const canEnableGasless =
-    props.teamPlan !== "free" && activeWallet?.id === "inApp";
+  // TODO: enable later when bundler changes are done
+  const canEnableGasless = false; // props.teamPlan !== "free" && activeWallet?.id === "inApp";
   const [isGasless, setIsGasless] = useState(canEnableGasless);
-  const showGaslessSection = activeWallet?.id === "inApp";
+  const showGaslessSection = false; // activeWallet?.id === "inApp";
+
+  const [notEnoughFunds, setNotEnoughFunds] = useState<
+    | false
+    | {
+        values: {
+          requiredAmount: string;
+          balance: string;
+        };
+        isBuySuccess: boolean;
+        showBuyWidget: boolean;
+      }
+  >(false);
 
   const contractLink = contractAddressRef.current
     ? `/team/${props.teamSlug}/${props.projectSlug}/contract/${formValues.collectionInfo.chain}/${contractAddressRef.current}`
@@ -203,6 +227,16 @@ export function LaunchNFT(props: {
               },
               gasless: isGasless,
               values: formValues,
+              onNotEnoughFunds: (data) => {
+                setNotEnoughFunds({
+                  values: {
+                    balance: data.balance,
+                    requiredAmount: data.requiredAmount,
+                  },
+                  isBuySuccess: false,
+                  showBuyWidget: false,
+                });
+              },
             });
 
             batchesProcessedRef.current += 1;
@@ -215,6 +249,16 @@ export function LaunchNFT(props: {
             },
             gasless: isGasless,
             values: formValues,
+            onNotEnoughFunds: (data) => {
+              setNotEnoughFunds({
+                values: {
+                  balance: data.balance,
+                  requiredAmount: data.requiredAmount,
+                },
+                isBuySuccess: false,
+                showBuyWidget: false,
+              });
+            },
           });
         }
       }
@@ -273,6 +317,8 @@ export function LaunchNFT(props: {
           contractType: ercType === "erc721" ? "DropERC721" : "DropERC1155",
           error: errorMessage,
           step: currentStep.id,
+          is_testnet: chainMeta.testnet,
+          chainId: Number(formValues.collectionInfo.chain),
         });
 
         throw error;
@@ -282,6 +328,8 @@ export function LaunchNFT(props: {
     reportAssetCreationSuccessful({
       assetType: "nft",
       contractType: ercType === "erc721" ? "DropERC721" : "DropERC1155",
+      chainId: Number(formValues.collectionInfo.chain),
+      is_testnet: chainMeta?.testnet ?? false,
     });
 
     props.onLaunchSuccess();
@@ -302,11 +350,12 @@ export function LaunchNFT(props: {
   }
 
   const isComplete = steps.every((step) => step.status.type === "completed");
-  const isPending = steps.some((step) => step.status.type === "pending");
 
   const isPriceSame = props.values.nfts.every(
     (nft) => nft.price_amount === props.values.nfts[0]?.price_amount,
   );
+
+  const chain = useV5DashboardChain(Number(formValues.collectionInfo.chain));
 
   const uniqueAttributes = useMemo(() => {
     const attributeNames = new Set<string>();
@@ -355,64 +404,161 @@ export function LaunchNFT(props: {
           className="gap-0 overflow-hidden p-0 md:max-w-[480px]"
           dialogCloseClassName="hidden"
         >
-          <div className="flex flex-col gap-6 p-6">
-            <DialogHeader className="space-y-0.5">
-              <DialogTitle className="font-semibold text-xl tracking-tight">
-                Status
-              </DialogTitle>
-              {walletRequiresApproval && (
-                <DialogDescription>
-                  Each step will prompt a signature request in your wallet
-                </DialogDescription>
-              )}
-            </DialogHeader>
-
-            <MultiStepStatus
-              onRetry={handleRetry}
-              renderError={(step, errorMessage) => {
-                if (
-                  props.teamPlan === "free" &&
-                  errorMessage.toLowerCase().includes("storage limit")
-                ) {
-                  return (
-                    <StorageErrorPlanUpsell
-                      onRetry={() => handleRetry(step)}
-                      teamSlug={props.teamSlug}
-                      trackingCampaign="create-nft"
-                    />
-                  );
-                }
-
-                return null;
-              }}
-              steps={steps}
-            />
-          </div>
-
-          <div className="mt-2 flex justify-between gap-4 border-border border-t bg-card p-6">
-            {isComplete && contractLink ? (
-              <div>
-                <Button asChild className="gap-2">
-                  <Link href={contractLink}>
-                    View NFT <ArrowRightIcon className="size-4" />
-                  </Link>
+          {/** biome-ignore lint/complexity/useOptionalChain: can't change it to optional chain */}
+          {notEnoughFunds && notEnoughFunds.showBuyWidget ? (
+            <div className="bg-card">
+              <div className="border-b py-2 px-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setNotEnoughFunds({
+                      ...notEnoughFunds,
+                      showBuyWidget: false,
+                    })
+                  }
+                  className="gap-2 px-2 text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeftIcon className="size-4" />
+                  Back
                 </Button>
               </div>
-            ) : (
-              <div />
-            )}
+              <BuyWidget
+                client={props.client}
+                chain={chain}
+                amount={String(
+                  Number(notEnoughFunds.values.requiredAmount) -
+                    Number(notEnoughFunds.values.balance),
+                )}
+                buttonLabel={`Buy ${chainMeta?.nativeCurrency?.symbol || "ETH"}`}
+                theme={getSDKTheme(theme === "dark" ? "dark" : "light")}
+                className="!border-none !w-full !rounded-none"
+                onSuccess={() => {
+                  setNotEnoughFunds({
+                    ...notEnoughFunds,
+                    isBuySuccess: true,
+                    showBuyWidget: false,
+                  });
+                }}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6 p-6 mb-2">
+              <DialogHeader className="space-y-0.5">
+                <DialogTitle className="font-semibold text-xl tracking-tight">
+                  Status
+                </DialogTitle>
+                {walletRequiresApproval && (
+                  <DialogDescription>
+                    Each step will prompt a signature request in your wallet
+                  </DialogDescription>
+                )}
+              </DialogHeader>
 
-            <Button
-              disabled={isPending}
-              onClick={() => {
-                setIsModalOpen(false);
-                // reset steps
-                setSteps([]);
-              }}
-              variant="outline"
-            >
-              {isComplete ? "Close" : "Cancel"}
-            </Button>
+              <MultiStepStatus
+                onRetry={handleRetry}
+                renderError={(step, errorMessage) => {
+                  if (
+                    props.teamPlan === "free" &&
+                    errorMessage.toLowerCase().includes("storage limit")
+                  ) {
+                    return (
+                      <StorageErrorPlanUpsell
+                        onRetry={() => handleRetry(step)}
+                        teamSlug={props.teamSlug}
+                        trackingCampaign="create-nft"
+                      />
+                    );
+                  }
+
+                  if (notEnoughFunds) {
+                    return (
+                      <div>
+                        {notEnoughFunds.isBuySuccess ? (
+                          <p className="text-success-text text-sm mt-1.5 mb-2">
+                            Funds bought successfully
+                          </p>
+                        ) : (
+                          <div className="mt-2 mb-2 space-y-1">
+                            <p className="text-destructive-text text-sm">
+                              Not enough funds
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                              Required Funds:{" "}
+                              {notEnoughFunds.values.requiredAmount}{" "}
+                              {chainMeta?.nativeCurrency?.symbol || "ETH"}
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                              Balance: {notEnoughFunds.values.balance}{" "}
+                              {chainMeta?.nativeCurrency?.symbol || "ETH"}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => {
+                              handleRetry(step);
+                              setNotEnoughFunds(false);
+                            }}
+                            size="sm"
+                            variant={
+                              notEnoughFunds.isBuySuccess
+                                ? "default"
+                                : "outline"
+                            }
+                            className="gap-2"
+                          >
+                            <RefreshCcwIcon className="size-3.5" />
+                            Retry
+                          </Button>
+
+                          {!notEnoughFunds.isBuySuccess && (
+                            <Button
+                              onClick={() => {
+                                setNotEnoughFunds({
+                                  ...notEnoughFunds,
+                                  showBuyWidget: true,
+                                });
+                              }}
+                              size="sm"
+                              className="gap-2"
+                            >
+                              <ShoppingBagIcon className="size-3.5" />
+                              Buy Funds
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                }}
+                steps={steps}
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end gap-4 border-border border-t bg-card p-6">
+            {!isComplete ? (
+              <Button
+                onClick={() => {
+                  setIsModalOpen(false);
+                  // reset steps
+                  setSteps([]);
+                }}
+                variant="outline"
+              >
+                Cancel
+              </Button>
+            ) : contractLink ? (
+              <Button asChild className="gap-2">
+                <Link href={contractLink}>
+                  View NFT Collection <ArrowRightIcon className="size-4" />
+                </Link>
+              </Button>
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
@@ -500,8 +646,7 @@ export function LaunchNFT(props: {
                 {formValues.nfts[0].price_amount}{" "}
                 <TokenProvider
                   address={formValues.nfts[0].price_currency}
-                  // eslint-disable-next-line no-restricted-syntax
-                  chain={defineChain(Number(formValues.collectionInfo.chain))}
+                  chain={chain}
                   client={props.client}
                 >
                   <TokenSymbol
@@ -572,6 +717,7 @@ export function LaunchNFT(props: {
             </div>
             <GatedSwitch
               currentPlan={props.teamPlan}
+              isLegacyPlan={props.isLegacyPlan}
               requiredPlan="starter"
               switchProps={{
                 checked: isGasless,

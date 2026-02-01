@@ -1,3 +1,4 @@
+export type { SupportedFiatCurrency } from "../pay/convert/type.js";
 export {
   AccountProvider,
   type AccountProviderProps,
@@ -23,12 +24,14 @@ export type {
   TransactionOptions,
 } from "../react/core/hooks/connection/ConnectButtonProps.js";
 export type { ConnectEmbedProps } from "../react/core/hooks/connection/ConnectEmbedProps.js";
+export type { OnConnectCallback } from "../react/core/hooks/connection/types.js";
 export { useContractEvents } from "../react/core/hooks/contract/useContractEvents.js";
 // contract
 export { useReadContract } from "../react/core/hooks/contract/useReadContract.js";
 export { useWaitForReceipt } from "../react/core/hooks/contract/useWaitForReceipt.js";
 // chain hooks
 export { useChainMetadata } from "../react/core/hooks/others/useChainQuery.js";
+export { useInvalidateBalances } from "../react/core/hooks/others/useInvalidateBalances.js";
 export { useInvalidateContractQuery } from "../react/core/hooks/others/useInvalidateQueries.js";
 export { useWalletBalance } from "../react/core/hooks/others/useWalletBalance.js";
 export {
@@ -66,7 +69,6 @@ export {
 export type { TransactionButtonProps } from "../react/core/hooks/transaction/transaction-button-utils.js";
 export { useEstimateGas } from "../react/core/hooks/transaction/useEstimateGas.js";
 export { useEstimateGasCost } from "../react/core/hooks/transaction/useEstimateGasCost.js";
-export { useSendAndConfirmTransaction } from "../react/core/hooks/transaction/useSendAndConfirmTransaction.js";
 export { useSendBatchTransaction } from "../react/core/hooks/transaction/useSendBatchTransaction.js";
 // transaction
 export type {
@@ -74,15 +76,14 @@ export type {
   SendTransactionPayModalConfig,
 } from "../react/core/hooks/transaction/useSendTransaction.js";
 export { useSimulateTransaction } from "../react/core/hooks/transaction/useSimulateTransaction.js";
-export {
-  type UseBridgeRoutesParams,
-  useBridgeRoutes,
-} from "../react/core/hooks/useBridgeRoutes.js";
+export type { BridgePrepareResult } from "../react/core/hooks/useBridgePrepare.js";
+export type { CompletedStatusResult } from "../react/core/hooks/useStepExecutor.js";
 export { useActiveAccount } from "../react/core/hooks/wallets/useActiveAccount.js";
 // wallet hooks
 export { useActiveWallet } from "../react/core/hooks/wallets/useActiveWallet.js";
 export { useActiveWalletChain } from "../react/core/hooks/wallets/useActiveWalletChain.js";
 export { useActiveWalletConnectionStatus } from "../react/core/hooks/wallets/useActiveWalletConnectionStatus.js";
+export { useAddConnectedWallet } from "../react/core/hooks/wallets/useAddConnectedWallet.js";
 export { useAdminWallet } from "../react/core/hooks/wallets/useAdminWallet.js";
 export { useAuthToken } from "../react/core/hooks/wallets/useAuthToken.js";
 // eip5792
@@ -101,7 +102,6 @@ export { useConnectionManager } from "../react/core/providers/connection-manager
 // Social
 export { useSocialProfiles } from "../react/core/social/useSocialProfiles.js";
 export type { AccountBalanceInfo } from "../react/core/utils/account.js";
-
 // utils
 export { createContractQuery } from "../react/core/utils/createQuery.js";
 // tokens
@@ -126,22 +126,36 @@ export {
   WalletProvider,
   type WalletProviderProps,
 } from "../react/core/wallet/provider.js";
+export { useSendAndConfirmTransaction } from "../react/web/hooks/transaction/useSendAndConfirmTransaction.js";
 export { useSendTransaction } from "../react/web/hooks/transaction/useSendTransaction.js";
 export { useAutoConnect } from "../react/web/hooks/wallets/useAutoConnect.js";
 export { useLinkProfile } from "../react/web/hooks/wallets/useLinkProfile.js";
 export { useProfiles } from "../react/web/hooks/wallets/useProfiles.js";
 export { useUnlinkProfile } from "../react/web/hooks/wallets/useUnlinkProfile.js";
+// x402
+export {
+  type UseFetchWithPaymentOptions,
+  useFetchWithPayment,
+} from "../react/web/hooks/x402/useFetchWithPayment.js";
 export { ThirdwebProvider } from "../react/web/providers/thirdweb-provider.js";
 export { AutoConnect } from "../react/web/ui/AutoConnect/AutoConnect.js";
-
+export type { BuyOrOnrampPrepareResult } from "../react/web/ui/Bridge/BuyWidget.js";
 export {
   BuyWidget,
   type BuyWidgetProps,
 } from "../react/web/ui/Bridge/BuyWidget.js";
 export {
+  BridgeWidget,
+  type BridgeWidgetProps,
+} from "../react/web/ui/Bridge/bridge-widget/bridge-widget.js";
+export {
   CheckoutWidget,
   type CheckoutWidgetProps,
 } from "../react/web/ui/Bridge/CheckoutWidget.js";
+export {
+  SwapWidget,
+  type SwapWidgetProps,
+} from "../react/web/ui/Bridge/swap-widget/SwapWidget.js";
 export {
   TransactionWidget,
   type TransactionWidgetProps,
@@ -268,7 +282,6 @@ export { SiteEmbed } from "../react/web/ui/SiteEmbed.js";
 export { SiteLink } from "../react/web/ui/SiteLink.js";
 export { TransactionButton } from "../react/web/ui/TransactionButton/index.js";
 export type { LocaleId } from "../react/web/ui/types.js";
-
 // Utils
 export { getLastAuthProvider } from "../react/web/utils/storage.js";
 export type {

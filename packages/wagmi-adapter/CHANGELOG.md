@@ -1,5 +1,193 @@
 # @thirdweb-dev/wagmi-adapter
 
+## 0.2.201
+
+## 0.2.200
+
+## 0.2.199
+
+## 0.2.198
+
+## 0.2.197
+
+## 0.2.196
+
+## 0.2.195
+
+## 0.2.194
+
+## 0.2.193
+
+## 0.2.192
+
+## 0.2.191
+
+## 0.2.190
+
+## 0.2.189
+
+## 0.2.188
+
+### Patch Changes
+
+- [#8425](https://github.com/thirdweb-dev/js/pull/8425) [`419fb31`](https://github.com/thirdweb-dev/js/commit/419fb3160188c435a89d65caf36bdd845dd239fe) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Better handling of autoconnect to last connected chain
+
+## 0.2.187
+
+## 0.2.186
+
+## 0.2.185
+
+## 0.2.184
+
+## 0.2.183
+
+## 0.2.182
+
+## 0.2.181
+
+## 0.2.180
+
+## 0.2.179
+
+## 0.2.178
+
+## 0.2.177
+
+## 0.2.176
+
+## 0.2.175
+
+## 0.2.174
+
+## 0.2.173
+
+## 0.2.172
+
+## 0.2.171
+
+## 0.2.170
+
+## 0.2.169
+
+## 0.2.168
+
+## 0.2.167
+
+## 0.2.166
+
+## 0.2.165
+
+## 0.2.164
+
+## 0.2.163
+
+## 0.2.162
+
+## 0.2.161
+
+## 0.2.160
+
+## 0.2.159
+
+## 0.2.158
+
+## 0.2.157
+
+## 0.2.156
+
+### Patch Changes
+
+- [#8167](https://github.com/thirdweb-dev/js/pull/8167) [`eb603f8`](https://github.com/thirdweb-dev/js/commit/eb603f89086f25202b157eb748f70a252dd7c6e7) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update dependencies, better storage management
+
+## 0.2.155
+
+## 0.2.154
+
+## 0.2.153
+
+### Patch Changes
+
+- [#8131](https://github.com/thirdweb-dev/js/pull/8131) [`cf02cbf`](https://github.com/thirdweb-dev/js/commit/cf02cbf3af205ebe6196087e23f6a9b71e10e30e) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add onConnect callback
+
+## 0.2.152
+
+## 0.2.151
+
+## 0.2.150
+
+## 0.2.149
+
+## 0.2.148
+
+## 0.2.147
+
+## 0.2.146
+
+## 0.2.145
+
+## 0.2.144
+
+## 0.2.143
+
+## 0.2.142
+
+## 0.2.141
+
+## 0.2.140
+
+## 0.2.139
+
+## 0.2.138
+
+## 0.2.137
+
+## 0.2.136
+
+## 0.2.135
+
+## 0.2.134
+
+## 0.2.133
+
+## 0.2.132
+
+## 0.2.131
+
+## 0.2.130
+
+## 0.2.129
+
+## 0.2.128
+
+## 0.2.127
+
+## 0.2.126
+
+## 0.2.125
+
+## 0.2.124
+
+## 0.2.123
+
+## 0.2.122
+
+## 0.2.121
+
+## 0.2.120
+
+## 0.2.119
+
+## 0.2.118
+
+## 0.2.117
+
+## 0.2.116
+
+## 0.2.115
+
+## 0.2.114
+
 ## 0.2.113
 
 ## 0.2.112

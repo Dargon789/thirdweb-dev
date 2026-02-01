@@ -46,9 +46,9 @@ function AnnouncementBannerUI(props: {
 export function AnnouncementBanner() {
   return (
     <AnnouncementBannerUI
-      href="https://blog.thirdweb.com/the-fastest-way-to-build-web3-applications/"
-      label="We have re-branded our Engine, Universal Bridge, and Connect products. Please read the full blog post for details on changes"
-      trackingLabel="product-rebrand"
+      href="https://blog.thirdweb.com/changelog/project-view-update-wallets/"
+      label="Transactions, Vault, and Account Abstraction are now part of Wallets in Project Dashboard. View changes"
+      trackingLabel="project-view-update-wallets"
     />
   );
 }

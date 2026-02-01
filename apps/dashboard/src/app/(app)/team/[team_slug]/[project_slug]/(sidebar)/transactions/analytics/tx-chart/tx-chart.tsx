@@ -1,73 +1,79 @@
-import { ResponsiveSuspense } from "responsive-rsc";
-import type { Project } from "@/api/projects";
-import { getTransactionsChart } from "../../lib/analytics";
-import { getTxAnalyticsFiltersFromSearchParams } from "../../lib/utils";
+"use client";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import type { Project } from "@/api/project/projects";
+import {
+  DateRangeSelector,
+  getLastNDaysRange,
+} from "@/components/analytics/date-range-selector";
+import { IntervalSelector } from "@/components/analytics/interval-selector";
+import { normalizeTimeISOString } from "@/lib/time";
 import type { Wallet } from "../../server-wallets/wallet-table/types";
+import { TransactionAnalyticsSummary } from "../summary";
+import { getTransactionsChartData } from "./data";
 import { TransactionsChartCardUI } from "./tx-chart-ui";
 
-async function AsyncTransactionsChartCard(props: {
-  from: string;
-  to: string;
-  interval: "day" | "week";
+export function TransactionsAnalytics(props: {
   project: Project;
   wallets: Wallet[];
+  authToken: string;
   teamSlug: string;
 }) {
-  const data = await getTransactionsChart({
+  const [range, setRange] = useState(() => getLastNDaysRange("last-30"));
+  const [interval, setInterval] = useState<"day" | "week">("day");
+
+  const normalizedFrom = normalizeTimeISOString(range.from);
+  const normalizedTo = normalizeTimeISOString(range.to);
+
+  const params = {
     clientId: props.project.publishableKey,
-    from: props.from,
-    interval: props.interval,
+    from: normalizedFrom,
+    interval: interval,
     teamId: props.project.teamId,
-    to: props.to,
+    to: normalizedTo,
+    authToken: props.authToken,
+  };
+
+  const engineTxAnalytics = useQuery({
+    queryKey: ["engine-tx-analytics", params],
+    queryFn: async () => {
+      const data = await getTransactionsChartData(params);
+      return data;
+    },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   return (
-    <TransactionsChartCardUI
-      isPending={false}
-      project={props.project}
-      teamSlug={props.teamSlug}
-      userOpStats={data}
-      wallets={props.wallets}
-    />
-  );
-}
+    <div className="flex flex-col gap-6">
+      <div className="flex justify-start">
+        <div className="no-scrollbar flex items-center gap-3 max-sm:overflow-auto">
+          <DateRangeSelector
+            popoverAlign="end"
+            range={range}
+            setRange={setRange}
+          />
 
-export function TransactionsChartCard(props: {
-  searchParams: {
-    from?: string | undefined | string[];
-    to?: string | undefined | string[];
-    interval?: string | undefined | string[];
-  };
-  project: Project;
-  wallets: Wallet[];
-  teamSlug: string;
-}) {
-  const { range, interval } = getTxAnalyticsFiltersFromSearchParams(
-    props.searchParams,
-  );
-
-  return (
-    <ResponsiveSuspense
-      // TODO - change this if this component does not end up using these params
-      fallback={
-        <TransactionsChartCardUI
-          isPending={true}
-          project={props.project}
-          teamSlug={props.teamSlug}
-          userOpStats={[]}
-          wallets={[]}
-        />
-      }
-      searchParamsUsed={["from", "to", "interval"]}
-    >
-      <AsyncTransactionsChartCard
-        from={range.from.toISOString()}
-        interval={interval}
+          <IntervalSelector
+            intervalType={interval}
+            setIntervalType={setInterval}
+          />
+        </div>
+      </div>
+      <TransactionAnalyticsSummary
+        authToken={props.authToken}
+        clientId={props.project.publishableKey}
+        teamId={props.project.teamId}
+        startDate={normalizedFrom}
+        endDate={normalizedTo}
+      />
+      <TransactionsChartCardUI
+        isPending={engineTxAnalytics.isPending}
         project={props.project}
         teamSlug={props.teamSlug}
-        to={range.to.toISOString()}
+        userOpStats={engineTxAnalytics.data ?? []}
         wallets={props.wallets}
       />
-    </ResponsiveSuspense>
+    </div>
   );
 }

@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { useId, useState } from "react";
-import type { TeamAccountRole } from "@/api/team-members";
+import type { TeamAccountRole } from "@/api/team/team-members";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { teamStub } from "@/storybook/stubs";
-import { storybookThirdwebClient } from "../../../../../../../../@/storybook/utils";
+import { storybookThirdwebClient } from "@/storybook/utils";
 import { InviteSection } from "./InviteSection";
 
 const meta = {

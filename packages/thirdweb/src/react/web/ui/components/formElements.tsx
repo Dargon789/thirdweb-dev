@@ -2,6 +2,7 @@
 import { useCustomTheme } from "../../../core/design-system/CustomThemeProvider.js";
 import {
   fontSize,
+  media,
   radius,
   spacing,
   type Theme,
@@ -30,6 +31,7 @@ type InputProps = {
   variant: "outline" | "transparent";
   sm?: boolean;
   theme?: Theme;
+  bg?: keyof Theme["colors"];
 };
 
 export const Input = /* @__PURE__ */ StyledInput<InputProps>((props) => {
@@ -86,7 +88,7 @@ export const Input = /* @__PURE__ */ StyledInput<InputProps>((props) => {
         WebkitAppearance: "none",
       },
     appearance: "none",
-    background: "transparent",
+    background: props.bg ? theme.colors[props.bg] : "transparent",
     border: "none",
     borderRadius: radius.md,
     boxShadow: `0 0 0 1.5px ${
@@ -96,11 +98,14 @@ export const Input = /* @__PURE__ */ StyledInput<InputProps>((props) => {
     color: theme.colors.primaryText,
     display: "block",
     fontFamily: "inherit",
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     outline: "none",
     padding: props.sm ? spacing.sm : fontSize.sm,
     WebkitAppearance: "none",
     width: "100%",
+    [media.mobile]: {
+      fontSize: fontSize.md,
+    },
   };
 });
 

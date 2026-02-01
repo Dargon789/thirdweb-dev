@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CanClaimResponseType } from "app/(app)/api/testnet-faucet/can-claim/CanClaimResponseType";
+import { ArrowUpRightIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -17,7 +18,6 @@ import type { Chain, ChainMetadata } from "thirdweb/chains";
 import {
   useActiveAccount,
   useActiveWalletChain,
-  useSendTransaction,
   useSwitchActiveWalletChain,
   useWalletBalance,
 } from "thirdweb/react";
@@ -43,11 +43,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   NEXT_PUBLIC_THIRDWEB_ENGINE_FAUCET_WALLET,
   NEXT_PUBLIC_TURNSTILE_SITE_KEY,
 } from "@/constants/public-envs";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
 import { parseError } from "@/utils/errorParser";
 import { mapV4ChainToV5Chain } from "@/utils/map-chains";
 
@@ -192,6 +193,20 @@ export function FaucetButton({
 
   // Can not claim
   if (canClaimFaucetQuery.data && canClaimFaucetQuery.data.canClaim === false) {
+    if (canClaimFaucetQuery.data.type === "paid-plan-required") {
+      return (
+        <Button
+          asChild
+          className="w-full gap-2 whitespace-pre-wrap h-auto min-h-10 text-center bg-background"
+          variant="outline"
+        >
+          <Link href="/team/~/~/billing">
+            Faucet is not available on Free plan. Upgrade your plan to continue
+            <ArrowUpRightIcon className="size-4 shrink-0 text-muted-foreground" />
+          </Link>
+        </Button>
+      );
+    }
     return (
       <Button className="!opacity-100 w-full " disabled variant="outline">
         {canClaimFaucetQuery.data.type === "throttle" && (
@@ -203,10 +218,6 @@ export function FaucetButton({
 
         {canClaimFaucetQuery.data.type === "unsupported-chain" &&
           "Faucet is empty right now"}
-
-        {/* TODO: add an upsell path here to subscribe to one of these plans */}
-        {canClaimFaucetQuery.data.type === "paid-plan-required" &&
-          "Faucet is only available on Starter, Growth, Scale and Pro plans."}
       </Button>
     );
   }
@@ -310,7 +321,7 @@ function SendFundsToFaucetModalContent(props: {
   const account = useActiveAccount();
   const activeChain = useActiveWalletChain();
   const switchActiveWalletChain = useSwitchActiveWalletChain();
-  const sendTxMutation = useSendTransaction({
+  const sendAndConfirmTx = useSendAndConfirmTx({
     payModal: false,
   });
   const switchChainMutation = useMutation({
@@ -334,7 +345,7 @@ function SendFundsToFaucetModalContent(props: {
       value: toWei(values.amount.toString()),
     });
 
-    const promise = sendTxMutation.mutateAsync(sendNativeTokenTx);
+    const promise = sendAndConfirmTx.mutateAsync(sendNativeTokenTx);
 
     toast.promise(promise, {
       error: `Failed to send ${values.amount} ${props.chainMeta.nativeCurrency.symbol} to faucet`,
@@ -404,11 +415,11 @@ function SendFundsToFaucetModalContent(props: {
             {activeChain.id === props.chain.id ? (
               <Button
                 className="mt-4 w-full gap-2"
-                disabled={sendTxMutation.isPending}
+                disabled={sendAndConfirmTx.isPending}
                 key="submit"
                 type="submit"
               >
-                {sendTxMutation.isPending && <Spinner className="size-4" />}
+                {sendAndConfirmTx.isPending && <Spinner className="size-4" />}
                 Send funds to faucet
               </Button>
             ) : (

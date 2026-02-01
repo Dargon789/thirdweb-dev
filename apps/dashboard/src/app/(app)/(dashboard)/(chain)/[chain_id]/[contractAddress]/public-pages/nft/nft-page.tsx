@@ -1,9 +1,11 @@
+import { cookies } from "next/headers";
 import type { ThirdwebContract } from "thirdweb";
 import type { ChainMetadata } from "thirdweb/chains";
 import { getContractMetadata } from "thirdweb/extensions/common";
 import { isTokenByIndexSupported } from "thirdweb/extensions/erc721";
 import { ResponsiveLayout } from "@/components/blocks/Responsive";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HAS_USED_DASHBOARD } from "@/constants/cookie";
 import { resolveFunctionSelectors } from "@/lib/selectors";
 import { cn } from "@/lib/utils";
 import { getContractCreator } from "../_components/getContractCreator";
@@ -51,6 +53,13 @@ export async function NFTPublicPage(props: {
   const _isTokenByIndexSupported =
     props.type === "erc721" && isTokenByIndexSupported(functionSelectors);
 
+  // FIXME: this is technically a bad fallback but we gotta do what we gotta do
+  const contractMetadataWithNameAndSymbolFallback = {
+    ...contractMetadata,
+    // fall back to the contract address if the name is not set
+    name: contractMetadata.name || props.clientContract.address,
+    symbol: contractMetadata.symbol || "",
+  };
   const buyNFTDropCard = nftDropClaimParams ? (
     <BuyNFTDropCardServer
       chainMetadata={props.chainMetadata}
@@ -71,7 +80,7 @@ export async function NFTPublicPage(props: {
     <NFTsGrid
       chainMetadata={props.chainMetadata}
       clientContract={props.clientContract}
-      collectionMetadata={contractMetadata}
+      collectionMetadata={contractMetadataWithNameAndSymbolFallback}
       gridClassName={
         buyNFTDropCard
           ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
@@ -100,12 +109,16 @@ export async function NFTPublicPage(props: {
     <Skeleton className="h-[620px] border" />
   ) : null;
 
+  const cookieStore = await cookies();
+  const isDashboardUser = cookieStore.has(HAS_USED_DASHBOARD);
+
   return (
     <NFTPublicPageLayout
       chainMetadata={props.chainMetadata}
       clientContract={props.clientContract}
       contractCreator={contractCreator}
-      contractMetadata={contractMetadata}
+      contractMetadata={contractMetadataWithNameAndSymbolFallback}
+      isDashboardUser={isDashboardUser}
     >
       <ResponsiveLayout
         desktop={
@@ -132,7 +145,7 @@ export async function NFTPublicPage(props: {
         <PageLoadTokenViewerSheet
           chainMetadata={props.chainMetadata}
           clientContract={props.clientContract}
-          collectionMetadata={contractMetadata}
+          collectionMetadata={contractMetadataWithNameAndSymbolFallback}
           tokenByIndexSupported={_isTokenByIndexSupported}
           tokenId={BigInt(props.tokenId)}
           type={props.type}

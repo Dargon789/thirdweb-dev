@@ -10,6 +10,8 @@ module.exports = [
   "/wallets",
   "/account-abstraction",
   "/payments",
+  "/x402",
+  "/nexus",
   "/auth",
   "/in-app-wallets",
   "/transactions",
@@ -19,10 +21,11 @@ module.exports = [
   "/rpc",
   "/insight",
   "/storage",
+  "/gateway",
   // -- end scale category
 
-  // -- nebula
-  "/nebula",
+  // -- ai
+  "/ai",
   // -- contracts
   "/contracts",
   "/contracts/modular-contracts",
@@ -62,4 +65,10 @@ module.exports = [
   // -- universal bridge landing pages --
   "/universal-bridge-regions/:region_slug",
   "/enterprise",
+  "/token",
+  "/vault",
+  "/monetize/bridge",
+  // ai
+  "/ai-privacy-policy",
+  "/ai-terms",
 ];

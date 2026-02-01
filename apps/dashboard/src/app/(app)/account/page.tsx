@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
-import { getTeams } from "@/api/team";
-import { getMemberByAccountId } from "@/api/team-members";
+import { getValidAccount } from "@/api/account/get-account";
+import { getAuthToken } from "@/api/auth-token";
+import { getTeams } from "@/api/team/get-team";
+import { getMemberByAccountId } from "@/api/team/team-members";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
-import { getAuthToken } from "../../../@/api/auth-token";
-import { loginRedirect } from "../login/loginRedirect";
+import { loginRedirect } from "@/utils/redirects";
 import { AccountTeamsUI } from "./overview/AccountTeamsUI";
-import { getValidAccount } from "./settings/getAccount";
+import { RewindModalClient } from "./rewind/RewindModalClient";
 
 export default async function Page() {
   const [authToken, account, teams] = await Promise.all([
@@ -49,6 +50,8 @@ export default async function Page() {
       <div className="container flex max-w-[950px] grow flex-col py-8">
         <AccountTeamsUI client={client} teamsWithRole={teamsWithRole} />
       </div>
+
+      <RewindModalClient />
     </div>
   );
 }

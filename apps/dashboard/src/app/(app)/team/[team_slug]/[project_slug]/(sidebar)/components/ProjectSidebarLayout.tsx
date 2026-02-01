@@ -1,164 +1,161 @@
 "use client";
+import { Badge } from "@workspace/ui/components/badge";
 import {
-  ArrowLeftRightIcon,
-  BellIcon,
-  BookTextIcon,
-  BoxIcon,
-  CoinsIcon,
+  BotIcon,
+  DatabaseIcon,
+  DoorOpenIcon,
   HomeIcon,
-  LockIcon,
-  RssIcon,
-  SettingsIcon,
-  WalletIcon,
+  Settings2Icon,
 } from "lucide-react";
-import { FullWidthSidebarLayout } from "@/components/blocks/full-width-sidebar-layout";
-import { Badge } from "@/components/ui/badge";
+import {
+  FullWidthSidebarLayout,
+  type ShadcnSidebarLink,
+} from "@/components/blocks/full-width-sidebar-layout";
+import { BridgeIcon } from "@/icons/BridgeIcon";
 import { ContractIcon } from "@/icons/ContractIcon";
-import { InsightIcon } from "@/icons/InsightIcon";
 import { PayIcon } from "@/icons/PayIcon";
-import { SmartAccountIcon } from "@/icons/SmartAccountIcon";
+import { TokenIcon } from "@/icons/TokenIcon";
+import { WalletProductIcon } from "@/icons/WalletProductIcon";
 
 export function ProjectSidebarLayout(props: {
   layoutPath: string;
-  engineLinkType: "cloud" | "dedicated";
   children: React.ReactNode;
-  isCentralizedWebhooksFeatureFlagEnabled: boolean;
+  hasEngines: boolean;
+  showContracts: boolean;
 }) {
-  const {
-    layoutPath,
-    engineLinkType,
-    children,
-    isCentralizedWebhooksFeatureFlagEnabled,
-  } = props;
-
-  return (
-    <FullWidthSidebarLayout
-      contentSidebarLinks={[
+  const contentSidebarLinks = [
+    {
+      exactMatch: true,
+      href: props.layoutPath,
+      icon: HomeIcon,
+      label: "Overview",
+    },
+    {
+      separator: true,
+    },
+    {
+      subMenu: {
+        icon: WalletProductIcon,
+        label: "Wallets",
+      },
+      links: [
         {
-          exactMatch: true,
-          href: layoutPath,
-          icon: HomeIcon,
-          label: "Overview",
+          href: `${props.layoutPath}/wallets/user-wallets`,
+          label: "User Wallets",
         },
         {
-          separator: true,
+          href: `${props.layoutPath}/wallets/server-wallets`,
+          label: "Server Wallets",
         },
         {
-          group: "Build",
-          links: [
-            {
-              href: `${layoutPath}/wallets`,
-              icon: WalletIcon,
-              label: "Wallets",
-            },
-            {
-              href:
-                engineLinkType === "cloud"
-                  ? `${layoutPath}/transactions`
-                  : `${layoutPath}/engine/dedicated`,
-              icon: ArrowLeftRightIcon,
-              isActive: (pathname) => {
-                return (
-                  pathname.startsWith(`${layoutPath}/transactions`) ||
-                  pathname.startsWith(`${layoutPath}/engine/dedicated`)
-                );
-              },
-              label: "Transactions",
-            },
-            {
-              href: `${layoutPath}/contracts`,
-              icon: ContractIcon,
-              label: "Contracts",
-            },
-          ],
+          href: `${props.layoutPath}/wallets/sponsored-gas`,
+          label: "Gas Sponsorship",
         },
         {
-          separator: true,
-        },
-        {
-          group: "Monetize",
-          links: [
-            {
-              href: `${layoutPath}/universal-bridge`,
-              icon: PayIcon,
-              label: "Payments",
-            },
-            {
-              href: `${layoutPath}/tokens`,
-              icon: CoinsIcon,
-              label: (
-                <span className="flex items-center gap-2">
-                  Tokens <Badge>New</Badge>
-                </span>
-              ),
-            },
-          ],
-        },
-        {
-          separator: true,
-        },
-        {
-          group: "Scale",
-          links: [
-            {
-              href: `${layoutPath}/insight`,
-              icon: InsightIcon,
-              label: "Insight",
-            },
-            {
-              href: `${layoutPath}/account-abstraction`,
-              icon: SmartAccountIcon,
-              label: "Account Abstraction",
-            },
-            {
-              href: `${layoutPath}/rpc`,
-              icon: RssIcon,
-              label: "RPC",
-            },
-            {
-              href: `${layoutPath}/vault`,
-              icon: LockIcon,
-              label: "Vault",
-            },
-          ],
-        },
-      ]}
-      footerSidebarLinks={[
-        {
-          href: isCentralizedWebhooksFeatureFlagEnabled
-            ? `${layoutPath}/webhooks`
-            : `${layoutPath}/webhooks/contracts`,
-          icon: BellIcon,
-          isActive: (pathname) => {
-            return pathname.startsWith(`${layoutPath}/webhooks`);
-          },
+          href: `${props.layoutPath}/wallets/dedicated-relayer`,
           label: (
             <span className="flex items-center gap-2">
-              Webhooks <Badge>New</Badge>
+              Dedicated Relayer <Badge>New</Badge>
             </span>
           ),
         },
+      ],
+    },
+    ...(props.showContracts
+      ? [
+          {
+            href: `${props.layoutPath}/contracts`,
+            icon: ContractIcon,
+            label: "Contracts",
+          },
+        ]
+      : []),
+    {
+      href: `${props.layoutPath}/x402`,
+      icon: PayIcon,
+      label: (
+        <span className="flex items-center gap-2">
+          x402 <Badge>New</Badge>
+        </span>
+      ),
+    },
+    {
+      href: `${props.layoutPath}/bridge`,
+      icon: BridgeIcon,
+      label: "Bridge",
+    },
+    {
+      href: `${props.layoutPath}/tokens`,
+      icon: TokenIcon,
+      label: "Tokens",
+    },
+    {
+      subMenu: {
+        icon: BotIcon,
+        label: "AI",
+      },
+      links: [
         {
-          href: `${layoutPath}/settings`,
-          icon: SettingsIcon,
-          label: "Project Settings",
+          href: `${props.layoutPath}/ai`,
+          label: "Chat",
+          isActive: (pathname) => {
+            return (
+              pathname === `${props.layoutPath}/ai` ||
+              pathname.startsWith(`${props.layoutPath}/ai/chat`)
+            );
+          },
         },
         {
-          separator: true,
+          href: `${props.layoutPath}/ai/analytics`,
+          label: "Analytics",
+        },
+      ],
+    },
+    {
+      subMenu: {
+        icon: DoorOpenIcon,
+        label: "Gateway",
+      },
+      links: [
+        {
+          href: `${props.layoutPath}/gateway/rpc`,
+          label: "RPC",
         },
         {
-          href: "https://portal.thirdweb.com",
-          icon: BookTextIcon,
-          label: "Documentation",
+          href: `${props.layoutPath}/gateway/indexer`,
+          label: "Indexer",
         },
-        {
-          href: "https://playground.thirdweb.com/connect/sign-in/button",
-          icon: BoxIcon,
-          label: "Playground",
-        },
-      ]}
+      ],
+    },
+    // only show engine link if there the user already has an engine instance
+    ...(props.hasEngines
+      ? [
+          {
+            href: `${props.layoutPath}/engine`,
+            icon: DatabaseIcon,
+            label: "Engine",
+          },
+        ]
+      : []),
+  ] satisfies ShadcnSidebarLink[];
+
+  const footerSidebarLinks = [
+    {
+      separator: true,
+    },
+    {
+      href: `${props.layoutPath}/settings`,
+      icon: Settings2Icon,
+      label: "Project Settings",
+    },
+  ] satisfies ShadcnSidebarLink[];
+
+  return (
+    <FullWidthSidebarLayout
+      contentSidebarLinks={contentSidebarLinks}
+      footerSidebarLinks={footerSidebarLinks}
     >
-      {children}
+      {props.children}
     </FullWidthSidebarLayout>
   );
 }

@@ -10,6 +10,7 @@ import { getContract } from "../../contract/contract.js";
 import type { GetBalanceResult } from "../../extensions/erc20/read/getBalance.js";
 import { eth_getBalance } from "../../rpc/actions/eth_getBalance.js";
 import { getRpcClient } from "../../rpc/rpc.js";
+import { getAddress } from "../../utils/address.js";
 import { toTokens } from "../../utils/units.js";
 
 export type GetWalletBalanceOptions = {
@@ -42,9 +43,20 @@ export type GetWalletBalanceResult = GetBalanceResult;
 export async function getWalletBalance(
   options: GetWalletBalanceOptions,
 ): Promise<GetBalanceResult> {
-  const { address, client, chain, tokenAddress } = options;
+  const { address, client, chain } = options;
+
+  // Scipper chain (42429) uses a wrapped native token for balance queries
+  const tokenAddress =
+    options.tokenAddress ||
+    (chain.id === 42429
+      ? "0x20c0000000000000000000000000000000000000"
+      : undefined);
+
   // erc20 case
-  if (tokenAddress) {
+  if (
+    tokenAddress &&
+    getAddress(tokenAddress) !== getAddress(NATIVE_TOKEN_ADDRESS)
+  ) {
     // load balanceOf dynamically to avoid circular dependency
     const { getBalance } = await import(
       "../../extensions/erc20/read/getBalance.js"

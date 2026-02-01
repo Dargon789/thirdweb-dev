@@ -1,4 +1,3 @@
-import { differenceInCalendarDays, format, subDays } from "date-fns";
 import { DatePickerWithRange } from "@/components/ui/DatePickerWithRange";
 import {
   Select,
@@ -7,36 +6,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { normalizeTime } from "@/lib/time";
-import { cn } from "@/lib/utils";
+import { differenceInCalendarDays, format, subDays } from "date-fns";
 
 export function DateRangeSelector(props: {
   range: Range;
   setRange: (range: Range) => void;
-  popoverAlign?: "start" | "end" | "center";
-  className?: string;
 }) {
   const { range, setRange } = props;
   const daysDiff = differenceInCalendarDays(range.to, range.from);
-  const matchingRange =
-    normalizeTime(range.to).getTime() === normalizeTime(new Date()).getTime()
-      ? durationPresets.find((preset) => preset.days === daysDiff)
-      : undefined;
-
-  const rangeType = matchingRange?.id || range.type;
-  const rangeLabel = matchingRange?.name || range.label;
+  const rangeType =
+    durationPresets.find((preset) => preset.days === daysDiff)?.id ||
+    range.type;
 
   return (
     <DatePickerWithRange
-      className={cn("w-auto bg-card", props.className)}
       from={range.from}
+      to={range.to}
+      setFrom={(from) =>
+        setRange({
+          from,
+          to: range.to,
+          type: "custom",
+        })
+      }
+      setTo={(to) =>
+        setRange({
+          from: range.from,
+          to,
+          type: "custom",
+        })
+      }
       header={
         <div className="mb-2 border-border border-b p-4">
           <Select
+            value={rangeType}
             onValueChange={(id: DurationId) => {
               setRange(getLastNDaysRange(id));
             }}
-            value={rangeType}
           >
             <SelectTrigger className="flex bg-transparent">
               <SelectValue placeholder="Select" />
@@ -58,23 +64,8 @@ export function DateRangeSelector(props: {
           </Select>
         </div>
       }
-      labelOverride={rangeLabel}
-      popoverAlign={props.popoverAlign}
-      setFrom={(from) =>
-        setRange({
-          from,
-          to: range.to,
-          type: "custom",
-        })
-      }
-      setTo={(to) =>
-        setRange({
-          from: range.from,
-          to,
-          type: "custom",
-        })
-      }
-      to={range.to}
+      labelOverride={range.label}
+      className="w-auto bg-card"
     />
   );
 }
@@ -82,16 +73,16 @@ export function DateRangeSelector(props: {
 export function getLastNDaysRange(id: DurationId) {
   const durationInfo = durationPresets.find((preset) => preset.id === id);
   if (!durationInfo) {
-    throw new Error(`Invalid duration id: ${id}`);
+    throw new Error("Invalid duration id");
   }
 
-  const todayDate = new Date(Date.now() + 1000 * 60 * 60 * 24); // add 1 day to avoid timezone issues
+  const todayDate = new Date();
 
   const value: Range = {
-    from: subDays(todayDate, durationInfo.days),
-    label: durationInfo.name,
-    to: todayDate,
     type: id,
+    from: subDays(todayDate, durationInfo.days),
+    to: todayDate,
+    label: durationInfo.name,
   };
 
   return value;
@@ -99,24 +90,24 @@ export function getLastNDaysRange(id: DurationId) {
 
 const durationPresets = [
   {
-    days: 7,
-    id: "last-7",
     name: "Last 7 Days",
+    id: "last-7",
+    days: 7,
   },
   {
-    days: 30,
-    id: "last-30",
     name: "Last 30 Days",
+    id: "last-30",
+    days: 30,
   },
   {
-    days: 60,
-    id: "last-60",
     name: "Last 60 Days",
+    id: "last-60",
+    days: 60,
   },
   {
-    days: 120,
-    id: "last-120",
     name: "Last 120 Days",
+    id: "last-120",
+    days: 120,
   },
 ] as const;
 

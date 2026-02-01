@@ -1,12 +1,13 @@
 // export { CustomAccordion } from "../others/CustomAccordion";
 
+export { Badge } from "../ui/badge";
 // export { Table } from "./Table";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+export { OpenApiEndpoint } from "./APIEndpointMeta/OpenApiEndpoint";
 export { AuthList } from "./AuthList";
 export { Breadcrumb } from "./Breadcrumb";
 export { Callout } from "./Callout";
 export { ArticleCard, ArticleIconCard } from "./Cards/ArticleCard";
-export { ConnectCard } from "./Cards/ConnectCard";
 export { GithubTemplateCard } from "./Cards/GithubTemplateCard";
 export { CodeBlock } from "./Code";
 export { Details } from "./Details";
@@ -18,7 +19,6 @@ export { GithubButtonLink } from "./GithubButtonLink";
 // export { EditPage } from "./EditPage";
 export { Grid } from "./Grid";
 export { Heading } from "./Heading";
-// export { ApiEndpoint } from "./APIEndpointMeta/ApiEndpoint";
 export { InlineCode } from "./InlineCode";
 export { InstallTabs } from "./InstallTabs";
 export { UnorderedList } from "./List";

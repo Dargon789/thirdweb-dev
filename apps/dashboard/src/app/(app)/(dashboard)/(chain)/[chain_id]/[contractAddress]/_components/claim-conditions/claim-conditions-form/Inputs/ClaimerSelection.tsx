@@ -1,8 +1,18 @@
-import { Box, Flex, Select } from "@chakra-ui/react";
-import { UploadIcon } from "lucide-react";
+import { ArrowDownToLineIcon, UploadIcon } from "lucide-react";
+import Papa from "papaparse";
+import { handleDownload } from "@/components/blocks/download-file-button";
+import { FormFieldSetup } from "@/components/blocks/FormFieldSetup";
 import { Button } from "@/components/ui/button";
-import { useClaimConditionsFormContext } from "..";
-import { CustomFormControl } from "../common";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import type { SnapshotEntry } from "../../legacy-zod-schema";
+import { useClaimConditionsFormContext } from "../index";
 
 /**
  * Allows the user to
@@ -19,15 +29,16 @@ export const ClaimerSelection = () => {
     isErc20,
     setOpenSnapshotIndex: setOpenIndex,
     isAdmin,
-    isColumn,
     claimConditionType,
+    phaseSnapshots,
+    setPhaseSnapshot,
   } = useClaimConditionsFormContext();
 
-  const handleClaimerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.currentTarget.value as "any" | "specific" | "overrides";
+  const handleClaimerChange = (value: string) => {
+    const val = value as "any" | "specific" | "overrides";
 
     if (val === "any") {
-      form.setValue(`phases.${phaseIndex}.snapshot`, undefined);
+      setPhaseSnapshot(phaseIndex, undefined);
     } else {
       if (val === "specific") {
         form.setValue(`phases.${phaseIndex}.maxClaimablePerWallet`, 0);
@@ -35,7 +46,7 @@ export const ClaimerSelection = () => {
       if (val === "overrides" && field.maxClaimablePerWallet !== 1) {
         form.setValue(`phases.${phaseIndex}.maxClaimablePerWallet`, 1);
       }
-      form.setValue(`phases.${phaseIndex}.snapshot`, []);
+      setPhaseSnapshot(phaseIndex, []);
       setOpenIndex(phaseIndex);
     }
   };
@@ -43,6 +54,7 @@ export const ClaimerSelection = () => {
   let helperText: React.ReactNode;
 
   const disabledSnapshotButton = isAdmin && formDisabled;
+  const snapshot = phaseSnapshots[phaseIndex];
 
   if (dropType === "specific") {
     helperText = (
@@ -80,79 +92,102 @@ export const ClaimerSelection = () => {
         : `Who can claim ${isErc20 ? "tokens" : "NFTs"} during this phase?`;
 
   return (
-    <CustomFormControl
-      disabled={formDisabled}
-      error={
-        form.getFieldState(`phases.${phaseIndex}.snapshot`, form.formState)
-          .error
-      }
+    <FormFieldSetup
+      errorMessage={undefined}
       helperText={helperText}
       label={label}
+      isRequired={false}
     >
-      <Flex direction={{ base: "column", md: "row" }} gap={4}>
+      <div className="flex flex-col md:flex-row gap-4">
         {claimConditionType === "overrides" ||
         claimConditionType === "specific" ? null : (
           <Select
-            isDisabled={formDisabled}
-            onChange={handleClaimerChange}
+            disabled={formDisabled}
+            onValueChange={handleClaimerChange}
             value={dropType}
-            w={{ base: "100%", md: "50%" }}
           >
-            <option value="any">Any wallet</option>
-            <option value="overrides">Any wallet (with overrides)</option>
-            <option value="specific">Only specific wallets</option>
+            <SelectTrigger className="w-full md:w-1/2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any wallet</SelectItem>
+              <SelectItem value="overrides">
+                Any wallet (with overrides)
+              </SelectItem>
+              <SelectItem value="specific">Only specific wallets</SelectItem>
+            </SelectContent>
           </Select>
         )}
 
         {/* Edit or See Snapshot */}
-        {field.snapshot ? (
-          <Flex
-            direction={{
-              base: "column",
-              md: isColumn ? "column" : "row",
-            }}
-            gap={1.5}
-          >
+        {snapshot ? (
+          <div className="flex flex-col md:flex-row md:items-center gap-3">
             {/* disable the "Edit" button when form is disabled, but not when it's a "See" button */}
             <Button
-              className="gap-2 rounded-md"
+              className="gap-2"
               disabled={disabledSnapshotButton}
               onClick={() => setOpenIndex(phaseIndex)}
-              variant="primary"
+              size="sm"
             >
               {isAdmin ? "Edit" : "See"} Claimer Snapshot
               <UploadIcon className="size-4" />
             </Button>
 
-            <Flex
-              _light={{
-                color: field.snapshot?.length === 0 ? "red.500" : "green.500",
-              }}
-              align="center"
-              color={field.snapshot?.length === 0 ? "red.400" : "green.400"}
-              direction="row"
-              gap={2}
-              justify="center"
-              ml={2}
-              opacity={disabledSnapshotButton ? 0.5 : 1}
+            {snapshot && snapshot.length > 0 && (
+              <Button
+                className="gap-2 rounded bg-background"
+                variant="outline"
+                disabled={disabledSnapshotButton}
+                onClick={() => {
+                  downloadSnapshotAsCSV(snapshot);
+                }}
+                size="sm"
+              >
+                <ArrowDownToLineIcon className="size-4" />
+                Download
+              </Button>
+            )}
+
+            <div
+              className={cn(
+                "flex gap-2 items-center",
+                snapshot?.length === 0
+                  ? "text-muted-foreground"
+                  : "text-green-600 dark:text-green-500",
+                disabledSnapshotButton ? "opacity-50" : "",
+              )}
             >
-              <p>
-                ●{" "}
-                <strong>
-                  {field.snapshot?.length} address
-                  {field.snapshot?.length === 1 ? "" : "es"}
-                </strong>{" "}
-                in snapshot
-              </p>
-            </Flex>
-          </Flex>
-        ) : (
-          <Box
-            display={{ base: "none", md: "block" }}
-            w={{ base: "100%", md: "50%" }}
-          />
-        )}
-      </Flex>
-    </CustomFormControl>
+              <div className="size-2 bg-current rounded-full" />
+              <span className="text-sm">
+                {snapshot?.length}{" "}
+                {snapshot?.length === 1 ? "address" : "addresses"} in snapshot
+              </span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </FormFieldSetup>
   );
 };
+
+function downloadSnapshotAsCSV(snapshot: SnapshotEntry[]) {
+  const csvData = snapshot.map((entry) => ({
+    address: entry.address,
+    maxClaimable:
+      entry.maxClaimable === "0" ? "" : entry.maxClaimable?.toString() || "",
+    price: entry.price?.toString() || "",
+    currencyAddress: entry.currencyAddress || "",
+  }));
+
+  const csvContent = Papa.unparse(csvData, {
+    header: true,
+    delimiter: ",",
+    quotes: false,
+  });
+
+  handleDownload({
+    fileContent: csvContent,
+    fileNameWithExtension: "snapshot.csv",
+    fileFormat: "text/csv",
+  });
+}

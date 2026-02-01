@@ -55,25 +55,34 @@ export type ApiResponse = {
 
 /**
  * Stores service-specific capabilities.
- * This type should match the schema from API server.
+ * These types should match the schema from API server.
  */
+export type ReasonCode =
+  | "free_limit_exceeded"
+  | "subscription_required"
+  | "invoice_past_due"
+  | "enterprise_plan_required"
+  | "other";
+type EnabledWithReason<T> = T &
+  ({ enabled: true } | { enabled: false; reasonCode: ReasonCode });
 type TeamCapabilities = {
   platform: {
     auditLogs: boolean;
     ecosystemWallets: boolean;
     seats: boolean;
   };
-  rpc: {
-    enabled: boolean;
+  rpc: EnabledWithReason<{
     rateLimit: number;
-  };
-  insight: {
-    enabled: boolean;
+    websockets: EnabledWithReason<{
+      maxConnections: number;
+      maxSubscriptions: number;
+    }>;
+  }>;
+  insight: EnabledWithReason<{
     rateLimit: number;
     webhooks: boolean;
-  };
-  storage: {
-    enabled: boolean;
+  }>;
+  storage: EnabledWithReason<{
     download: {
       rateLimit: number;
     };
@@ -81,34 +90,38 @@ type TeamCapabilities = {
       totalFileSizeBytesLimit: number;
       rateLimit: number;
     };
-  };
-  nebula: {
-    enabled: boolean;
-    rateLimit: number;
-  };
-  bundler: {
-    enabled: boolean;
+  }>;
+  nebula: EnabledWithReason<{
+    rateLimit: {
+      perSecond: number;
+      perMinute: number;
+    };
+  }>;
+  bundler: EnabledWithReason<{
     mainnetEnabled: boolean;
     rateLimit: number;
-  };
-  embeddedWallets: {
-    enabled: boolean;
+  }>;
+  embeddedWallets: EnabledWithReason<{
     customAuth: boolean;
     customBranding: boolean;
     sms: {
       domestic: boolean;
       international: boolean;
     };
-  };
-  engineCloud: {
-    enabled: boolean;
+  }>;
+  engineCloud: EnabledWithReason<{
     mainnetEnabled: boolean;
     rateLimit: number;
-  };
-  pay: {
-    enabled: boolean;
+  }>;
+  pay: EnabledWithReason<{
     rateLimit: number;
-  };
+  }>;
+  mcp: EnabledWithReason<{
+    rateLimit: number;
+  }>;
+  gateway: EnabledWithReason<{
+    rateLimit: number;
+  }>;
 };
 
 type TeamPlan =
@@ -182,6 +195,11 @@ export type ProjectBundlerService = {
       value: string;
     }>;
   } | null;
+  dedicatedRelayer?: {
+    sku: string;
+    chainIds: number[];
+    executors: string[];
+  } | null;
 };
 
 export type ProjectEmbeddedWalletsService = {
@@ -228,6 +246,9 @@ export type ProjectService =
       rotationCode?: string | null;
       encryptedAdminKey?: string | null;
       encryptedWalletAccessToken?: string | null;
+      projectWalletAddress?: string | null;
+      x402FeeBPS?: number | null;
+      x402FeeRecipient?: string | null;
     }
   | ProjectBundlerService
   | ProjectEmbeddedWalletsService;

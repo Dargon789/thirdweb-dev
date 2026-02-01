@@ -9,11 +9,19 @@ import {
 import { StyledButton } from "../design-system/elements.js";
 
 type ButtonProps = {
-  variant: "primary" | "secondary" | "link" | "accent" | "outline" | "ghost";
+  variant:
+    | "primary"
+    | "secondary"
+    | "link"
+    | "accent"
+    | "outline"
+    | "ghost"
+    | "ghost-solid";
   unstyled?: boolean;
   fullWidth?: boolean;
   gap?: keyof typeof spacing;
   bg?: keyof Theme["colors"];
+  hoverBg?: keyof Theme["colors"];
 };
 
 export const Button = /* @__PURE__ */ StyledButton((props: ButtonProps) => {
@@ -22,7 +30,8 @@ export const Button = /* @__PURE__ */ StyledButton((props: ButtonProps) => {
     return {};
   }
   return {
-    "&:active": {
+    all: "unset",
+    "[&:active]:not([disabled])": {
       transform: "translateY(1px)",
     },
     "&[data-disabled='true']": {
@@ -38,7 +47,6 @@ export const Button = /* @__PURE__ */ StyledButton((props: ButtonProps) => {
       cursor: "not-allowed",
     },
     alignItems: "center",
-    all: "unset",
     background: (() => {
       if (props.bg) {
         return theme.colors[props.bg];
@@ -65,6 +73,7 @@ export const Button = /* @__PURE__ */ StyledButton((props: ButtonProps) => {
         case "secondary":
           return theme.colors.secondaryButtonText;
         case "ghost":
+        case "ghost-solid":
         case "outline":
           return theme.colors.secondaryButtonText;
         case "link":
@@ -87,6 +96,9 @@ export const Button = /* @__PURE__ */ StyledButton((props: ButtonProps) => {
     transition: "border 200ms ease",
     WebkitTapHighlightColor: "transparent",
     width: props.fullWidth ? "100%" : undefined,
+    "&:hover": {
+      background: props.hoverBg ? theme.colors[props.hoverBg] : undefined,
+    },
     ...(() => {
       if (props.variant === "outline") {
         return {
@@ -109,6 +121,15 @@ export const Button = /* @__PURE__ */ StyledButton((props: ButtonProps) => {
         };
       }
 
+      if (props.variant === "ghost-solid") {
+        return {
+          "&:hover": {
+            background: theme.colors[props.hoverBg || "tertiaryBg"],
+          },
+          border: "1px solid transparent",
+        };
+      }
+
       if (props.variant === "accent") {
         return {
           "&:hover": {
@@ -120,7 +141,7 @@ export const Button = /* @__PURE__ */ StyledButton((props: ButtonProps) => {
       if (props.variant === "secondary") {
         return {
           "&:hover": {
-            background: theme.colors.secondaryButtonHoverBg,
+            background: theme.colors[props.hoverBg || "secondaryButtonHoverBg"],
           },
         };
       }
@@ -144,6 +165,7 @@ export const ButtonLink = /* @__PURE__ */ (() => Button.withComponent("a"))();
 export const IconButton = /* @__PURE__ */ StyledButton((_) => {
   const theme = useCustomTheme();
   return {
+    all: "unset",
     "&:hover": {
       background: theme.colors.secondaryIconHoverBg,
       color: theme.colors.secondaryIconHoverColor,
@@ -152,7 +174,6 @@ export const IconButton = /* @__PURE__ */ StyledButton((_) => {
       cursor: "not-allowed",
     },
     alignItems: "center",
-    all: "unset",
     borderRadius: radius.sm,
     color: theme.colors.secondaryIconColor,
     cursor: "pointer",

@@ -7,8 +7,8 @@ import {
   RefreshCwIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DynamicHeight } from "../../ui/DynamicHeight";
-import { Spinner } from "../../ui/Spinner/Spinner";
+import { DynamicHeight } from "@/components/ui/DynamicHeight";
+import { Spinner } from "@/components/ui/Spinner";
 
 export type MultiStepState<T extends string> = {
   id: T;
@@ -34,7 +34,7 @@ export function MultiStepStatus<T extends string>(props: {
 }) {
   return (
     <DynamicHeight>
-      <div className="space-y-4">
+      <div className="space-y-4 overflow-hidden">
         {props.steps.map((step) => (
           <div className="flex items-start space-x-3 " key={step.label}>
             {step.status.type === "completed" ? (
@@ -46,7 +46,7 @@ export function MultiStepStatus<T extends string>(props: {
             ) : (
               <CircleIcon className="mt-0.5 size-5 flex-shrink-0 text-muted-foreground/70" />
             )}
-            <div className="flex-1">
+            <div className="grow">
               <p
                 className={`font-medium ${
                   step.status.type === "pending"
@@ -73,7 +73,7 @@ export function MultiStepStatus<T extends string>(props: {
               {step.status.type === "error"
                 ? props.renderError?.(step, step.status.message) || (
                     <div className="mt-1 space-y-2">
-                      <p className="mb-1 text-red-500 text-sm">
+                      <p className="mb-1 text-red-500 text-sm whitespace-pre-wrap break-all">
                         {step.status.message}
                       </p>
                       <Button

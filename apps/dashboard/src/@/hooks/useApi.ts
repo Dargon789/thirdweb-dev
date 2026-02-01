@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useActiveAccount } from "thirdweb/react";
 import { apiServerProxy } from "@/actions/proxies";
-import type { Project } from "@/api/projects";
+import type { Project } from "@/api/project/projects";
 import { rotateVaultAccountAndAccessToken } from "../../app/(app)/team/[team_slug]/[project_slug]/(sidebar)/transactions/lib/vault.client";
 import { accountKeys, authorizedWallets } from "../query-keys/cache-keys";
 
@@ -330,20 +330,16 @@ export async function rotateSecretKeyClient(params: { project: Project }) {
     throw new Error(res.error);
   }
 
-  try {
-    // if the project has an encrypted vault admin key, rotate it as well
-    const service = params.project.services.find(
-      (service) => service.name === "engineCloud",
-    );
-    if (service?.encryptedAdminKey) {
-      await rotateVaultAccountAndAccessToken({
-        project: params.project,
-        projectSecretKey: res.data.data.secret,
-        projectSecretHash: res.data.data.secretHash,
-      });
-    }
-  } catch (error) {
-    console.error("Failed to rotate vault admin key", error);
+  // if the project has an encrypted vault admin key, rotate it as well
+  const service = params.project.services.find(
+    (service) => service.name === "engineCloud",
+  );
+  if (service?.encryptedAdminKey) {
+    await rotateVaultAccountAndAccessToken({
+      project: params.project,
+      projectSecretKey: res.data.data.secret,
+      projectSecretHash: res.data.data.secretHash,
+    });
   }
 
   return res.data;
