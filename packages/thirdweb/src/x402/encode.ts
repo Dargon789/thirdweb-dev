@@ -1,5 +1,8 @@
 import type { ExactEvmPayload } from "x402/types";
-import type { RequestedPaymentPayload } from "./schemas.js";
+import type {
+  RequestedPaymentPayload,
+  RequestedPaymentRequirements,
+} from "./schemas.js";
 
 /**
  * Encodes a payment payload into a base64 string, ensuring bigint values are properly stringified
@@ -45,6 +48,21 @@ export function decodePayment(payment: string): RequestedPaymentPayload {
 }
 
 /**
+ * Encodes a payment required object into a base64 string for the PAYMENT-REQUIRED header (x402 v2)
+ *
+ * @param paymentRequired - The payment required object to encode
+ * @returns A base64 encoded string representation of the payment required object
+ */
+export function encodePaymentRequired(paymentRequired: {
+  x402Version: number;
+  error?: string;
+  accepts: RequestedPaymentRequirements[];
+  resource?: { url: string; description?: string; mimeType?: string };
+}): string {
+  return safeBase64Encode(JSON.stringify(paymentRequired));
+}
+
+/**
  * Encodes a string to base64 format
  *
  * @param data - The string to be encoded to base64
@@ -66,7 +84,7 @@ export function safeBase64Encode(data: string): string {
  * @param data - The base64 encoded string to be decoded
  * @returns The decoded string in UTF-8 format
  */
-function safeBase64Decode(data: string): string {
+export function safeBase64Decode(data: string): string {
   if (
     typeof globalThis !== "undefined" &&
     typeof globalThis.atob === "function"
