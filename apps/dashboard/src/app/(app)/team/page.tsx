@@ -1,10 +1,7 @@
-import { getDefaultTeam } from "@/api/team";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
+import { getLastVisitedTeam } from "@/api/team/get-team";
 
 export default async function TeamRootPage() {
-  const firstTeam = await getDefaultTeam();
-  if (!firstTeam) {
-    notFound();
-  }
-  redirect(`/team/${firstTeam.slug}`);
+  const team = await getLastVisitedTeam();
+  redirect(team ? `/team/${team.slug}` : "/team/~");
 }

@@ -1,162 +1,138 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { FormControl, Input } from "@chakra-ui/react";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { useTrack } from "hooks/analytics/useTrack";
-import { Flame } from "lucide-react";
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FlameIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { type ThirdwebContract, toUnits } from "thirdweb";
 import * as ERC20Ext from "thirdweb/extensions/erc20";
+import { z } from "zod";
+import { TransactionButton } from "@/components/tx-button";
+import { Button } from "@/components/ui/button";
+import { DecimalInput } from "@/components/ui/decimal-input";
 import {
-  useActiveAccount,
-  useReadContract,
-  useSendAndConfirmTransaction,
-} from "thirdweb/react";
-import {
-  FormErrorMessage,
-  FormHelperText,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
   FormLabel,
-  Text,
-} from "tw-components";
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
+import { parseError } from "@/utils/errorParser";
 
-interface TokenBurnButtonProps {
+const burnSchema = z.object({
+  amount: z.string().refine(
+    (val) => {
+      const num = Number(val);
+      return !Number.isNaN(num) && num > 0;
+    },
+    {
+      message: "Amount must be greater than 0",
+    },
+  ),
+});
+
+export function TokenBurnButton(props: {
   contract: ThirdwebContract;
   isLoggedIn: boolean;
-}
-
-const BURN_FORM_ID = "token-burn-form";
-
-export const TokenBurnButton: React.FC<TokenBurnButtonProps> = ({
-  contract,
-  isLoggedIn,
-  ...restButtonProps
-}) => {
-  const address = useActiveAccount()?.address;
-
-  const tokenBalanceQuery = useReadContract(ERC20Ext.balanceOf, {
-    contract,
-    address: address || "",
-    queryOptions: { enabled: !!address },
+}) {
+  const sendAndConfirmTx = useSendAndConfirmTx();
+  const form = useForm<z.infer<typeof burnSchema>>({
+    defaultValues: { amount: "0" },
+    resolver: zodResolver(burnSchema),
   });
 
-  const hasBalance = tokenBalanceQuery.data && tokenBalanceQuery.data > 0n;
-  const [open, setOpen] = useState(false);
-  const sendConfirmation = useSendAndConfirmTransaction();
-  const trackEvent = useTrack();
-  const form = useForm({ defaultValues: { amount: "0" } });
-  const decimalsQuery = useReadContract(ERC20Ext.decimals, { contract });
+  async function onSubmit(data: z.infer<typeof burnSchema>) {
+    // TODO: burn should be updated to take amount / amountWei (v6?)
+    const burnTokensTx = ERC20Ext.burn({
+      asyncParams: async () => {
+        return {
+          amount: toUnits(
+            data.amount,
+            await ERC20Ext.decimals({ contract: props.contract }),
+          ),
+        };
+      },
+      contract: props.contract,
+    });
+
+    const txPromise = sendAndConfirmTx.mutateAsync(burnTokensTx);
+
+    toast.promise(txPromise, {
+      error: (error) => ({
+        message: "Failed to burn tokens",
+        description: parseError(error),
+      }),
+      success: "Tokens burned successfully",
+    });
+
+    await txPromise;
+  }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet>
       <SheetTrigger asChild>
-        <Button
-          variant="primary"
-          {...restButtonProps}
-          disabled={!hasBalance}
-          className="gap-2"
-        >
-          <Flame size={16} /> Burn
+        <Button className="gap-2">
+          <FlameIcon className="size-4" /> Burn
         </Button>
       </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle className="text-left">Burn tokens</SheetTitle>
+
+      <SheetContent className="!w-full lg:!max-w-lg">
+        <SheetHeader className="mb-4">
+          <SheetTitle className="text-left tracking-tight">
+            Burn tokens
+          </SheetTitle>
         </SheetHeader>
-        <form className="mt-10 flex flex-col gap-3">
-          <div className="flex w-full flex-col gap-6 md:flex-row">
-            <FormControl isRequired isInvalid={!!form.formState.errors.amount}>
-              <FormLabel>Amount</FormLabel>
-              <Input
-                type="text"
-                pattern={`^\\d+(\\.\\d{1,${decimalsQuery.data || 18}})?$`}
-                {...form.register("amount")}
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="flex w-full flex-col gap-6 md:flex-row mb-3">
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormLabel>Amount</FormLabel>
+                    <FormControl>
+                      <DecimalInput className="bg-card" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      How many would you like to burn?
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <FormHelperText>How many would you like to burn?</FormHelperText>
-              <FormErrorMessage>
-                {form.formState.errors.amount?.message}
-              </FormErrorMessage>
-            </FormControl>
-          </div>
-          <Text>
-            Burning these{" "}
-            {`${Number.parseInt(form.watch("amount")) > 1 ? form.watch("amount") : ""} `}
-            tokens will remove them from the total circulating supply. This
-            action is irreversible.
-          </Text>
-        </form>
-        <SheetFooter className="mt-10">
-          <TransactionButton
-            isLoggedIn={isLoggedIn}
-            txChainID={contract.chain.id}
-            transactionCount={1}
-            form={BURN_FORM_ID}
-            isPending={sendConfirmation.isPending}
-            type="submit"
-            disabled={!form.formState.isDirty}
-            onClick={form.handleSubmit((data) => {
-              if (address) {
-                trackEvent({
-                  category: "token",
-                  action: "burn",
-                  label: "attempt",
-                });
+            </div>
 
-                // TODO: burn should be updated to take amount / amountWei (v6?)
-                const tx = ERC20Ext.burn({
-                  contract,
-                  asyncParams: async () => {
-                    return {
-                      amount: toUnits(
-                        data.amount,
-                        await ERC20Ext.decimals({ contract }),
-                      ),
-                    };
-                  },
-                });
+            <p className="text-sm text-muted-foreground mb-6">
+              Burning these tokens will remove them from the total circulating
+              supply. This action is irreversible.
+            </p>
 
-                const promise = sendConfirmation.mutateAsync(tx, {
-                  onSuccess: () => {
-                    trackEvent({
-                      category: "token",
-                      action: "burn",
-                      label: "success",
-                    });
-                    form.reset({ amount: "0" });
-                    setOpen(false);
-                  },
-                  onError: (error) => {
-                    trackEvent({
-                      category: "token",
-                      action: "burn",
-                      label: "error",
-                      error,
-                    });
-                    console.error(error);
-                  },
-                });
-                toast.promise(promise, {
-                  loading: `Burning ${data.amount} token(s)`,
-                  success: "Tokens burned successfully",
-                  error: "Failed to burn tokens",
-                });
-              }
-            })}
-          >
-            Burn Tokens
-          </TransactionButton>
-        </SheetFooter>
+            <TransactionButton
+              client={props.contract.client}
+              disabled={!form.formState.isDirty}
+              isLoggedIn={props.isLoggedIn}
+              isPending={sendAndConfirmTx.isPending}
+              transactionCount={1}
+              txChainID={props.contract.chain.id}
+              type="submit"
+            >
+              Burn Tokens
+            </TransactionButton>
+          </form>
+        </Form>
       </SheetContent>
     </Sheet>
   );
-};
+}

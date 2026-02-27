@@ -1,17 +1,6 @@
 "use client";
-import { CopyTextButton } from "@/components/ui/CopyTextButton";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { CodeClient } from "@/components/ui/code/code.client";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { ToolTipLabel } from "@/components/ui/tooltip";
-import { useThirdwebClient } from "@/constants/thirdweb.client";
 import type { Abi, AbiFunction } from "abitype";
-import { useV5DashboardChain } from "lib/v5-adapter";
-import { ArrowDown, WalletIcon } from "lucide-react";
+import { ArrowDownIcon, WalletIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -25,6 +14,17 @@ import {
 import { resolveContractAbi } from "thirdweb/contract";
 import { useActiveAccount } from "thirdweb/react";
 import { parseAbiParams } from "thirdweb/utils";
+import { Button } from "@/components/ui/button";
+import { CopyTextButton } from "@/components/ui/CopyTextButton";
+import { Card } from "@/components/ui/card";
+import { CodeClient } from "@/components/ui/code/code.client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/Spinner";
+import { Textarea } from "@/components/ui/textarea";
+import { ToolTipLabel } from "@/components/ui/tooltip";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
+import { useV5DashboardChain } from "@/hooks/chains/v5-adapter";
 import { ShareButton } from "../../components/share";
 
 export type SimulateTransactionForm = {
@@ -51,18 +51,17 @@ export const TransactionSimulator = (props: {
   // TODO - replace this with a mutation.isPending
   const [isPending, setIsPending] = useState(false);
   const [state, setState] = useState<State>({
-    success: false,
-    message: "",
     codeExample: "",
+    message: "",
     shareUrl: "",
+    success: false,
   });
   const form = useForm<SimulateTransactionForm>();
   const chainId = form.watch("chainId");
   const chain = useV5DashboardChain(
     Number.isInteger(Number(chainId)) ? chainId : undefined,
   );
-  const client = useThirdwebClient();
-
+  const client = getClientThirdwebClient();
   async function handleSimulation(data: SimulateTransactionForm) {
     try {
       setIsPending(true);
@@ -71,9 +70,9 @@ export const TransactionSimulator = (props: {
         throw new Error("Invalid chainId");
       }
       const contract = getContract({
-        client,
-        chain,
         address: to,
+        chain,
+        client,
       });
       const abi = (await resolveContractAbi(contract)) as Abi;
       const abiItem = abi.find(
@@ -99,20 +98,20 @@ export const TransactionSimulator = (props: {
         {
           chainId: chain.id,
           from,
-          to,
-          value,
           functionArgs,
           functionName,
+          to,
+          value,
         },
         params,
       );
       const shareUrl = getShareUrl({
         chainId: chain.id,
         from,
-        to,
-        value,
         functionArgs,
         functionName,
+        to,
+        value,
       });
       const transaction = prepareContractCall({
         contract,
@@ -131,7 +130,7 @@ export const TransactionSimulator = (props: {
         }),
       ]);
       setState({
-        success: true,
+        codeExample,
         message: `result: ${simulateResult.length > 0 ? simulateResult.join(",") : "Method did not return a result."}\n
 ${Object.keys(populatedTransaction)
   .map((key) => {
@@ -142,15 +141,15 @@ ${Object.keys(populatedTransaction)
     return `${key}: ${_val}\n`;
   })
   .join("")}`,
-        codeExample,
         shareUrl,
+        success: true,
       });
     } catch (err) {
       setState({
-        success: false,
-        message: `${err}`,
         codeExample: "",
+        message: `${err}`,
         shareUrl: "",
+        success: false,
       });
     }
     setIsPending(false);
@@ -163,19 +162,19 @@ ${Object.keys(populatedTransaction)
       </p>
 
       <form
-        onSubmit={form.handleSubmit(handleSimulation)}
         className="flex-col space-y-4"
+        onSubmit={form.handleSubmit(handleSimulation)}
       >
         <Card className="flex flex-col gap-4 p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Label htmlFor="chainId" className="min-w-60">
+            <Label className="min-w-60" htmlFor="chainId">
               Chain ID
             </Label>
             <Input
-              type="number"
-              required
-              placeholder="The chain ID of the sender wallet"
               defaultValue={initialFormValues.chainId}
+              placeholder="The chain ID of the sender wallet"
+              required
+              type="number"
               {...form.register("chainId", { required: true })}
               // Hide spinner.
               className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -183,21 +182,21 @@ ${Object.keys(populatedTransaction)
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Label htmlFor="from" className="min-w-60">
+            <Label className="min-w-60" htmlFor="from">
               From Address
             </Label>
             <Input
-              required
-              placeholder="The sender wallet address"
               defaultValue={initialFormValues.from}
+              placeholder="The sender wallet address"
+              required
               {...form.register("from", { required: true })}
             />
             {activeAccount && (
               <ToolTipLabel label="Use current wallet address">
                 <Button
-                  variant="ghost"
-                  size="icon"
                   onClick={() => form.setValue("from", activeAccount.address)}
+                  size="icon"
+                  variant="ghost"
                 >
                   <WalletIcon className="size-4" />
                 </Button>
@@ -207,38 +206,38 @@ ${Object.keys(populatedTransaction)
         </Card>
 
         <div className="flex justify-center">
-          <ArrowDown />
+          <ArrowDownIcon className="size-4" />
         </div>
 
         <Card className="flex flex-col gap-4 p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Label htmlFor="to" className="min-w-60">
+            <Label className="min-w-60" htmlFor="to">
               Contract Address
             </Label>
             <Input
-              placeholder="The contract address to call"
               defaultValue={initialFormValues.to}
+              placeholder="The contract address to call"
               {...form.register("to", { required: true })}
             />
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Label htmlFor="functionName" className="min-w-60">
+            <Label className="min-w-60" htmlFor="functionName">
               Function Name
             </Label>
             <Input
-              placeholder="The contract function name (i.e. mintTo)"
               defaultValue={initialFormValues.functionName}
+              placeholder="The contract function name (i.e. mintTo)"
               {...form.register("functionName", { required: true })}
             />
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Label htmlFor="functionArgs" className="min-w-60">
+            <Label className="min-w-60" htmlFor="functionArgs">
               Function Arguments
             </Label>
             <Textarea
+              className="bg-transparent"
               placeholder="Comma-separated arguments to call the function"
               rows={3}
-              className="bg-transparent"
               {...form.register("functionArgs")}
               defaultValue={
                 initialFormValues.functionArgs
@@ -248,7 +247,7 @@ ${Object.keys(populatedTransaction)
             />
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Label htmlFor="value" className="min-w-60">
+            <Label className="min-w-60" htmlFor="value">
               Value
             </Label>
             <Input
@@ -273,7 +272,7 @@ ${Object.keys(populatedTransaction)
       {state.message && (
         <>
           <div className="flex justify-center">
-            <ArrowDown />
+            <ArrowDownIcon className="size-4" />
           </div>
           <Card className="max-w-[800px] p-4">
             <p className="overflow-auto whitespace-pre-wrap font-mono text-sm">
@@ -289,10 +288,10 @@ ${Object.keys(populatedTransaction)
       <div className="flex justify-between">
         {state.shareUrl && (
           <CopyTextButton
+            copyIconPosition="right"
+            textToCopy={state.shareUrl}
             textToShow="Copy Simulation Link"
             tooltip="Copy Simulation Link"
-            textToCopy={state.shareUrl}
-            copyIconPosition="right"
           />
         )}
         <ShareButton
@@ -304,12 +303,12 @@ ${Object.keys(populatedTransaction)
       {state.codeExample && (
         <div className="flex max-w-[800px] flex-col gap-2 pt-16 ">
           <a
-            href="https://portal.thirdweb.com/references/typescript/v5/simulateTransaction"
-            target="_blank"
-            rel="noopener noreferrer"
             className="underline"
+            href="https://portal.thirdweb.com/references/typescript/v5/simulateTransaction"
+            rel="noopener noreferrer"
+            target="_blank"
           >
-            Connect SDK example
+            TypeScript SDK example
           </a>
           <CodeClient code={state.codeExample} lang="ts" />
         </div>

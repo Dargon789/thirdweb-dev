@@ -1,4 +1,7 @@
+import { ExternalLinkIcon } from "lucide-react";
 import type { ThirdwebContract } from "thirdweb";
+import { UpsellBannerCard } from "@/components/blocks/UpsellBannerCard";
+import type { ProjectMeta } from "../../../../../team/[team_slug]/[project_slug]/contract/[chainIdOrSlug]/[contractAddress]/types";
 import { TokenDetailsCard } from "../tokens/components/supply";
 import { ContractAnalyticsOverviewCard } from "./components/Analytics";
 import { BuildYourApp } from "./components/BuildYourApp";
@@ -20,9 +23,8 @@ interface ContractOverviewPageProps {
   isAnalyticsSupported: boolean;
   functionSelectors: string[];
   publishedBy: React.ReactNode;
+  projectMeta: ProjectMeta | undefined;
 }
-
-const TRACKING_CATEGORY = "contract_overview";
 
 export const ContractOverviewPage: React.FC<ContractOverviewPageProps> = ({
   contract,
@@ -36,67 +38,83 @@ export const ContractOverviewPage: React.FC<ContractOverviewPageProps> = ({
   isAnalyticsSupported,
   functionSelectors,
   publishedBy,
+  projectMeta,
 }) => {
   return (
     <div className="flex flex-col gap-10 lg:flex-row lg:gap-8">
       <div className="flex grow flex-col gap-10 overflow-hidden">
+        {isErc20 && (
+          <UpsellBannerCard
+            accentColor="blue"
+            cta={{
+              icon: <ExternalLinkIcon className="size-4" />,
+              link: `/${chainSlug}/${contract.address}`,
+              target: "_blank",
+              text: "View token page",
+            }}
+            description="A public page is available for this contract for anyone to buy this token"
+            title="Public token page available"
+          />
+        )}
+
         <ContractChecklist
+          chainSlug={chainSlug}
+          contract={contract}
+          functionSelectors={functionSelectors}
+          isErc20={isErc20}
           isErc721={isErc721}
           isErc1155={isErc1155}
-          isErc20={isErc20}
-          contract={contract}
-          chainSlug={chainSlug}
-          functionSelectors={functionSelectors}
+          projectMeta={projectMeta}
         />
 
         {isAnalyticsSupported && (
           <ContractAnalyticsOverviewCard
-            contractAddress={contract.address}
             chainId={contract.chain.id}
-            trackingCategory={TRACKING_CATEGORY}
             chainSlug={chainSlug}
+            contractAddress={contract.address}
+            projectMeta={projectMeta}
           />
         )}
 
         {(hasEnglishAuctions || hasDirectListings) && (
           <MarketplaceDetails
-            contract={contract}
-            trackingCategory={TRACKING_CATEGORY}
-            hasEnglishAuctions={hasEnglishAuctions}
-            hasDirectListings={hasDirectListings}
             chainSlug={chainSlug}
+            contract={contract}
+            hasDirectListings={hasDirectListings}
+            hasEnglishAuctions={hasEnglishAuctions}
+            projectMeta={projectMeta}
           />
         )}
 
         {(isErc1155 || isErc721) && (
           <NFTDetails
-            contract={contract}
-            trackingCategory={TRACKING_CATEGORY}
-            isErc721={isErc721}
             chainSlug={chainSlug}
+            contract={contract}
+            isErc721={isErc721}
+            projectMeta={projectMeta}
           />
         )}
 
         {isErc20 && <TokenDetailsCard contract={contract} />}
 
         <LatestEvents
-          contract={contract}
-          trackingCategory={TRACKING_CATEGORY}
           chainSlug={chainSlug}
+          contract={contract}
+          projectMeta={projectMeta}
         />
 
         {isPermissionsEnumerable && (
           <PermissionsTable
-            contract={contract}
-            trackingCategory={TRACKING_CATEGORY}
             chainSlug={chainSlug}
+            contract={contract}
+            projectMeta={projectMeta}
           />
         )}
 
         <BuildYourApp
-          trackingCategory={TRACKING_CATEGORY}
           chainSlug={chainSlug}
           contractAddress={contract.address}
+          projectMeta={projectMeta}
         />
       </div>
       <div className="shrink-0 lg:w-[300px]">{publishedBy}</div>

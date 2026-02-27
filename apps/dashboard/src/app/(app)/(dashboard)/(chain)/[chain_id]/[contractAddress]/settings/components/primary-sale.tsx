@@ -1,13 +1,5 @@
 "use client";
-import { AdminOnly } from "@3rdweb-sdk/react/components/roles/admin-only";
-import { Flex, FormControl } from "@chakra-ui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { ExtensionDetectedState } from "components/buttons/ExtensionDetectedState";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { AddressOrEnsSchema } from "constants/schemas";
-import { SolidityInput } from "contract-ui/components/solidity-inputs";
-import { useTrack } from "hooks/analytics/useTrack";
-import { useTxNotifications } from "hooks/useTxNotifications";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { type ThirdwebContract, ZERO_ADDRESS } from "thirdweb";
@@ -15,19 +7,24 @@ import {
   primarySaleRecipient,
   setPrimarySaleRecipient,
 } from "thirdweb/extensions/common";
-import {
-  useActiveAccount,
-  useReadContract,
-  useSendAndConfirmTransaction,
-} from "thirdweb/react";
-import {
-  Card,
-  FormErrorMessage,
-  FormLabel,
-  Heading,
-  Text,
-} from "tw-components";
+import { useActiveAccount, useReadContract } from "thirdweb/react";
 import { z } from "zod";
+import { AdminOnly } from "@/components/contracts/roles/admin-only";
+import { SolidityInput } from "@/components/solidity-inputs";
+import { TransactionButton } from "@/components/tx-button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
+import { AddressOrEnsSchema } from "@/schema/schemas";
+import type { ExtensionDetectedState } from "@/types/ExtensionDetectedState";
+import { parseError } from "@/utils/errorParser";
 import { SettingDetectedState } from "./detected-state";
 
 const CommonPrimarySaleSchema = z.object({
@@ -44,119 +41,106 @@ export const SettingsPrimarySale = ({
   isLoggedIn: boolean;
 }) => {
   const address = useActiveAccount()?.address;
-  const trackEvent = useTrack();
+
   const query = useReadContract(primarySaleRecipient, {
     contract,
   });
-  const mutation = useSendAndConfirmTransaction();
+  const sendAndConfirmTx = useSendAndConfirmTx();
 
   const transformedQueryData = {
     primary_sale_recipient: query.data,
   };
 
   const form = useForm<z.input<typeof CommonPrimarySaleSchema>>({
-    resolver: zodResolver(CommonPrimarySaleSchema),
     defaultValues: transformedQueryData,
+    resolver: zodResolver(CommonPrimarySaleSchema),
     values: transformedQueryData,
   });
 
-  const { onSuccess, onError } = useTxNotifications(
-    "Primary sale address updated",
-    "Error updating primary sale address",
-    contract,
-  );
+  const onSubmit = (data: z.input<typeof CommonPrimarySaleSchema>) => {
+    const saleRecipient = data.primary_sale_recipient;
+    if (!saleRecipient) {
+      return toast.error("Please enter a valid primary sale recipient address");
+    }
+    const transaction = setPrimarySaleRecipient({
+      contract,
+      saleRecipient,
+    });
+
+    sendAndConfirmTx.mutate(transaction, {
+      onError: (error) => {
+        toast.error("Error updating primary sale address", {
+          description: parseError(error),
+        });
+        console.error(error);
+      },
+      onSuccess: () => {
+        toast.success("Primary sale address updated");
+      },
+    });
+  };
 
   return (
-    <Card p={0} position="relative" overflow="hidden">
-      <SettingDetectedState type="primarySale" detectedState={detectedState} />
-      <Flex
-        as="form"
-        onSubmit={form.handleSubmit((d) => {
-          trackEvent({
-            category: "settings",
-            action: "set-primary-sale",
-            label: "attempt",
-          });
-          const saleRecipient = d.primary_sale_recipient;
-          if (!saleRecipient) {
-            return toast.error(
-              "Please enter a valid primary sale recipient address",
-            );
-          }
-          const transaction = setPrimarySaleRecipient({
-            contract,
-            saleRecipient,
-          });
-          // if we switch back to mutateAsync then *need* to catch errors
-          mutation.mutate(transaction, {
-            onSuccess: () => {
-              trackEvent({
-                category: "settings",
-                action: "set-primary-sale",
-                label: "success",
-              });
-              form.reset({ primary_sale_recipient: saleRecipient });
-              onSuccess();
-            },
-            onError: (error) => {
-              trackEvent({
-                category: "settings",
-                action: "set-primary-sale",
-                label: "error",
-                error,
-              });
-              onError(error);
-            },
-          });
-        })}
-        direction="column"
-      >
-        <Flex p={{ base: 6, md: 10 }} as="section" direction="column" gap={4}>
-          <Heading size="title.sm">Primary Sales</Heading>
-          <Text size="body.md" fontStyle="italic">
-            The wallet address that should receive the revenue from initial
-            sales of the assets.
-          </Text>
-          <Flex gap={4} direction={{ base: "column", md: "row" }}>
-            <FormControl
-              isDisabled={mutation.isPending || !address}
-              isInvalid={
-                !!form.getFieldState("primary_sale_recipient", form.formState)
-                  .error
-              }
-            >
-              <FormLabel>Recipient Address</FormLabel>
-              <SolidityInput
-                disabled={mutation.isPending || !address}
-                solidityType="address"
-                formContext={form}
-                {...form.register("primary_sale_recipient")}
+    <div className="relative bg-card border rounded-lg">
+      <SettingDetectedState detectedState={detectedState} type="primarySale" />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="p-4 md:p-6">
+            {/* header */}
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold tracking-tight">
+                Primary Sales
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                The wallet address that should receive the revenue from initial
+                sales of the assets
+              </p>
+            </div>
+
+            {query.isPending ? (
+              <Skeleton className="h-[74px] w-full" />
+            ) : (
+              <FormField
+                control={form.control}
+                name="primary_sale_recipient"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recipient Address</FormLabel>
+                    <FormControl>
+                      <SolidityInput
+                        client={contract.client}
+                        disabled={!address}
+                        formContext={form}
+                        solidityType="address"
+                        className="max-w-md"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <FormErrorMessage>
-                {
-                  form.getFieldState("primary_sale_recipient", form.formState)
-                    .error?.message
-                }
-              </FormErrorMessage>
-            </FormControl>
-          </Flex>
-        </Flex>
-        <AdminOnly contract={contract}>
-          <TransactionButton
-            isLoggedIn={isLoggedIn}
-            txChainID={contract.chain.id}
-            transactionCount={1}
-            disabled={query.isPending || !form.formState.isDirty}
-            type="submit"
-            isPending={mutation.isPending}
-            className="!rounded-t-none rounded-xl"
-          >
-            {mutation.isPending
-              ? "Updating Primary Sale Settings"
-              : "Update Primary Sale Settings"}
-          </TransactionButton>
-        </AdminOnly>
-      </Flex>
-    </Card>
+            )}
+          </div>
+          <AdminOnly contract={contract}>
+            <div className="px-4 lg:px-6 py-3 border-t border-dashed flex justify-end">
+              <TransactionButton
+                client={contract.client}
+                disabled={query.isPending}
+                isLoggedIn={isLoggedIn}
+                isPending={sendAndConfirmTx.isPending}
+                transactionCount={undefined}
+                txChainID={contract.chain.id}
+                type="submit"
+                variant="default"
+                size="sm"
+              >
+                Save
+              </TransactionButton>
+            </div>
+          </AdminOnly>
+        </form>
+      </Form>
+    </div>
   );
 };

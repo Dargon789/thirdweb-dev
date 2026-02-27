@@ -1,7 +1,18 @@
 "use client";
 
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { UnderlineLink } from "@/components/ui/UnderlineLink";
+import {
+  CircleAlertIcon,
+  CodeIcon,
+  ExternalLinkIcon,
+  PlusIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { Chain, ThirdwebClient } from "thirdweb";
+import { AddToProjectSelector } from "@/components/contracts/import-contract/add-to-project-selector";
+import type { MinimalTeamsAndProjects } from "@/components/contracts/import-contract/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,22 +23,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { EVMContractInfo } from "@3rdweb-sdk/react";
-import {
-  AddToProjectSelector,
-  type MinimalTeamsAndProjects,
-} from "components/contract-components/contract-deploy-form/add-to-project-card";
-import { useTrack } from "hooks/analytics/useTrack";
-import { CodeIcon, PlusIcon } from "lucide-react";
-import { CircleAlertIcon, ExternalLinkIcon } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
-import type { Chain, ThirdwebClient } from "thirdweb";
-import { useAddContractToProject } from "../../../../../team/[team_slug]/[project_slug]/hooks/project-contracts";
-
-const TRACKING_CATEGORY = "add_to_dashboard_upsell";
+import { Spinner } from "@/components/ui/Spinner";
+import { UnderlineLink } from "@/components/ui/UnderlineLink";
+import { useAddContractToProject } from "@/hooks/project-contracts";
+import type { EVMContractInfo } from "@/hooks/useActiveChainId";
+import type { ProjectMeta } from "../../../../../team/[team_slug]/[project_slug]/contract/[chainIdOrSlug]/[contractAddress]/types";
+import { buildContractPagePath } from "../_utils/contract-page-path";
 
 type AddToDashboardCardProps = {
   contractAddress: string;
@@ -36,6 +37,7 @@ type AddToDashboardCardProps = {
   hideCodePageLink?: boolean;
   teamsAndProjects: MinimalTeamsAndProjects | undefined;
   client: ThirdwebClient;
+  projectMeta: ProjectMeta | undefined;
 };
 
 export const PrimaryDashboardButton: React.FC<AddToDashboardCardProps> = ({
@@ -45,8 +47,16 @@ export const PrimaryDashboardButton: React.FC<AddToDashboardCardProps> = ({
   hideCodePageLink,
   teamsAndProjects,
   client,
+  projectMeta,
 }) => {
   const pathname = usePathname();
+
+  const codePagePath = buildContractPagePath({
+    chainIdOrSlug: contractInfo.chainSlug,
+    contractAddress: contractAddress,
+    projectMeta,
+    subpath: "/code",
+  });
 
   // if user is not logged in
   if (!teamsAndProjects) {
@@ -56,10 +66,8 @@ export const PrimaryDashboardButton: React.FC<AddToDashboardCardProps> = ({
 
     if (!pathname?.endsWith("/code")) {
       return (
-        <Button variant="outline" asChild className="gap-2">
-          <Link
-            href={`/${contractInfo.chainSlug}/${contractInfo.contractAddress}/code`}
-          >
+        <Button asChild className="gap-2" variant="outline">
+          <Link href={codePagePath}>
             <CodeIcon className="size-4" />
             Code Snippets
           </Link>
@@ -70,12 +78,28 @@ export const PrimaryDashboardButton: React.FC<AddToDashboardCardProps> = ({
     return null;
   }
 
+  // if user is on a project page
+  if (projectMeta) {
+    return (
+      <Button asChild className="rounded-full" variant="default">
+        <Link
+          className="gap-2"
+          href={`/${contractInfo.chainSlug}/${contractAddress}`}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          View Token Page <ExternalLinkIcon className="size-3.5" />
+        </Link>
+      </Button>
+    );
+  }
+
   return (
     <AddToProjectButton
-      contractAddress={contractAddress}
-      teamsAndProjects={teamsAndProjects}
       chainId={chain.id.toString()}
       client={client}
+      contractAddress={contractAddress}
+      teamsAndProjects={teamsAndProjects}
     />
   );
 };
@@ -103,10 +127,10 @@ function AddToProjectButton(props: {
           </DialogDescription>
         </DialogHeader>
         <AddToProjectModalContent
-          teamsAndProjects={props.teamsAndProjects}
           chainId={props.chainId}
-          contractAddress={props.contractAddress}
           client={props.client}
+          contractAddress={props.contractAddress}
+          teamsAndProjects={props.teamsAndProjects}
         />
       </DialogContent>
     </Dialog>
@@ -119,58 +143,37 @@ function AddToProjectModalContent(props: {
   contractAddress: string;
   client: ThirdwebClient;
 }) {
-  const trackEvent = useTrack();
   const addContractToProject = useAddContractToProject();
 
   const [importSelection, setImportSelection] = useState({
-    team: props.teamsAndProjects[0]?.team,
     project: props.teamsAndProjects[0]?.projects[0],
+    team: props.teamsAndProjects[0]?.team,
   });
 
   const selectedTeam = props.teamsAndProjects.find(
     (t) => t.team.id === importSelection.team?.id,
   );
 
-  function handleImport(params: {
-    teamId: string;
-    projectId: string;
-  }) {
-    trackEvent({
-      category: TRACKING_CATEGORY,
-      action: "add-to-dashboard",
-      label: "attempt",
-      contractAddress: props.contractAddress,
-    });
+  function handleImport(params: { teamId: string; projectId: string }) {
     addContractToProject.mutate(
       {
-        contractAddress: props.contractAddress,
-        teamId: params.teamId,
-        projectId: params.projectId,
         chainId: props.chainId,
+        contractAddress: props.contractAddress,
+        contractType: undefined,
+        deploymentType: undefined,
+        projectId: params.projectId,
+        teamId: params.teamId,
       },
       {
-        onSuccess: () => {
-          toast.success("Contract added to the project successfully");
-          trackEvent({
-            category: TRACKING_CATEGORY,
-            action: "add-to-dashboard",
-            label: "success",
-            contractAddress: props.contractAddress,
-          });
-        },
         onError: (err) => {
           if (err.message.includes("PROJECT_CONTRACT_ALREADY_EXISTS")) {
             toast.error("Contract is already added to the project");
           } else {
             toast.error("Failed to import contract");
           }
-          trackEvent({
-            category: TRACKING_CATEGORY,
-            action: "add-to-dashboard",
-            label: "error",
-            contractAddress: props.contractAddress,
-            error: err,
-          });
+        },
+        onSuccess: () => {
+          toast.success("Contract added to the project successfully");
         },
       },
     );
@@ -182,10 +185,10 @@ function AddToProjectModalContent(props: {
     <div>
       <div className="flex flex-col gap-4 border-border border-t px-6 py-6">
         <AddToProjectSelector
-          selection={importSelection}
-          onSelectionChange={setImportSelection}
-          teamsAndProjects={props.teamsAndProjects}
           client={props.client}
+          onSelectionChange={setImportSelection}
+          selection={importSelection}
+          teamsAndProjects={props.teamsAndProjects}
         />
 
         {/* No projects alert */}
@@ -195,8 +198,8 @@ function AddToProjectModalContent(props: {
             <AlertTitle> Selected team has no projects </AlertTitle>
             <AlertDescription>
               <UnderlineLink
-                href={`/team/${selectedTeam.team.slug}`}
                 className="inline-flex items-center gap-2"
+                href={`/team/${selectedTeam.team.slug}`}
                 target="_blank"
               >
                 Create Project <ExternalLinkIcon className="size-3.5" />
@@ -207,16 +210,16 @@ function AddToProjectModalContent(props: {
       </div>
       <div className="mt-3 flex justify-end border-border border-t bg-card p-6">
         <Button
-          disabled={!isImportEnabled}
           className="gap-2"
+          disabled={!isImportEnabled}
           onClick={() => {
             if (!importSelection.team || !importSelection.project) {
               return;
             }
 
             handleImport({
-              teamId: importSelection.team.id,
               projectId: importSelection.project.id,
+              teamId: importSelection.team.id,
             });
           }}
         >

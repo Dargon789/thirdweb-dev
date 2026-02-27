@@ -26,17 +26,22 @@ import {
 import { setLastAuthProvider } from "../../../core/utils/storage.js";
 import { socialIcons } from "../../../core/utils/walletIcon.js";
 import { useSetSelectionData } from "../../providers/wallet-ui-states-provider.js";
-import { WalletTypeRowButton } from "../../ui/ConnectWallet/WalletTypeRowButton.js";
 import { EmailIcon } from "../../ui/ConnectWallet/icons/EmailIcon.js";
 import { FingerPrintIcon } from "../../ui/ConnectWallet/icons/FingerPrintIcon.js";
 import { GuestIcon } from "../../ui/ConnectWallet/icons/GuestIcon.js";
 import { OutlineWalletIcon } from "../../ui/ConnectWallet/icons/OutlineWalletIcon.js";
 import { PhoneIcon } from "../../ui/ConnectWallet/icons/PhoneIcon.js";
+import {
+  getLastUsedSocialAuth,
+  getLastUsedWalletId,
+} from "../../ui/ConnectWallet/Modal/storage.js";
+import { WalletTypeRowButton } from "../../ui/ConnectWallet/WalletTypeRowButton.js";
+import { LastUsedBadge } from "../../ui/components/badge.js";
+import { Container } from "../../ui/components/basic.js";
+import { Button } from "../../ui/components/buttons.js";
 import { Img } from "../../ui/components/Img.js";
 import { Spacer } from "../../ui/components/Spacer.js";
 import { TextDivider } from "../../ui/components/TextDivider.js";
-import { Container } from "../../ui/components/basic.js";
-import { Button } from "../../ui/components/buttons.js";
 import { InputSelectionUI } from "../in-app/InputSelectionUI.js";
 import { validateEmail } from "../in-app/validateEmail.js";
 import { LoadingScreen } from "./LoadingScreen.js";
@@ -61,7 +66,7 @@ export type ConnectWalletSelectUIState =
       };
     };
 
-const defaultAuthOptions: AuthOption[] = [
+export const defaultAuthOptions: AuthOption[] = [
   "email",
   "phone",
   "google",
@@ -97,6 +102,9 @@ export const ConnectWalletSocialOptions = (
   ) => void;
 
   const themeObj = useCustomTheme();
+  const lastUsedSocialAuth = useMemo(() => getLastUsedSocialAuth(), []);
+  const lastUsedWalletId = useMemo(() => getLastUsedWalletId(), []);
+
   const optionalImageMetadata = useMemo(
     () =>
       props.wallet.id === "inApp"
@@ -106,22 +114,24 @@ export const ConnectWalletSocialOptions = (
   );
 
   const loginMethodsLabel = {
-    google: locale.signInWithGoogle,
-    facebook: locale.signInWithFacebook,
     apple: locale.signInWithApple,
-    discord: locale.signInWithDiscord,
-    line: "LINE",
-    x: "X",
     coinbase: "Coinbase",
+    discord: locale.signInWithDiscord,
+    facebook: locale.signInWithFacebook,
     farcaster: "Farcaster",
-    telegram: "Telegram",
     github: "GitHub",
-    twitch: "Twitch",
+    google: locale.signInWithGoogle,
+    line: "LINE",
     steam: "Steam",
+    telegram: "Telegram",
+    twitch: "Twitch",
+    x: "X",
+    tiktok: "TikTok",
+    epic: "Epic",
   };
 
   const { data: ecosystemAuthOptions, isLoading } = useQuery({
-    queryKey: ["auth-options", wallet.id],
+    enabled: isEcosystemWallet(wallet),
     queryFn: async () => {
       if (isEcosystemWallet(wallet)) {
         const options = await getEcosystemInfo(wallet.id);
@@ -129,12 +139,28 @@ export const ConnectWalletSocialOptions = (
       }
       return null;
     },
-    enabled: isEcosystemWallet(wallet),
+    queryKey: ["auth-options", wallet.id],
     retry: false,
   });
-  const authOptions = isEcosystemWallet(wallet)
+  const _authOptions = isEcosystemWallet(wallet)
     ? (ecosystemAuthOptions ?? defaultAuthOptions)
     : (wallet.getConfig()?.auth?.options ?? defaultAuthOptions);
+
+  const authOptions = useMemo(() => {
+    if (!lastUsedSocialAuth || wallet.id !== lastUsedWalletId) {
+      return _authOptions;
+    }
+
+    return [..._authOptions].sort((a, b) => {
+      if (lastUsedSocialAuth === a) {
+        return -1;
+      }
+      if (lastUsedSocialAuth === b) {
+        return 1;
+      }
+      return 0;
+    });
+  }, [_authOptions, lastUsedSocialAuth, wallet.id, lastUsedWalletId]);
 
   const emailIndex = authOptions.indexOf("email");
   const isEmailEnabled = emailIndex !== -1;
@@ -212,10 +238,10 @@ export const ConnectWalletSocialOptions = (
 
   const handleGuestLogin = async () => {
     const connectOptions = {
+      chain: props.chain,
       client: props.client,
       ecosystem: ecosystemInfo,
       strategy: "guest" as const,
-      chain: props.chain,
     };
     const connectPromise = (async () => {
       const result = await wallet.connect(connectOptions);
@@ -246,17 +272,17 @@ export const ConnectWalletSocialOptions = (
         authOption: strategy,
         client: props.client,
         ecosystem: ecosystemInfo,
-        redirectUrl: walletConfig?.auth?.redirectUrl,
         mode: authMode,
+        redirectUrl: walletConfig?.auth?.redirectUrl,
       });
     }
 
     try {
       const socialLoginWindow = openOauthSignInWindow({
         authOption: strategy,
-        themeObj,
         client: props.client,
         ecosystem: ecosystemInfo,
+        themeObj,
       });
       if (!socialLoginWindow) {
         throw new Error("Failed to open login window");
@@ -264,12 +290,12 @@ export const ConnectWalletSocialOptions = (
       const connectOptions = {
         chain: props.chain,
         client: props.client,
-        strategy,
-        openedWindow: socialLoginWindow,
         closeOpenedWindow: (openedWindow: Window) => {
           openedWindow.close();
         },
         ecosystem: ecosystemInfo,
+        openedWindow: socialLoginWindow,
+        strategy,
       };
 
       const connectPromise = (() => {
@@ -287,8 +313,8 @@ export const ConnectWalletSocialOptions = (
 
       setData({
         socialLogin: {
-          type: strategy,
           connectionPromise: connectPromise,
+          type: strategy,
         },
       });
 
@@ -330,12 +356,12 @@ export const ConnectWalletSocialOptions = (
       {optionalImageMetadata && (
         <>
           <Img
-            client={props.client}
-            src={optionalImageMetadata.src}
             alt={optionalImageMetadata.alt}
-            width={`${optionalImageMetadata.width}`}
+            client={props.client}
             height={`${optionalImageMetadata.height}`}
+            src={optionalImageMetadata.src}
             style={{ margin: "auto" }}
+            width={`${optionalImageMetadata.width}`}
           />
           <Spacer y="xxs" />
         </>
@@ -357,23 +383,28 @@ export const ConnectWalletSocialOptions = (
                 })();
                 return (
                   <SocialButton
+                    className="tw-social-button"
                     aria-label={`Login with ${loginMethod}`}
                     data-variant={showOnlyIcons ? "icon" : "full"}
-                    key={loginMethod}
-                    variant="outline"
                     disabled={props.disabled}
+                    key={loginMethod}
                     onClick={() => {
                       handleSocialLogin(loginMethod as SocialAuthOption);
                     }}
                     style={{
                       flexGrow: socialLogins.length < 7 ? 1 : 0,
+                      position: "relative",
                     }}
+                    variant="outline"
                   >
+                    {lastUsedWalletId === wallet.id &&
+                      lastUsedSocialAuth === loginMethod && <LastUsedBadge />}
+
                     <Img
+                      client={props.client}
+                      height={imgIconSize}
                       src={socialIcons[loginMethod as SocialAuthOption]}
                       width={imgIconSize}
-                      height={imgIconSize}
-                      client={props.client}
                     />
                     {!showOnlyIcons &&
                       `${socialLogins.length === 1 ? "Continue with " : ""}${loginMethodsLabel[loginMethod as SocialAuthOption]}`}
@@ -393,13 +424,12 @@ export const ConnectWalletSocialOptions = (
       {isEmailEnabled &&
         (inputMode === "email" ? (
           <InputSelectionUI
-            type={type}
-            onSelect={(value) => {
-              setData({ emailLogin: value });
-              props.select();
-            }}
-            placeholder={placeholder}
-            name="email"
+            className="tw-input-container tw-input-container__email"
+            lastUsedBadge={
+              lastUsedWalletId === wallet.id && lastUsedSocialAuth === "email"
+            }
+            disabled={props.disabled}
+            emptyErrorMessage={emptyErrorMessage}
             errorMessage={(input) => {
               const isValidEmail = validateEmail(input.toLowerCase());
               if (!isValidEmail) {
@@ -407,36 +437,49 @@ export const ConnectWalletSocialOptions = (
               }
               return undefined;
             }}
-            disabled={props.disabled}
-            emptyErrorMessage={emptyErrorMessage}
+            name="email"
+            onSelect={(value) => {
+              setData({ emailLogin: value });
+              props.select();
+            }}
+            placeholder={placeholder}
             submitButtonText={locale.submitEmail}
+            type={type}
           />
         ) : (
           <WalletTypeRowButton
+            lastUsedBadge={
+              lastUsedWalletId === wallet.id && lastUsedSocialAuth === "email"
+            }
+            className="tw-select-button tw-select-button__email"
             client={props.client}
+            disabled={props.disabled}
             icon={EmailIcon}
             onClick={() => {
               setManualInputMode("email");
             }}
             title={locale.emailPlaceholder}
-            disabled={props.disabled}
           />
         ))}
+
       {isPhoneEnabled &&
         (inputMode === "phone" ? (
           <InputSelectionUI
-            format="phone"
-            type={type}
-            onSelect={(value) => {
-              // removes white spaces and special characters
-              setData({ phoneLogin: value.replace(/[-\(\) ]/g, "") });
-              props.select();
-            }}
-            placeholder={placeholder}
-            name="phone"
+            className="tw-input-container tw-input-container__phone"
+            allowedSmsCountryCodes={
+              wallet.getConfig()?.auth?.allowedSmsCountryCodes
+            }
+            defaultSmsCountryCode={
+              wallet.getConfig()?.auth?.defaultSmsCountryCode
+            }
+            lastUsedBadge={
+              lastUsedWalletId === wallet.id && lastUsedSocialAuth === "phone"
+            }
+            disabled={props.disabled}
+            emptyErrorMessage={emptyErrorMessage}
             errorMessage={(_input) => {
               // removes white spaces and special characters
-              const input = _input.replace(/[-\(\) ]/g, "");
+              const input = _input.replace(/[-() ]/g, "");
               const isPhone = /^[0-9]+$/.test(input);
 
               if (!isPhone && isPhoneEnabled) {
@@ -445,40 +488,56 @@ export const ConnectWalletSocialOptions = (
 
               return undefined;
             }}
-            disabled={props.disabled}
-            emptyErrorMessage={emptyErrorMessage}
+            format="phone"
+            name="phone"
+            onSelect={(value) => {
+              // removes white spaces and special characters
+              setData({ phoneLogin: value.replace(/[-() ]/g, "") });
+              props.select();
+            }}
+            placeholder={placeholder}
             submitButtonText={locale.submitEmail}
-            defaultSmsCountryCode={
-              wallet.getConfig()?.auth?.defaultSmsCountryCode
-            }
+            type={type}
           />
         ) : (
           <WalletTypeRowButton
+            lastUsedBadge={
+              lastUsedWalletId === wallet.id && lastUsedSocialAuth === "phone"
+            }
+            className="tw-select-button tw-select-button__phone"
             client={props.client}
+            disabled={props.disabled}
             icon={PhoneIcon}
             onClick={() => {
               setManualInputMode("phone");
             }}
             title={locale.phonePlaceholder}
-            disabled={props.disabled}
           />
         ))}
 
       {passKeyEnabled && (
         <WalletTypeRowButton
+          lastUsedBadge={
+            lastUsedWalletId === wallet.id && lastUsedSocialAuth === "passkey"
+          }
+          className="tw-select-button tw-select-button__passkey"
           client={props.client}
+          disabled={props.disabled}
           icon={FingerPrintIcon}
           onClick={() => {
             handlePassKeyLogin();
           }}
           title={locale.passkey}
-          disabled={props.disabled}
         />
       )}
 
       {/* SIWE login */}
       {siweEnabled && !props.isLinking && (
         <WalletTypeRowButton
+          lastUsedBadge={
+            lastUsedWalletId === wallet.id && lastUsedSocialAuth === "wallet"
+          }
+          className="tw-select-button tw-select-button__link-wallet"
           client={props.client}
           icon={OutlineWalletIcon}
           onClick={() => {
@@ -491,18 +550,24 @@ export const ConnectWalletSocialOptions = (
       {/* Guest login */}
       {guestEnabled && (
         <WalletTypeRowButton
+          lastUsedBadge={
+            lastUsedWalletId === wallet.id && lastUsedSocialAuth === "guest"
+          }
+          className="tw-select-button tw-select-button__guest"
           client={props.client}
+          disabled={props.disabled}
           icon={GuestIcon}
           onClick={() => {
             handleGuestLogin();
           }}
           title={locale.loginAsGuest}
-          disabled={props.disabled}
         />
       )}
 
       {props.isLinking && (
         <WalletTypeRowButton
+          lastUsedBadge={false}
+          className="tw-select-button tw-select-button__link-wallet"
           client={props.client}
           icon={OutlineWalletIcon}
           onClick={() => {
@@ -517,12 +582,12 @@ export const ConnectWalletSocialOptions = (
 
 const SocialButtonRow = (props: { children: React.ReactNode[] }) => (
   <Container
-    flex="row"
     center="x"
+    flex="row"
     gap={props.children.length > 4 ? "xs" : "sm"}
     style={{
-      justifyContent: "center",
       display: "flex",
+      justifyContent: "center",
       ...{
         "& > *": {
           flexBasis: `${100 / props.children.length}%`,
@@ -537,16 +602,16 @@ const SocialButtonRow = (props: { children: React.ReactNode[] }) => (
 
 const SocialButton = /* @__PURE__ */ styled(Button)({
   "&[data-variant='full']": {
-    display: "flex",
-    justifyContent: "flex-start",
-    padding: spacing.md,
-    gap: spacing.sm,
-    fontSize: fontSize.md,
-    fontWeight: 500,
-    transition: "background-color 0.2s ease",
     "&:active": {
       boxShadow: "none",
     },
+    display: "flex",
+    fontSize: fontSize.md,
+    fontWeight: 500,
+    gap: spacing.sm,
+    justifyContent: "flex-start",
+    padding: spacing.md,
+    transition: "background-color 0.2s ease",
   },
   "&[data-variant='icon']": {
     padding: spacing.sm,

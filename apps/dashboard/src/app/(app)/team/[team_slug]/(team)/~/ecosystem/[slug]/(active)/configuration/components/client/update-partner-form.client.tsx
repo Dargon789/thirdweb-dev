@@ -1,8 +1,10 @@
 "use client";
-import { useDashboardRouter } from "@/lib/DashboardRouter";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import type { Ecosystem, Partner } from "../../../../../types";
+import type { ThirdwebClient } from "thirdweb";
+import type { Ecosystem, Partner } from "@/api/team/ecosystems";
+import { useDashboardStorageUpload } from "@/hooks/useDashboardStorageUpload";
+import { useDashboardRouter } from "@/lib/DashboardRouter";
 import { useUpdatePartner } from "../../hooks/use-update-partner";
 import { PartnerForm, type PartnerFormValues } from "./partner-form.client";
 
@@ -11,16 +13,20 @@ export function UpdatePartnerForm({
   partner,
   authToken,
   teamId,
+  client,
 }: {
   ecosystem: Ecosystem;
   partner: Partner;
   authToken: string;
   teamId: string;
+  client: ThirdwebClient;
 }) {
   const router = useDashboardRouter();
   const params = useParams();
   const teamSlug = params.team_slug as string;
   const ecosystemSlug = params.slug as string;
+
+  const storageUpload = useDashboardStorageUpload({ client });
 
   const { mutateAsync: updatePartner, isPending } = useUpdatePartner(
     {
@@ -28,6 +34,13 @@ export function UpdatePartnerForm({
       teamId,
     },
     {
+      onError: (error) => {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to update ecosystem partner";
+        toast.error(message);
+      },
       onSuccess: () => {
         toast.success("Partner updated successfully", {
           description: "The partner details have been updated.",
@@ -37,39 +50,55 @@ export function UpdatePartnerForm({
         const redirectPath = `/team/${teamSlug}/~/ecosystem/${ecosystemSlug}`;
         router.push(redirectPath);
       },
-      onError: (error) => {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to update ecosystem partner";
-        toast.error(message);
-      },
     },
   );
 
-  const handleSubmit = (
+  const isUploading = storageUpload.isPending;
+
+  const handleSubmit = async (
     values: PartnerFormValues,
     finalAccessControl: Partner["accessControl"] | null,
   ) => {
+    // Determine imageUrl based on three states:
+    // 1. New file uploaded → upload and use new URI
+    // 2. Explicit removal → send null to clear
+    // 3. No change → preserve existing partner imageUrl
+    let imageUrl: string | null | undefined;
+    if (values.logo) {
+      try {
+        const [uri] = await storageUpload.mutateAsync([values.logo]);
+        imageUrl = uri;
+      } catch {
+        toast.error("Failed to upload logo");
+        return;
+      }
+    } else if (values.removeLogo) {
+      imageUrl = null;
+    } else {
+      imageUrl = partner.imageUrl;
+    }
+
     updatePartner({
-      ecosystem,
-      partnerId: partner.id,
-      name: values.name,
-      allowlistedDomains: values.domains
-        .split(/,| /)
-        .filter((d) => d.length > 0),
+      accessControl: finalAccessControl,
       allowlistedBundleIds: values.bundleIds
         .split(/,| /)
         .filter((d) => d.length > 0),
-      accessControl: finalAccessControl,
+      allowlistedDomains: values.domains
+        .split(/,| /)
+        .filter((d) => d.length > 0),
+      ecosystem,
+      imageUrl,
+      name: values.name,
+      partnerId: partner.id,
     });
   };
 
   return (
     <PartnerForm
-      partner={partner}
+      client={client}
+      isSubmitting={isPending || isUploading}
       onSubmit={handleSubmit}
-      isSubmitting={isPending}
+      partner={partner}
       submitLabel="Update"
     />
   );

@@ -1,33 +1,37 @@
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { useCustomTheme } from "../../../../../../core/design-system/CustomThemeProvider.js";
+import {
+  iconSize,
+  radius,
+} from "../../../../../../core/design-system/index.js";
 import { Container } from "../../../../components/basic.js";
 
 export function StepConnectorArrow() {
   const theme = useCustomTheme();
   return (
     <Container
-      flex="row"
       center="both"
+      flex="row"
       style={{
-        width: "100%",
+        marginBottom: "-12px",
+        marginTop: "-12px",
         position: "relative",
-        marginTop: "-10px",
-        marginBottom: "-10px",
+        width: "100%",
         zIndex: 1000,
       }}
     >
       <Container
-        flex="row"
         center="both"
+        color="secondaryText"
+        flex="row"
         style={{
-          borderRadius: "100%",
-          width: "30px",
-          height: "30px",
           backgroundColor: theme.colors.modalBg,
           border: `1px solid ${theme.colors.borderColor}`,
+          borderRadius: radius.full,
+          padding: "6px",
         }}
       >
-        <ChevronDownIcon width={16} height={16} />
+        <ChevronDownIcon height={iconSize["sm+"]} width={iconSize["sm+"]} />
       </Container>
     </Container>
   );

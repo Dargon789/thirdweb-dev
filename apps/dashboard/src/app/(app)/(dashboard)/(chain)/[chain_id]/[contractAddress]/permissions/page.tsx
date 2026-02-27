@@ -1,46 +1,17 @@
-import { notFound } from "next/navigation";
-import { localhost } from "thirdweb/chains";
-import { getRawAccount } from "../../../../../account/settings/getAccount";
-import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
-import { getContractPageMetadata } from "../_utils/getContractPageMetadata";
-import { ContractPermissionsPage } from "./ContractPermissionsPage";
-import { ContractPermissionsPageClient } from "./ContractPermissionsPage.client";
+import { getRawAccount } from "@/api/account/get-account";
+import type { PublicContractPageParams } from "../types";
+import { SharedPermissionsPage } from "./shared-permissions-page";
 
 export default async function Page(props: {
-  params: Promise<{
-    contractAddress: string;
-    chain_id: string;
-  }>;
+  params: Promise<PublicContractPageParams>;
 }) {
-  const params = await props.params;
-  const info = await getContractPageParamsInfo(params);
-
-  if (!info) {
-    notFound();
-  }
-
-  const account = await getRawAccount();
-
-  const { contract } = info;
-  if (contract.chain.id === localhost.id) {
-    return (
-      <ContractPermissionsPageClient
-        contract={contract}
-        chainMetadata={info.chainMetadata}
-        isLoggedIn={!!account}
-      />
-    );
-  }
-
-  const { isPermissionsEnumerableSupported } =
-    await getContractPageMetadata(contract);
-
+  const [params, account] = await Promise.all([props.params, getRawAccount()]);
   return (
-    <ContractPermissionsPage
-      contract={contract}
-      chainSlug={info.chainMetadata.slug}
-      detectedPermissionEnumerable={isPermissionsEnumerableSupported}
+    <SharedPermissionsPage
+      chainIdOrSlug={params.chain_id}
+      contractAddress={params.contractAddress}
       isLoggedIn={!!account}
+      projectMeta={undefined}
     />
   );
 }

@@ -9,6 +9,7 @@ export type GetClaimConditionsParams = {
 };
 /**
  * Retrieves all claim conditions.
+ * This method is only available on the `DropERC1155` contract.
  * @param options - The transaction options.
  * @returns A promise that resolves to all claim conditions.
  * @throws An error if the claim conditions are unsupported by the contract.
@@ -38,14 +39,14 @@ export async function getClaimConditions(
           metadata,
         ]) => [
           {
-            startTimestamp,
-            maxClaimableSupply,
-            supplyClaimed,
-            quantityLimitPerWallet,
-            merkleRoot,
-            pricePerToken,
             currency,
+            maxClaimableSupply,
+            merkleRoot,
             metadata,
+            pricePerToken,
+            quantityLimitPerWallet,
+            startTimestamp,
+            supplyClaimed,
           },
         ],
       );

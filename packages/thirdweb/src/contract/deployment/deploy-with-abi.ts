@@ -1,5 +1,9 @@
 import type { Abi, AbiConstructor } from "abitype";
+import { parseEventLogs } from "../../event/actions/parse-logs.js";
+import { contractDeployedEvent } from "../../extensions/stylus/__generated__/IStylusDeployer/events/ContractDeployed.js";
 import { activateStylusContract } from "../../extensions/stylus/write/activateStylusContract.js";
+import { deployWithStylusConstructor } from "../../extensions/stylus/write/deployWithStylusConstructor.js";
+import { isContractActivated } from "../../extensions/stylus/write/isContractActivated.js";
 import { sendAndConfirmTransaction } from "../../transaction/actions/send-and-confirm-transaction.js";
 import { sendTransaction } from "../../transaction/actions/send-transaction.js";
 import { prepareTransaction } from "../../transaction/prepare-transaction.js";
@@ -131,11 +135,11 @@ export async function deployContract(
 ) {
   if (await isZkSyncChain(options.chain)) {
     return zkDeployContract({
-      account: options.account,
-      client: options.client,
-      chain: options.chain,
-      bytecode: options.bytecode,
       abi: options.abi,
+      account: options.account,
+      bytecode: options.bytecode,
+      chain: options.chain,
+      client: options.client,
       params: options.constructorParams,
       salt: options.salt,
     });
@@ -147,16 +151,16 @@ export async function deployContract(
     const info = await computeDeploymentInfoFromBytecode(options);
     address = computeDeploymentAddress({
       bytecode: options.bytecode,
-      encodedArgs: info.encodedArgs,
       create2FactoryAddress: info.create2FactoryAddress,
-      salt: options.salt,
+      encodedArgs: info.encodedArgs,
       extraDataWithUri: options.extraDataWithUri,
+      salt: options.salt,
     });
     const isDeployed = await isContractDeployed(
       getContract({
-        client: options.client,
-        chain: options.chain,
         address,
+        chain: options.chain,
+        client: options.client,
       }),
     );
     if (isDeployed) {
@@ -167,10 +171,57 @@ export async function deployContract(
       transaction: prepareTransaction({
         chain: options.chain,
         client: options.client,
-        to: info.create2FactoryAddress,
         data: info.initCalldata,
+        to: info.create2FactoryAddress,
       }),
     });
+  } else if (options.isStylus && options.constructorParams) {
+    const isActivated = await isContractActivated(options);
+
+    if (!isActivated) {
+      // one time deploy to activate the new codehash
+      const impl = await deployContract({
+        ...options,
+        abi: [],
+        constructorParams: undefined,
+      });
+
+      // fetch metadata
+      await fetch(
+        `https://contract.thirdweb.com/metadata/${options.chain.id}/${impl}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "GET",
+        },
+      );
+    }
+
+    const deployTx = deployWithStylusConstructor({
+      abi: options.abi,
+      bytecode: options.bytecode,
+      chain: options.chain,
+      client: options.client,
+      constructorParams: options.constructorParams,
+    });
+
+    const receipt = await sendAndConfirmTransaction({
+      account: options.account,
+      transaction: deployTx,
+    });
+
+    const deployEvent = contractDeployedEvent();
+    const decodedEvent = parseEventLogs({
+      events: [deployEvent],
+      logs: receipt.logs,
+    });
+    if (decodedEvent.length === 0 || !decodedEvent[0]) {
+      throw new Error(
+        `No ContractDeployed event found in transaction: ${receipt.transactionHash}`,
+      );
+    }
+    address = decodedEvent[0]?.args.deployedContract;
   } else {
     const deployTx = prepareDirectDeployTransaction(options);
     const receipt = await sendAndConfirmTransaction({
@@ -194,8 +245,8 @@ export async function deployContract(
       });
 
       await sendTransaction({
-        transaction: activationTransaction,
         account: options.account,
+        transaction: activationTransaction,
       });
     } catch {
       console.error("Error: Contract could not be activated.");

@@ -32,10 +32,12 @@ export async function loginWithOauthRedirect(options: {
   ecosystem?: Ecosystem;
   redirectUrl?: string;
   mode?: "redirect" | "popup" | "window";
+  authFlow?: "connect" | "link";
 }): Promise<void> {
   const loginUrl = getLoginUrl({
     ...options,
     mode: options.mode || "redirect",
+    authFlow: options.authFlow,
   });
   if (options.mode === "redirect") {
     window.location.href = loginUrl;
@@ -99,9 +101,9 @@ export const loginWithOauth = async (options: {
             window.removeEventListener("message", messageListener);
             clearInterval(pollTimer);
             closeWindow({
+              closeOpenedWindow: options.closeOpenedWindow,
               isWindowOpenedByFn,
               win,
-              closeOpenedWindow: options.closeOpenedWindow,
             });
             if (event.data.authResult) {
               resolve(event.data.authResult);
@@ -112,9 +114,9 @@ export const loginWithOauth = async (options: {
             window.removeEventListener("message", messageListener);
             clearInterval(pollTimer);
             closeWindow({
+              closeOpenedWindow: options.closeOpenedWindow,
               isWindowOpenedByFn,
               win,
-              closeOpenedWindow: options.closeOpenedWindow,
             });
             reject(new Error(event.data.errorString));
             break;

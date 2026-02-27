@@ -1,14 +1,14 @@
-import { getProjects } from "@/api/projects";
-import { getTeamBySlug, getTeams } from "@/api/team";
-import { AppFooter } from "@/components/blocks/app-footer";
-import { getThirdwebClient } from "@/constants/thirdweb.server";
+import { differenceInDays } from "date-fns";
+import { InfoIcon } from "lucide-react";
 import { notFound } from "next/navigation";
-import { getValidAccount } from "../../../account/settings/getAccount";
-import {
-  getAuthToken,
-  getAuthTokenWalletAddress,
-} from "../../../api/lib/getAuthToken";
-import { loginRedirect } from "../../../login/loginRedirect";
+import { getValidAccount } from "@/api/account/get-account";
+import { getAuthToken, getAuthTokenWalletAddress } from "@/api/auth-token";
+import { getProjects } from "@/api/project/projects";
+import { getTeamBySlug, getTeams } from "@/api/team/get-team";
+import { AppFooter } from "@/components/footers/app-footer";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
+import { loginRedirect } from "@/utils/redirects";
 import { TeamHeaderLoggedIn } from "../../../team/components/TeamHeader/team-header-logged-in.client";
 
 export default async function Layout(props: {
@@ -32,18 +32,22 @@ export default async function Layout(props: {
     notFound();
   }
 
+  // show the banner only if the team was created more than 3 days ago
+  const shouldShowOnboardingBanner =
+    differenceInDays(new Date(), new Date(team.createdAt)) > 3;
+
   // Note:
   // Do not check that team is already onboarded or not and redirect away from /get-started pages
   // because the team is marked as onboarded in the first step- instead of after completing all the steps
 
   const teamsAndProjects = await Promise.all(
     teams.map(async (team) => ({
-      team,
       projects: await getProjects(team.slug),
+      team,
     })),
   );
 
-  const client = getThirdwebClient({
+  const client = getClientThirdwebClient({
     jwt: authToken,
     teamId: team.id,
   });
@@ -52,14 +56,29 @@ export default async function Layout(props: {
     <div className="flex min-h-dvh grow flex-col">
       <div className="border-b bg-card">
         <TeamHeaderLoggedIn
-          client={client}
           account={account}
           accountAddress={accountAddress}
+          client={client}
           currentProject={undefined}
           currentTeam={team}
           teamsAndProjects={teamsAndProjects}
         />
       </div>
+      {shouldShowOnboardingBanner && (
+        <div className="container mt-10">
+          <Alert variant="info">
+            <InfoIcon className="size-5" />
+            <AlertTitle>Finish setting up your team</AlertTitle>
+            <AlertDescription>
+              Your team predates our latest onboarding flow, so a few steps
+              might still be pending.
+              <br />
+              Completing this updated guide takes less than a minute and ensures
+              everything is set up correctly.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
       {props.children}
       <AppFooter />
     </div>

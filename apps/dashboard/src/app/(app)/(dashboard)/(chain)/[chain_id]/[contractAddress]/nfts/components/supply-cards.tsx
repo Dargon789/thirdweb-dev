@@ -1,10 +1,9 @@
 "use client";
-import { useMemo } from "react";
 import type { ThirdwebContract } from "thirdweb";
 import {
-  nextTokenIdToMint,
-  startTokenId,
-  totalSupply,
+  getTotalClaimedSupply,
+  totalSupply as getTotalSupply,
+  getTotalUnclaimedSupply,
 } from "thirdweb/extensions/erc721";
 import { useReadContract } from "thirdweb/react";
 import { StatCard } from "../../overview/components/stat-card";
@@ -14,42 +13,34 @@ interface SupplyCardsProps {
 }
 
 export const SupplyCards: React.FC<SupplyCardsProps> = ({ contract }) => {
-  const nextTokenIdQuery = useReadContract(nextTokenIdToMint, {
+  const totalSupplyQuery = useReadContract(getTotalSupply, {
     contract,
   });
 
-  const totalSupplyQuery = useReadContract(totalSupply, {
+  const totalClaimedSupplyQuery = useReadContract(getTotalClaimedSupply, {
     contract,
   });
 
-  const startTokenIdQuery = useReadContract(startTokenId, { contract });
-
-  const realTotalSupply = useMemo(
-    () => (nextTokenIdQuery.data || 0n) - (startTokenIdQuery.data || 0n),
-    [nextTokenIdQuery.data, startTokenIdQuery.data],
-  );
-
-  const unclaimedSupply = useMemo(
-    () => (realTotalSupply - (totalSupplyQuery?.data || 0n)).toString(),
-    [realTotalSupply, totalSupplyQuery.data],
-  );
+  const totalUnClaimedSupplyQuery = useReadContract(getTotalUnclaimedSupply, {
+    contract,
+  });
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <StatCard
-        value={realTotalSupply.toString()}
-        label="Total Supply"
-        isPending={nextTokenIdQuery.isPending}
-      />
-      <StatCard
-        value={totalSupplyQuery?.data?.toString() || "N/A"}
-        label="Claimed Supply"
         isPending={totalSupplyQuery.isPending}
+        label="Total Supply"
+        value={totalSupplyQuery.data?.toString() || "N/A"}
       />
       <StatCard
-        value={unclaimedSupply}
+        isPending={totalClaimedSupplyQuery.isPending}
+        label="Claimed Supply"
+        value={totalClaimedSupplyQuery.data?.toString() || "N/A"}
+      />
+      <StatCard
+        isPending={totalUnClaimedSupplyQuery.isPending}
         label="Unclaimed Supply"
-        isPending={totalSupplyQuery.isPending || nextTokenIdQuery.isPending}
+        value={totalUnClaimedSupplyQuery.data?.toString() || "N/A"}
       />
     </div>
   );

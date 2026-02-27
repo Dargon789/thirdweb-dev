@@ -1,9 +1,10 @@
-import { getTeamBySlug } from "@/api/team";
 import { notFound } from "next/navigation";
-import { getAuthToken } from "../../../../../../../../../../../api/lib/getAuthToken";
-import { loginRedirect } from "../../../../../../../../../../../login/loginRedirect";
+import { getAuthToken } from "@/api/auth-token";
+import { fetchEcosystem } from "@/api/team/ecosystems";
+import { getTeamBySlug } from "@/api/team/get-team";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
+import { loginRedirect } from "@/utils/redirects";
 import { UpdatePartnerForm } from "../../../components/client/update-partner-form.client";
-import { fetchEcosystem } from "../../../hooks/fetchEcosystem";
 import { fetchPartnerDetails } from "../../../hooks/fetchPartnerDetails";
 
 export default async function EditPartnerPage({
@@ -29,18 +30,23 @@ export default async function EditPartnerPage({
   const ecosystemSlug = slug;
   const partnerId = partner_id;
 
+  const client = getClientThirdwebClient({
+    jwt: authToken,
+    teamId: team.id,
+  });
+
   try {
-    const ecosystem = await fetchEcosystem({
-      teamIdOrSlug: teamSlug,
-      slug: ecosystemSlug,
-      authToken,
-    });
+    const ecosystem = await fetchEcosystem(ecosystemSlug, teamSlug);
+
+    if (!ecosystem) {
+      throw new Error("Ecosystem not found");
+    }
 
     try {
       const partner = await fetchPartnerDetails({
+        authToken,
         ecosystem,
         partnerId,
-        authToken,
         teamId: team.id,
       });
 
@@ -64,9 +70,10 @@ export default async function EditPartnerPage({
               Edit Partner: {partner.name}
             </h1>
             <UpdatePartnerForm
+              authToken={authToken}
+              client={client}
               ecosystem={ecosystem}
               partner={partner}
-              authToken={authToken}
               teamId={team.id}
             />
           </div>

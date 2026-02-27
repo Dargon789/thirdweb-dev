@@ -1,5 +1,5 @@
+import { AlertCircleIcon, AlertTriangleIcon, InfoIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AlertCircle, AlertTriangle, Info } from "lucide-react";
 
 export function Callout(props: {
   children: React.ReactNode;
@@ -9,8 +9,8 @@ export function Callout(props: {
 }) {
   return (
     <div
-      role="alert"
       className={cn("my-5 flex flex-col gap-1 rounded-lg border bg-card p-4")}
+      role="alert"
     >
       {/* Icon + title */}
       {props.title && (
@@ -25,14 +25,16 @@ export function Callout(props: {
           {!props.disableIcon && (
             <>
               {props.variant === "danger" && (
-                <AlertTriangle className="size-5 shrink-0" />
+                <AlertTriangleIcon className="size-5 shrink-0" />
               )}
 
               {props.variant === "warning" && (
-                <AlertCircle className="size-5 shrink-0 " />
+                <AlertCircleIcon className="size-5 shrink-0 " />
               )}
 
-              {props.variant === "info" && <Info className="size-5 shrink-0" />}
+              {props.variant === "info" && (
+                <InfoIcon className="size-5 shrink-0" />
+              )}
             </>
           )}
 

@@ -1,12 +1,12 @@
-import { getTeamBySlug } from "@/api/team";
-import { getTeamInvites } from "@/api/team-invites";
-import { getMembers } from "@/api/team-members";
-import { getThirdwebClient } from "@/constants/thirdweb.server";
 import { notFound, redirect } from "next/navigation";
-import { getValidAccount } from "../../../../../../account/settings/getAccount";
-import { getAuthToken } from "../../../../../../api/lib/getAuthToken";
-import { TeamMembersSettingsPage } from "./TeamMembersSettingsPage";
+import { getValidAccount } from "@/api/account/get-account";
+import { getAuthToken } from "@/api/auth-token";
+import { getTeamBySlug } from "@/api/team/get-team";
+import { getTeamInvites } from "@/api/team/team-invites";
+import { getMembers } from "@/api/team/team-members";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
 import { getRecommendedMembers } from "./getRecommendedMembers";
+import { TeamMembersSettingsPage } from "./TeamMembersSettingsPage";
 
 export default async function Page(props: {
   params: Promise<{
@@ -51,26 +51,26 @@ export default async function Page(props: {
     (invite) => invite.status === "pending" || invite.status === "expired",
   );
 
-  const client = getThirdwebClient({
+  const client = getClientThirdwebClient({
     jwt: authToken,
     teamId: team.id,
   });
 
   const recommendedMembers = team.verifiedDomain
     ? await getRecommendedMembers({
-        teamId: team.id,
         authToken,
+        teamId: team.id,
       })
     : [];
 
   return (
     <TeamMembersSettingsPage
-      team={team}
-      members={members}
-      userHasEditPermission={accountMemberInfo.role === "OWNER"}
       client={client}
-      teamInvites={pendingOrExpiredInvites}
+      members={members}
       recommendedMembers={recommendedMembers}
+      team={team}
+      teamInvites={pendingOrExpiredInvites}
+      userHasEditPermission={accountMemberInfo.role === "OWNER"}
     />
   );
 }

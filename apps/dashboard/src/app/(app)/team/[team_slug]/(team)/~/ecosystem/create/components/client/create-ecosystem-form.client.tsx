@@ -1,5 +1,9 @@
 "use client";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowRightIcon } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -14,15 +18,18 @@ import {
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItemButton } from "@/components/ui/radio-group";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRightIcon } from "lucide-react";
-import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
+import { Spinner } from "@/components/ui/Spinner";
+import { UnderlineLink } from "@/components/ui/UnderlineLink";
 import { createEcosystem } from "../../actions/create-ecosystem";
 
 const formSchema = z.object({
+  logo: z
+    .instanceof(File, {
+      message: "Logo is required",
+    })
+    .refine((file) => file.size <= 500 * 1024, {
+      message: "Logo size must be less than 500KB",
+    }),
   name: z
     .string()
     .min(3, {
@@ -30,13 +37,6 @@ const formSchema = z.object({
     })
     .refine((name) => /^[a-zA-Z0-9 ]*$/.test(name), {
       message: "Name can only contain letters, numbers and spaces",
-    }),
-  logo: z
-    .instanceof(File, {
-      message: "Logo is required",
-    })
-    .refine((file) => file.size <= 500 * 1024, {
-      message: "Logo size must be less than 500KB",
     }),
   permission: z.union([z.literal("PARTNER_WHITELIST"), z.literal("ANYONE")]),
 });
@@ -46,10 +46,10 @@ export function CreateEcosystemForm(props: {
   teamId: string;
 }) {
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
     defaultValues: {
       permission: "PARTNER_WHITELIST",
     },
+    resolver: zodResolver(formSchema),
   });
 
   return (
@@ -58,8 +58,8 @@ export function CreateEcosystemForm(props: {
         className="flex grow flex-col"
         onSubmit={form.handleSubmit(async (values) => {
           const res = await createEcosystem({
-            teamSlug: props.teamSlug,
             teamId: props.teamId,
+            teamSlug: props.teamSlug,
             ...values,
           });
           switch (res.status) {
@@ -87,15 +87,6 @@ export function CreateEcosystemForm(props: {
         })}
       >
         <div className="grid gap-6 p-4 lg:p-6">
-          <div>
-            <h2 className="font-semibold text-2xl tracking-tight">
-              Create Ecosystem
-            </h2>
-            <p className="text-muted-foreground">
-              Create wallets that work across every chain and every app
-            </p>
-          </div>
-
           <FormField
             control={form.control}
             name="name"
@@ -122,8 +113,8 @@ export function CreateEcosystemForm(props: {
                 <RequiredFormLabel>Ecosystem Logo</RequiredFormLabel>
                 <FormControl>
                   <ImageUpload
-                    className="bg-background"
                     accept="image/png, image/jpeg"
+                    className="bg-background"
                     onUpload={(files) => {
                       if (files[0]) {
                         form.setValue("logo", files[0], {
@@ -148,16 +139,15 @@ export function CreateEcosystemForm(props: {
                 <FormLabel>Integration permissions</FormLabel>
                 <FormControl>
                   <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue="PARTNER_WHITELIST"
                     className="flex flex-wrap gap-4 py-2"
+                    defaultValue="PARTNER_WHITELIST"
+                    onValueChange={field.onChange}
                   >
                     <FormItem>
                       <FormControl>
                         <RadioGroupItemButton
-                          value="PARTNER_WHITELIST"
-                          id="PARTNER_WHITELIST"
                           className="bg-background"
+                          value="PARTNER_WHITELIST"
                         >
                           Allowlist
                         </RadioGroupItemButton>
@@ -166,9 +156,8 @@ export function CreateEcosystemForm(props: {
                     <FormItem>
                       <FormControl>
                         <RadioGroupItemButton
-                          value="ANYONE"
-                          id="ANYONE"
                           className="bg-background"
+                          value="ANYONE"
                         >
                           Public
                         </RadioGroupItemButton>
@@ -177,13 +166,13 @@ export function CreateEcosystemForm(props: {
                   </RadioGroup>
                 </FormControl>
                 <FormDescription>
-                  <Link
-                    className="text-primary"
+                  <UnderlineLink
+                    href="https://portal.thirdweb.com/wallets/ecosystem/set-up#Set%20Ecosystem%20Permissions"
+                    rel="noopener noreferrer"
                     target="_blank"
-                    href="https://portal.thirdweb.com/connect/ecosystems/ecosystem-permissions"
                   >
                     Learn more about ecosystem permissions
-                  </Link>
+                  </UnderlineLink>
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -195,9 +184,9 @@ export function CreateEcosystemForm(props: {
 
         <div className="mt-auto flex justify-end border-t p-4 lg:p-6">
           <Button
-            type="submit"
             className="gap-2"
             disabled={form.formState.isSubmitting}
+            type="submit"
           >
             Create Ecosystem
             {form.formState.isSubmitting ? (

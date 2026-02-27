@@ -1,12 +1,11 @@
-import { CopyTextButton } from "@/components/ui/CopyTextButton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CircleAlertIcon, TicketCheckIcon } from "lucide-react";
 import Link from "next/link";
 import type { JSX } from "react";
-import type { ThirdwebClient } from "thirdweb";
+import { CopyTextButton } from "@/components/ui/CopyTextButton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { ChainSupportedService } from "@/types/chain";
 import { ChainIcon } from "../../../components/server/chain-icon";
-import type { ChainSupportedService } from "../../../types/chain";
-import { getChainMetadata } from "../../../utils";
+import { getCustomChainMetadata } from "../../../utils";
 
 type ChainListCardProps = {
   favoriteButton: JSX.Element | undefined;
@@ -17,10 +16,9 @@ type ChainListCardProps = {
   currencySymbol: string;
   isDeprecated: boolean;
   iconUrl?: string;
-  client: ThirdwebClient;
 };
 
-export async function ChainListCard({
+export function ChainListCard({
   isDeprecated,
   chainId,
   chainName,
@@ -29,16 +27,15 @@ export async function ChainListCard({
   enabledServices,
   favoriteButton,
   iconUrl,
-  client,
 }: ChainListCardProps) {
-  const chainMetadata = await getChainMetadata(chainId);
+  const customChainMetadata = getCustomChainMetadata(chainId);
 
   return (
     <div className="relative h-full">
       <Card className="h-full w-full transition-colors hover:border-active-border">
         <CardHeader className="flex flex-row items-center justify-between p-4">
           <div className="flex flex-row items-center gap-2">
-            <ChainIcon iconUrl={iconUrl} className="size-6" client={client} />
+            <ChainIcon className="size-6" iconUrl={iconUrl} />
             <Link
               className="group static before:absolute before:top-0 before:right-0 before:bottom-0 before:left-0 before:z-0 before:content-['']"
               href={`/${chainSlug}`}
@@ -60,12 +57,12 @@ export async function ChainListCard({
                 </th>
                 <td className="text-right">
                   <CopyTextButton
+                    className="relative z-10 inline-flex translate-x-2 py-0.5 text-base"
+                    copyIconPosition="left"
                     textToCopy={chainId.toString()}
                     textToShow={chainId.toString()}
                     tooltip="Copy Chain ID"
-                    className="relative z-10 inline-flex translate-x-2 py-0.5 text-base"
                     variant="ghost"
-                    copyIconPosition="left"
                   />
                 </td>
               </tr>
@@ -93,9 +90,9 @@ export async function ChainListCard({
             </tbody>
           </table>
 
-          {(isDeprecated || chainMetadata?.gasSponsored) && (
+          {(isDeprecated || customChainMetadata?.gasSponsored) && (
             <div className="mt-5 flex gap-5 border-t pt-4">
-              {!isDeprecated && chainMetadata?.gasSponsored && (
+              {!isDeprecated && customChainMetadata?.gasSponsored && (
                 <div className="flex items-center gap-1.5">
                   <TicketCheckIcon className="size-5 text-foreground" />
                   <p className="text-sm">Gas Sponsored</p>

@@ -91,8 +91,9 @@ export async function estimateGas(
         return gas;
       } catch (error) {
         throw await extractError({
-          error,
           contract: options.transaction.__contract,
+          error,
+          fromAddress,
         });
       }
     }
@@ -115,23 +116,20 @@ export async function estimateGas(
 
     const rpcRequest = getRpcClient(options.transaction);
     try {
-      let gas = await eth_estimateGas(
-        rpcRequest,
-        formatTransactionRequest({
-          to: toAddress ? getAddress(toAddress) : undefined,
-          data: encodedData,
-          from: fromAddress ? getAddress(fromAddress) : undefined,
-          value,
-          // TODO: Remove this casting when we migrate this file to Ox
-          authorizationList: authorizationList?.map((auth) => ({
-            ...auth,
-            r: ox__Hex.fromNumber(auth.r),
-            s: ox__Hex.fromNumber(auth.s),
-            nonce: Number(auth.nonce),
-            contractAddress: getAddress(auth.address),
-          })),
-        }),
-      );
+      const formattedTx = formatTransactionRequest({
+        authorizationList: authorizationList?.map((auth) => ({
+          ...auth,
+          address: getAddress(auth.address),
+          nonce: Number(auth.nonce),
+          r: ox__Hex.fromNumber(auth.r),
+          s: ox__Hex.fromNumber(auth.s),
+        })),
+        data: encodedData,
+        from: fromAddress ? getAddress(fromAddress) : undefined,
+        to: toAddress ? getAddress(toAddress) : undefined,
+        value,
+      });
+      let gas = await eth_estimateGas(rpcRequest, formattedTx);
 
       if (options.transaction.chain.experimental?.increaseZeroByteCount) {
         gas = roundUpGas(gas);
@@ -139,8 +137,9 @@ export async function estimateGas(
       return gas;
     } catch (error) {
       throw await extractError({
-        error,
         contract: options.transaction.__contract,
+        error,
+        fromAddress,
       });
     }
   })();

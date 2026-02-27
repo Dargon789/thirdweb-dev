@@ -13,7 +13,10 @@ const app = await Application.bootstrapWithPlugins({
     "src/bridge/index.ts",
     "src/bridge/Buy.ts",
     "src/bridge/Sell.ts",
+    "src/bridge/Onramp.ts",
+    "src/bridge/Webhook.ts",
     "src/insight/index.ts",
+    "src/engine/index.ts",
   ],
   exclude: [
     "src/exports/*.native.ts",

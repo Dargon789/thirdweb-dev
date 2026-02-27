@@ -1,214 +1,162 @@
-import { UnorderedList } from "@/components/ui/List/List";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { ToolTipLabel } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { Link } from "@chakra-ui/react";
-import { useCsvUpload } from "hooks/useCsvUpload";
-import { CircleAlertIcon, UploadIcon } from "lucide-react";
-import { useMemo, useRef } from "react";
-import type { Column } from "react-table";
-import { ZERO_ADDRESS } from "thirdweb";
-import { Button, Heading, Text } from "tw-components";
-import { CsvDataTable } from "../../_components/csv-data-table";
+import { ArrowRightIcon, RefreshCcwIcon, TrashIcon } from "lucide-react";
+import type { ThirdwebClient } from "thirdweb";
+import { DownloadableCode } from "@/components/blocks/code/downloadable-code";
+import { DropZone } from "@/components/blocks/drop-zone/drop-zone";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/Spinner";
+import { useCsvUpload } from "@/hooks/useCsvUpload";
+import { AirdropCSVTable } from "./airdrop-csv-table";
 
-export interface AirdropAddressInput {
+export type AirdropAddressInput = {
   address: string;
   quantity: string;
   isValid?: boolean;
-}
-interface AirdropUploadProps {
-  setAirdrop: (airdrop: AirdropAddressInput[]) => void;
-  onClose: () => void;
-}
-
-const csvParser = (items: AirdropAddressInput[]): AirdropAddressInput[] => {
-  return items
-    .map(({ address, quantity }) => ({
-      address: (address || "").trim(),
-      quantity: (quantity || "1").trim(),
-    }))
-    .filter(({ address }) => address !== "");
 };
 
-export const AirdropUpload: React.FC<AirdropUploadProps> = ({
-  setAirdrop,
-  onClose,
-}) => {
-  const {
-    normalizeQuery,
-    getInputProps,
-    getRootProps,
-    isDragActive,
-    rawData,
-    noCsv,
-    reset,
-    removeInvalid,
-  } = useCsvUpload<AirdropAddressInput>({ csvParser });
-  const paginationPortalRef = useRef<HTMLDivElement>(null);
+export function AirdropUpload(props: {
+  setAirdrop: (airdrop: AirdropAddressInput[]) => void;
+  client: ThirdwebClient;
+}) {
+  const csvUpload = useCsvUpload<AirdropAddressInput>({
+    client: props.client,
+    csvParser,
+  });
 
-  const normalizeData = normalizeQuery.data;
+  if (csvUpload.normalizeQuery.isPending) {
+    return (
+      <div className="flex min-h-[400px] w-full flex-col grow items-center justify-center">
+        <Spinner className="size-10" />
+        <p className="text-base text-foreground mt-5">Resolving ENS</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          {csvUpload.normalizeProgress.current} /{" "}
+          {csvUpload.normalizeProgress.total}
+        </p>
+      </div>
+    );
+  }
 
-  const columns = useMemo(() => {
-    return [
-      {
-        Header: "Address",
-        accessor: ({ address, isValid }) => {
-          if (isValid) {
-            return address;
-          }
-          return (
-            <ToolTipLabel
-              label={
-                address === ZERO_ADDRESS
-                  ? "Cannot send tokens to ZERO_ADDRESS"
-                  : address.startsWith("0x")
-                    ? "Address is not valid"
-                    : "Address couldn't be resolved"
-              }
-            >
-              <div className="flex flex-row items-center gap-2">
-                <CircleAlertIcon className="size-4 text-red-500" />
-                <div className="cursor-default font-bold text-red-500">
-                  {address}
-                </div>
-              </div>
-            </ToolTipLabel>
-          );
-        },
-      },
-      {
-        Header: "Quantity",
-        accessor: ({ quantity }: { quantity: string }) => {
-          return quantity || "1";
-        },
-      },
-    ] as Column<AirdropAddressInput>[];
-  }, []);
+  const normalizeData = csvUpload.normalizeQuery.data;
 
   if (!normalizeData) {
     return (
-      <div className="flex min-h-[400px] w-full grow items-center justify-center rounded-lg border border-border">
-        <Spinner className="size-10" />
+      <div className="flex min-h-[400px] w-full flex-col grow items-center justify-center text-center">
+        <p className="text-base text-foreground">Failed to resolve ENS</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          {String(csvUpload.normalizeQuery.error)}
+        </p>
       </div>
     );
   }
 
   const onSave = () => {
-    setAirdrop(
+    props.setAirdrop(
       normalizeData.result.map((o) => ({
         address: o.resolvedAddress,
         quantity: o.quantity,
       })),
     );
-    onClose();
   };
 
   return (
-    <div className="flex w-full flex-col gap-6">
-      {normalizeData.result.length && rawData.length > 0 ? (
-        <>
-          <CsvDataTable<AirdropAddressInput>
-            portalRef={paginationPortalRef}
-            data={normalizeQuery.data.result}
-            columns={columns}
+    <div className="w-full">
+      {normalizeData.result.length && csvUpload.rawData.length > 0 ? (
+        <div>
+          <AirdropCSVTable
+            data={csvUpload.normalizeQuery.data.result.map((row) => ({
+              address: row.address ?? row.resolvedAddress,
+              quantity: row.quantity,
+              isValid: row.isValid,
+            }))}
           />
-          <div className="mt-4 flex flex-col justify-between md:mt-0">
-            <div ref={paginationPortalRef} />
-            <div className="mt-3 ml-auto flex w-full flex-row gap-2 md:w-auto">
+          <div className="flex justify-end gap-4 mt-6">
+            <Button
+              disabled={csvUpload.rawData.length === 0}
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                csvUpload.reset();
+              }}
+            >
+              <RefreshCcwIcon className="size-4" />
+              <span>Reset</span>
+            </Button>
+            {csvUpload.normalizeQuery.data.invalidFound ? (
               <Button
-                borderRadius="md"
-                disabled={rawData.length === 0}
+                disabled={csvUpload.rawData.length === 0}
+                className="gap-2"
                 onClick={() => {
-                  reset();
+                  csvUpload.removeInvalid();
                 }}
-                w={{ base: "100%", md: "auto" }}
               >
-                Reset
+                <TrashIcon className="size-4" />
+                <span>Remove invalid</span>
               </Button>
-              {normalizeQuery.data.invalidFound ? (
-                <Button
-                  borderRadius="md"
-                  colorScheme="primary"
-                  disabled={rawData.length === 0}
-                  onClick={() => {
-                    removeInvalid();
-                  }}
-                  w={{ base: "100%", md: "auto" }}
-                >
-                  Remove invalid
-                </Button>
-              ) : (
-                <Button
-                  borderRadius="md"
-                  colorScheme="primary"
-                  onClick={onSave}
-                  w={{ base: "100%", md: "auto" }}
-                  isDisabled={rawData.length === 0}
-                >
-                  Next
-                </Button>
-              )}
-            </div>
+            ) : (
+              <Button
+                disabled={csvUpload.rawData.length === 0}
+                className="gap-2"
+                onClick={onSave}
+              >
+                <span>Next</span>
+                <ArrowRightIcon className="size-4" />
+              </Button>
+            )}
           </div>
-        </>
+        </div>
       ) : (
         <div className="flex flex-col gap-8">
-          <div className="relative aspect-[21/9] w-full">
-            <div
-              className={cn(
-                "flex h-full cursor-pointer items-center justify-center rounded-md border border-border hover:border-primary",
-                noCsv ? "bg-red-200" : "bg-background",
-              )}
-              {...getRootProps()}
-            >
-              <input {...getInputProps()} />
-              <div className="flex flex-col p-6">
-                <UploadIcon
-                  className={cn("mx-auto mb-2 size-4 text-gray-500", {
-                    "text-red-500": noCsv,
-                  })}
-                />
-                {isDragActive ? (
-                  <Heading as={Text} size="label.md">
-                    Drop the files here
-                  </Heading>
-                ) : (
-                  <Heading
-                    as={Text}
-                    size="label.md"
-                    color={noCsv ? "red.500" : "gray.600"}
-                  >
-                    {noCsv
-                      ? `No valid CSV file found, make sure your CSV includes the "address" & "quantity" column.`
-                      : "Drag & Drop a CSV file here"}
-                  </Heading>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <Heading size="subtitle.sm">Requirements</Heading>
-            <UnorderedList>
+          <DropZone
+            onDrop={csvUpload.setFiles}
+            isError={csvUpload.noCsv}
+            title="Upload CSV"
+            className="py-16"
+            description={
+              csvUpload.noCsv
+                ? "Invalid CSV File. Follow the instructions below to upload a valid CSV file"
+                : "Follow the instructions below to create a CSV file"
+            }
+            resetButton={{ label: "Remove CSV", onClick: csvUpload.reset }}
+            accept=".csv"
+          />
+
+          <div>
+            <h3 className="text-base font-medium mb-2">Requirements</h3>
+            <ul className="list-disc list-outside pl-4 space-y-2 text-muted-foreground text-base leading-relaxed">
               <li>
                 Files <em>must</em> contain one .csv file with an address and
                 quantity column, if the quantity column is not provided, that
-                record will be flagged as invalid.
-                <Link
-                  download
-                  color="primary.500"
-                  href="/assets/examples/airdrop.csv"
-                >
-                  Download an example CSV
-                </Link>
+                record will be flagged as invalid.{" "}
               </li>
               <li>
                 Repeated addresses will be removed and only the first found will
                 be kept.
               </li>
-            </UnorderedList>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-base font-medium mb-2">CSV Example</h3>
+            <DownloadableCode
+              code={exampleAirdropCSV}
+              lang="csv"
+              fileNameWithExtension="airdrop.csv"
+            />
           </div>
         </div>
       )}
     </div>
   );
+}
+
+const csvParser = (items: AirdropAddressInput[]): AirdropAddressInput[] => {
+  return items
+    .map(({ address, quantity }) => ({
+      address: address.trim(),
+      quantity: (quantity || "1").trim(),
+    }))
+    .filter(({ address }) => address !== "");
 };
+
+const exampleAirdropCSV = `address,quantity
+0xEb0effdFB4dC5b3d5d3aC6ce29F3ED213E95d675,10
+0x000000000000000000000000000000000000dEaD,1`;

@@ -1,4 +1,5 @@
-import type { Ecosystem } from "../../../../../types";
+import type { ThirdwebClient } from "thirdweb";
+import type { Ecosystem } from "@/api/team/ecosystems";
 import {
   AuthOptionsForm,
   AuthOptionsFormSkeleton,
@@ -8,13 +9,20 @@ export function AuthOptionsSection({
   ecosystem,
   authToken,
   teamId,
-}: { ecosystem?: Ecosystem; authToken: string; teamId: string }) {
+  client,
+}: {
+  ecosystem?: Ecosystem;
+  authToken: string;
+  teamId: string;
+  client: ThirdwebClient;
+}) {
   return (
     <section className="flex flex-col gap-4 md:gap-8">
       {ecosystem ? (
         <AuthOptionsForm
-          ecosystem={ecosystem}
           authToken={authToken}
+          client={client}
+          ecosystem={ecosystem}
           teamId={teamId}
         />
       ) : (

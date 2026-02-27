@@ -5,7 +5,6 @@ import { createWalletAdapter } from "../../adapters/wallet-adapter.js";
 import { ethereum } from "../../chains/chain-definitions/ethereum.js";
 import { webLocalStorage } from "../../utils/storage/webStorage.js";
 import { createWallet } from "../create-wallet.js";
-import { getInstalledWalletProviders } from "../injected/mipdStore.js";
 import { autoConnect } from "./autoConnect.js";
 import { autoConnectCore } from "./autoConnectCore.js";
 
@@ -17,15 +16,14 @@ vi.mock("./autoConnectCore.js");
 describe("autoConnect", () => {
   const mockWallet = createWalletAdapter({
     adaptedAccount: TEST_ACCOUNT_A,
-    client: TEST_CLIENT,
     chain: ethereum,
+    client: TEST_CLIENT,
     onDisconnect: () => {},
     switchChain: () => {},
   });
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getInstalledWalletProviders).mockReturnValue([]);
     vi.mocked(createWallet).mockReturnValue(mockWallet);
     vi.mocked(autoConnectCore).mockResolvedValue(true);
   });
@@ -37,22 +35,21 @@ describe("autoConnect", () => {
     });
 
     expect(autoConnectCore).toHaveBeenCalledWith({
-      storage: webLocalStorage,
+      createWalletFn: createWallet,
+      manager: expect.any(Object),
       props: {
         client: TEST_CLIENT,
         wallets: [mockWallet],
       },
-      createWalletFn: createWallet,
-      getInstalledWallets: expect.any(Function),
-      manager: expect.any(Object),
+      storage: webLocalStorage,
     });
     expect(result).toBe(true);
   });
 
   it("should use default wallets when no wallets are provided", async () => {
     await autoConnect({
-      wallets: [],
       client: TEST_CLIENT,
+      wallets: [],
     });
 
     expect(autoConnectCore).toHaveBeenCalledWith(

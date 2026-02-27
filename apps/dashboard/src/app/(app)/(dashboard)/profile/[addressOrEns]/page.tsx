@@ -1,10 +1,11 @@
-import { getThirdwebClient } from "@/constants/thirdweb.server";
-import { replaceDeployerAddress } from "lib/publisher-utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { shortenIfAddress } from "utils/usedapp-external";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
+import { serverThirdwebClient } from "@/constants/thirdweb-client.server";
+import { replaceDeployerAddress } from "@/lib/publisher-utils";
+import { resolveAddressAndEns } from "@/utils/resolveAddressAndEns";
+import { shortenIfAddress } from "@/utils/usedapp-external";
 import { ProfileUI } from "./ProfileUI";
-import { resolveAddressAndEns } from "./resolveAddressAndEns";
 
 type PageProps = {
   params: Promise<{
@@ -14,8 +15,10 @@ type PageProps = {
 
 export default async function Page(props: PageProps) {
   const params = await props.params;
-  const client = getThirdwebClient(undefined);
-  const resolvedInfo = await resolveAddressAndEns(params.addressOrEns, client);
+  const resolvedInfo = await resolveAddressAndEns(
+    params.addressOrEns,
+    serverThirdwebClient,
+  );
 
   if (!resolvedInfo) {
     return notFound();
@@ -23,17 +26,19 @@ export default async function Page(props: PageProps) {
 
   return (
     <ProfileUI
+      client={getClientThirdwebClient()}
       ensName={replaceDeployerAddress(resolvedInfo.ensName || "")}
       profileAddress={resolvedInfo.address}
-      client={client}
     />
   );
 }
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
-  const client = getThirdwebClient(undefined);
-  const resolvedInfo = await resolveAddressAndEns(params.addressOrEns, client);
+  const resolvedInfo = await resolveAddressAndEns(
+    params.addressOrEns,
+    serverThirdwebClient,
+  );
 
   if (!resolvedInfo) {
     return notFound();
@@ -47,11 +52,11 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const description = `Visit ${displayName}'s profile. See their published contracts and deploy them in one click.`;
 
   return {
-    title,
     description,
     openGraph: {
-      title,
       description,
+      title,
     },
+    title,
   };
 }

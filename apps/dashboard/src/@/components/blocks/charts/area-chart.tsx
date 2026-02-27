@@ -1,5 +1,12 @@
 "use client";
 
+import { format } from "date-fns";
+import { useMemo } from "react";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  EmptyChartState,
+  LoadingChartState,
+} from "@/components/analytics/empty-chart-state";
 import {
   Card,
   CardContent,
@@ -15,20 +22,15 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { formatDate } from "date-fns";
-import { useMemo } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import {
-  EmptyChartState,
-  LoadingChartState,
-} from "../../../../components/analytics/empty-chart-state";
-import { cn } from "../../../lib/utils";
+import { cn } from "@/lib/utils";
 
 type ThirdwebAreaChartProps<TConfig extends ChartConfig> = {
   header?: {
     title: string;
     description?: string;
     titleClassName?: string;
+    headerClassName?: string;
+    icon?: React.ReactNode;
   };
   customHeader?: React.ReactNode;
   // chart config
@@ -38,7 +40,7 @@ type ThirdwebAreaChartProps<TConfig extends ChartConfig> = {
 
   yAxis?: boolean;
   xAxis?: {
-    sameDay?: boolean;
+    showHour?: boolean;
   };
 
   variant?: "stacked" | "individual";
@@ -46,8 +48,18 @@ type ThirdwebAreaChartProps<TConfig extends ChartConfig> = {
   // chart className
   chartClassName?: string;
   isPending: boolean;
+  className?: string;
+  cardContentClassName?: string;
   hideLabel?: boolean;
   toolTipLabelFormatter?: (label: string, payload: unknown) => React.ReactNode;
+  toolTipValueFormatter?: (value: unknown) => React.ReactNode;
+  emptyChartState?: React.ReactElement;
+  margin?: {
+    top?: number;
+    right?: number;
+    bottom?: number;
+    left?: number;
+  };
 };
 
 export function ThirdwebAreaChart<TConfig extends ChartConfig>(
@@ -56,9 +68,10 @@ export function ThirdwebAreaChart<TConfig extends ChartConfig>(
   const configKeys = useMemo(() => Object.keys(props.config), [props.config]);
 
   return (
-    <Card>
+    <Card className={props.className}>
       {props.header && (
-        <CardHeader>
+        <CardHeader className={props.header.headerClassName}>
+          {props.header.icon}
           <CardTitle className={cn("mb-2", props.header.titleClassName)}>
             {props.header.title}
           </CardTitle>
@@ -70,47 +83,59 @@ export function ThirdwebAreaChart<TConfig extends ChartConfig>(
 
       {props.customHeader && props.customHeader}
 
-      <CardContent className={cn(!props.header && "pt-6")}>
-        <ChartContainer config={props.config} className={props.chartClassName}>
+      <CardContent
+        className={cn(!props.header && "pt-6", props.cardContentClassName)}
+      >
+        <ChartContainer className={props.chartClassName} config={props.config}>
           {props.isPending ? (
             <LoadingChartState />
           ) : props.data.length === 0 ? (
-            <EmptyChartState />
+            <EmptyChartState content={props.emptyChartState} />
           ) : (
-            <AreaChart accessibilityLayer data={props.data}>
+            <AreaChart
+              accessibilityLayer
+              data={props.data}
+              margin={{
+                right: props.margin?.right ?? 0,
+                left: props.margin?.left ?? 0,
+                bottom: props.margin?.bottom ?? 10,
+                top: props.margin?.top ?? 0,
+              }}
+            >
               <CartesianGrid vertical={false} />
-              {props.yAxis && <YAxis tickLine={false} axisLine={false} />}
+              {props.yAxis && <YAxis axisLine={false} tickLine={false} />}
               <XAxis
-                dataKey="time"
-                tickLine={false}
                 axisLine={false}
-                tickMargin={20}
+                dataKey="time"
                 tickFormatter={(value) =>
-                  formatDate(
+                  format(
                     new Date(value),
-                    props.xAxis?.sameDay ? "MMM dd, HH:mm" : "MMM dd",
+                    props.xAxis?.showHour ? "MMM dd, HH:mm" : "MMM dd",
                   )
                 }
+                tickLine={false}
+                tickMargin={20}
               />
               <ChartTooltip
-                cursor={true}
                 content={
                   <ChartTooltipContent
                     hideLabel={
                       props.hideLabel !== undefined ? props.hideLabel : true
                     }
                     labelFormatter={props.toolTipLabelFormatter}
+                    valueFormatter={props.toolTipValueFormatter}
                   />
                 }
+                cursor={true}
               />
               <defs>
                 {configKeys.map((key) => (
                   <linearGradient
-                    key={key}
                     id={`fill_${key}`}
+                    key={key}
                     x1="0"
-                    y1="0"
                     x2="0"
+                    y1="0"
                     y2="1"
                   >
                     <stop
@@ -129,23 +154,23 @@ export function ThirdwebAreaChart<TConfig extends ChartConfig>(
               {configKeys.map((key) =>
                 key === "maxLine" ? (
                   <Area
-                    key={key}
-                    type="monotone"
                     dataKey="maxLine"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
                     fill="none"
+                    key={key}
+                    stroke="#ef4444"
+                    strokeDasharray="5 5"
+                    strokeWidth={2}
+                    type="monotone"
                   />
                 ) : (
                   <Area
-                    key={key}
                     dataKey={key}
-                    type="natural"
                     fill={`url(#fill_${key})`}
                     fillOpacity={0.4}
-                    stroke={`var(--color-${key})`}
+                    key={key}
                     stackId={props.variant !== "stacked" ? undefined : "a"}
+                    stroke={`var(--color-${key})`}
+                    type="monotone"
                   />
                 ),
               )}

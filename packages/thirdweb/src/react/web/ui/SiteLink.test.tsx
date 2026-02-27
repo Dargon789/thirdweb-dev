@@ -7,7 +7,7 @@ describe("SiteLink", () => {
   it("renders anchor with correct href", () => {
     const testUrl = "https://example.com/";
     const { container } = render(
-      <SiteLink href={testUrl} client={TEST_CLIENT}>
+      <SiteLink client={TEST_CLIENT} href={testUrl}>
         Test Link
       </SiteLink>,
     );
@@ -23,7 +23,7 @@ describe("SiteLink", () => {
     expect(() =>
       render(
         // biome-ignore lint/suspicious/noExplicitAny: testing invalid input
-        <SiteLink href={testUrl} client={{} as any}>
+        <SiteLink client={{} as any} href={testUrl}>
           Test Link
         </SiteLink>,
       ),
@@ -33,7 +33,7 @@ describe("SiteLink", () => {
   it("adds wallet params to url when wallet is connected", async () => {
     const testUrl = "https://example.com/";
     const { container } = render(
-      <SiteLink href={testUrl} client={TEST_CLIENT}>
+      <SiteLink client={TEST_CLIENT} href={testUrl}>
         Test Link
       </SiteLink>,
       {
@@ -49,7 +49,7 @@ describe("SiteLink", () => {
   it("uses inApp wallet when wallet is a smart wallet", async () => {
     const testUrl = "https://example.com/";
     const { container } = render(
-      <SiteLink href={testUrl} client={TEST_CLIENT}>
+      <SiteLink client={TEST_CLIENT} href={testUrl}>
         Test Link
       </SiteLink>,
       {
@@ -61,5 +61,26 @@ describe("SiteLink", () => {
     const anchor = container.querySelector("a");
     expect(anchor).toBeTruthy();
     await waitFor(() => expect(anchor?.href).toContain("walletId=inApp"));
+  });
+
+  it("preserves hash fragment for hash-routed URLs", async () => {
+    const testUrl = "https://snapshot.org/#/s:wampei.eth";
+    const { container } = render(
+      <SiteLink client={TEST_CLIENT} href={testUrl}>
+        Test Link
+      </SiteLink>,
+      {
+        setConnectedWallet: true,
+      },
+    );
+
+    const anchor = container.querySelector("a");
+    expect(anchor).toBeTruthy();
+    await waitFor(() => {
+      const href = anchor?.href ?? "";
+      // Hash fragment must be preserved in the URL
+      expect(href).toContain("#/s:wampei.eth");
+      expect(href).toContain("walletId=");
+    });
   });
 });

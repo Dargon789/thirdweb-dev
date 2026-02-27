@@ -1,7 +1,10 @@
-import { getTeamBySlug } from "@/api/team";
 import { redirect } from "next/navigation";
-import { getAuthToken } from "../../../../../../../../api/lib/getAuthToken";
-import { fetchEcosystem } from "../../../utils/fetchEcosystem";
+import { ResponsiveSearchParamsProvider } from "responsive-rsc";
+import { getAuthToken } from "@/api/auth-token";
+import { fetchEcosystem } from "@/api/team/ecosystems";
+import { getTeamBySlug } from "@/api/team/get-team";
+import type { DurationId } from "@/components/analytics/date-range-selector";
+import { getFiltersFromSearchParams } from "@/lib/time";
 import { fetchPartners } from "../configuration/hooks/fetchPartners";
 import { EcosystemAnalyticsPage } from "./components/EcosystemAnalyticsPage";
 
@@ -29,7 +32,7 @@ export default async function Page(props: {
   }
 
   const [ecosystem, team] = await Promise.all([
-    fetchEcosystem(params.slug, authToken, params.team_slug),
+    fetchEcosystem(params.slug, params.team_slug),
     getTeamBySlug(params.team_slug),
   ]);
 
@@ -42,26 +45,30 @@ export default async function Page(props: {
   }
 
   const partners = await fetchPartners({
-    ecosystem,
     authToken,
+    ecosystem,
     teamId: team.id,
   });
 
+  const defaultRange: DurationId = "last-30";
+  const { range, interval } = getFiltersFromSearchParams({
+    defaultRange,
+    from: searchParams.from,
+    interval: searchParams.interval,
+    to: searchParams.to,
+  });
+
   return (
-    <EcosystemAnalyticsPage
-      ecosystemSlug={ecosystem.slug}
-      teamId={team.id}
-      interval={searchParams.interval || "week"}
-      partners={partners}
-      range={
-        searchParams.from && searchParams.to
-          ? {
-              from: new Date(searchParams.from),
-              to: new Date(searchParams.to),
-              type: "custom",
-            }
-          : undefined
-      }
-    />
+    <ResponsiveSearchParamsProvider value={searchParams}>
+      <EcosystemAnalyticsPage
+        authToken={authToken}
+        ecosystemSlug={ecosystem.slug}
+        interval={interval}
+        defaultRange={defaultRange}
+        partners={partners}
+        range={range}
+        teamId={team.id}
+      />
+    </ResponsiveSearchParamsProvider>
   );
 }

@@ -38,11 +38,11 @@ export async function linkAccount({
   const linkedDetailsResp = await clientFetch(
     `${IN_APP_URL}/api/2024-05-05/account/connect`,
     {
-      method: "POST",
-      headers,
       body: stringify({
         accountAuthTokenToConnect: tokenToLink,
       }),
+      headers,
+      method: "POST",
     },
   );
 
@@ -66,11 +66,13 @@ export async function unlinkAccount({
   client,
   ecosystem,
   profileToUnlink,
+  allowAccountDeletion = false,
   storage,
 }: {
   client: ThirdwebClient;
   ecosystem?: Ecosystem;
   profileToUnlink: Profile;
+  allowAccountDeletion?: boolean;
   storage: ClientScopedStorage;
 }): Promise<Profile[]> {
   const clientFetch = getClientFetch(client, ecosystem);
@@ -88,9 +90,13 @@ export async function unlinkAccount({
   const linkedDetailsResp = await clientFetch(
     `${IN_APP_URL}/api/2024-05-05/account/disconnect`,
     {
-      method: "POST",
+      body: stringify({
+        allowAccountDeletion,
+        details: profileToUnlink.details,
+        type: profileToUnlink.type,
+      }),
       headers,
-      body: stringify(profileToUnlink),
+      method: "POST",
     },
   );
 
@@ -134,8 +140,8 @@ export async function getLinkedProfilesInternal({
   const linkedAccountsResp = await clientFetch(
     `${IN_APP_URL}/api/2024-05-05/accounts`,
     {
-      method: "GET",
       headers,
+      method: "GET",
     },
   );
 

@@ -1,49 +1,47 @@
 "use client";
 
-import { ButtonGroup, Flex } from "@chakra-ui/react";
 import type { ThirdwebContract } from "thirdweb";
-import { Heading, TrackedLinkButton } from "tw-components";
-import { AccountsCount } from "./components/accounts-count";
+import { UnderlineLink } from "@/components/ui/UnderlineLink";
+import type { ProjectMeta } from "../../../../../team/[team_slug]/[project_slug]/contract/[chainIdOrSlug]/[contractAddress]/types";
 import { AccountsTable } from "./components/accounts-table";
 import { CreateAccountButton } from "./components/create-account-button";
 
-interface AccountsPageProps {
+export function AccountsPage(props: {
   contract: ThirdwebContract;
   isLoggedIn: boolean;
-}
-
-export const AccountsPage: React.FC<AccountsPageProps> = ({
-  contract,
-  isLoggedIn,
-}) => {
+  projectMeta: ProjectMeta | undefined;
+}) {
   return (
-    <Flex direction="column" gap={6}>
-      <Flex
-        direction={{ base: "column", md: "row" }}
-        justify="space-between"
-        align={{ base: "left", md: "center" }}
-        gap={4}
-      >
-        <Heading size="title.sm">Accounts</Heading>
-        <ButtonGroup
-          flexDirection={{ base: "column", md: "row" }}
-          gap={2}
-          w="inherit"
-        >
-          <TrackedLinkButton
-            category="smart-wallet"
-            variant="solid"
-            label="docs-factory-page"
-            href="https://portal.thirdweb.com/wallets/smart-wallet/get-started#3-connect-smart-wallets-in-your-application"
-            isExternal
-          >
-            View Documentation
-          </TrackedLinkButton>
-          <CreateAccountButton contract={contract} isLoggedIn={isLoggedIn} />
-        </ButtonGroup>
-      </Flex>
-      <AccountsCount contract={contract} />
-      <AccountsTable contract={contract} />
-    </Flex>
+    <div>
+      <div className="flex flex-col md:justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight mb-1">
+            Accounts
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            View list of smart accounts that have been created for this
+            contract.{" "}
+            <UnderlineLink
+              href="https://portal.thirdweb.com/wallets/sponsor-gas"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Learn more about gas sponsorship
+            </UnderlineLink>
+          </p>
+        </div>
+        <CreateAccountButton
+          contract={props.contract}
+          isLoggedIn={props.isLoggedIn}
+        />
+      </div>
+
+      <div className="h-5" />
+
+      <AccountsTable
+        contract={props.contract}
+        projectMeta={props.projectMeta}
+      />
+    </div>
   );
-};
+}

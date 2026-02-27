@@ -13,7 +13,32 @@ export type MinimalWalletInfo = {
 /**
  * @internal
  */
-const ALL_MINIMAL_WALLET_INFOS = (<const>[
+const ALL_MINIMAL_WALLET_INFOS = [
+  {
+    id: "io.1inch.wallet",
+    name: "1inch Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.binance.wallet",
+    name: "Binance Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.ledger",
+    name: "Ledger Live",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.bitpay",
+    name: "BitPay Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.bestwallet",
+    name: "Best Wallet",
+    hasMobileSupport: true,
+  },
   {
     id: "io.metamask",
     name: "MetaMask",
@@ -25,23 +50,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
+    id: "com.fireblocks",
+    name: "Fireblocks",
+    hasMobileSupport: true,
+  },
+  {
     id: "com.bitget.web3",
     name: "Bitget Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.okex.wallet",
-    name: "OKX Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.binance.wallet",
-    name: "Binance Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.safepal",
-    name: "SafePal",
     hasMobileSupport: true,
   },
   {
@@ -50,8 +65,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.bybit",
-    name: "Bybit Wallet",
+    id: "com.safepal",
+    name: "SafePal",
     hasMobileSupport: true,
   },
   {
@@ -65,13 +80,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "me.rainbow",
-    name: "Rainbow",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.ledger",
-    name: "Ledger Live",
+    id: "com.elrond.maiar.wallet",
+    name: "xPortal",
     hasMobileSupport: true,
   },
   {
@@ -80,13 +90,33 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.kraken",
-    name: "Kraken Wallet ",
+    id: "com.bitcoin",
+    name: "Bitcoin.com Wallet",
     hasMobileSupport: true,
   },
   {
-    id: "io.1inch.wallet",
-    name: "1inch Wallet",
+    id: "com.bifrostwallet",
+    name: "Bifrost Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "jp.co.rakuten-wallet",
+    name: "Rakuten Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.bybit",
+    name: "Bybit Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.blockchain.login",
+    name: "Blockchain.com",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.trezor",
+    name: "Trezor Suite",
     hasMobileSupport: true,
   },
   {
@@ -100,663 +130,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "xyz.timelesswallet",
-    name: "Timeless X",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.roninchain.wallet",
-    name: "Ronin Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.elrond.maiar.wallet",
-    name: "xPortal",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.backpack",
-    name: "Backpack",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.exodus",
-    name: "Exodus",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.fireblocks",
-    name: "Fireblocks",
-    hasMobileSupport: true,
-  },
-  {
-    id: "ag.jup",
-    name: "Jupiter",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.blockchain",
-    name: "Blockchain.com",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.magiceden.wallet",
-    name: "Magic Eden",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.bifrostwallet",
-    name: "Bifrost Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.tangem",
-    name: "Tangem Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.wemixplay",
-    name: "WEMIX Play",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.robinhood.wallet",
-    name: "Robinhood Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.bitcoin",
-    name: "Bitcoin.com Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.mathwallet",
-    name: "MathWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "network.blackfort",
-    name: "BlackFort Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.keplr",
-    name: "Keplr",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.bee",
-    name: "BeeWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.veworld",
-    name: "VeWorld Mobile",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.bestwallet",
-    name: "Best Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.fastex.wallet",
-    name: "Fastex Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.valoraapp",
-    name: "Valora",
-    hasMobileSupport: true,
-  },
-  {
-    id: "id.co.pintu",
-    name: "Pintu",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.core.extension",
-    name: "Core",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.opera",
-    name: "Opera Crypto Browser",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.girin",
-    name: "Girin Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "dev.auroracloud",
-    name: "Aurora Pass",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.chain",
-    name: "Chain",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.wombat",
-    name: "Wombat",
-    hasMobileSupport: true,
-  },
-  {
-    id: "me.haha",
-    name: "HaHa",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.huddln",
-    name: "Huddln",
-    hasMobileSupport: true,
-  },
-  {
-    id: "so.onekey.app.wallet",
-    name: "OneKey",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.subwallet",
-    name: "SubWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "pk.modular",
-    name: "Modular Wallet Prod",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.dcentwallet",
-    name: "D'CENT Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.internetmoney",
-    name: "Internet Money Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.hashpack.wallet",
-    name: "HashPack",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.kabila",
-    name: "Kabila Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.sabay.wallet",
-    name: "Sabay Wallet App",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.mewwallet",
-    name: "MEW wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.tokoin",
-    name: "Tokoin | My-T Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.atomicwallet",
-    name: "Atomic Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.leapwallet",
-    name: "Leap",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.novawallet",
-    name: "Nova Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.flowfoundation.wallet",
-    name: "Flow Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.gooddollar",
-    name: "GoodDollar",
-    hasMobileSupport: true,
-  },
-  {
-    id: "network.cvl",
-    name: "CVL Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.bitso",
-    name: "Bitso Web3 Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.zengo",
-    name: "Zengo Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.klipwallet",
-    name: "Klip",
-    hasMobileSupport: true,
-  },
-  {
-    id: "xyz.argent",
-    name: "Argent",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.everspace",
-    name: "Everspace",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.enjin",
-    name: "Enjin Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "xyz.uniultra.wallet",
-    name: "U2U Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "social.halo",
-    name: "Halo Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "tech.okto",
-    name: "Okto",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.kriptomat",
-    name: "Kriptomat",
-    hasMobileSupport: true,
-  },
-  {
-    id: "co.xellar",
-    name: "Xellar",
-    hasMobileSupport: true,
-  },
-  {
-    id: "network.haqq",
-    name: "HAQQ Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.oxalus",
-    name: "Oxalus Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.ullapay",
-    name: "WOW EARN",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.alephium",
-    name: "Alephium Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "xyz.frontier.wallet",
-    name: "Frontier",
-    hasMobileSupport: true,
-  },
-  {
-    id: "network.over",
-    name: "OverFlex",
-    hasMobileSupport: true,
-  },
-  {
-    id: "money.unstoppable",
-    name: "Unstoppable Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "me.iopay",
-    name: "ioPay",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.tomi",
-    name: "tomi Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "xyz.coca",
-    name: "COCA Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.coin98",
-    name: "Coin98 Super Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.thorwallet",
-    name: "THORWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.monarchwallet",
-    name: "Monarch Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.loopring.wallet",
-    name: "Loopring",
-    hasMobileSupport: true,
-  },
-  {
-    id: "one.metapro.wallet",
-    name: "metapro wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.burritowallet",
-    name: "Burrito",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.mtpelerin",
-    name: "Bridge Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.pluswallet",
-    name: "Plus Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "cc.localtrade.lab",
-    name: "LocalTrade Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.uptn.dapp-web",
-    name: "UPTN",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.herewallet",
-    name: "HERE Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.xcapit",
-    name: "Xcapit",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.zeal",
-    name: "Zeal",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.oasys-wallet",
-    name: "Oasys Passport",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.coolbitx.cwsapp",
-    name: "CoolWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.linen",
-    name: "Linen",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.nabox",
-    name: "Nabox",
-    hasMobileSupport: true,
-  },
-  {
-    id: "co.family.wallet",
-    name: "Family",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.krystal",
-    name: "Krystal",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.ellipal",
-    name: "ELLIPAL",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.yusetoken",
-    name: "Yuse Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.walletnow",
-    name: "NOW Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.saakuru.app",
-    name: "Saakuru All-in-One crypto App",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.foxwallet",
-    name: "FoxWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.withpaper",
-    name: "Paper",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.ricewallet",
-    name: "RiceWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.okse",
-    name: "Okse Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.aktionariat",
-    name: "Aktionariat",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.cypherhq",
-    name: "Cypher Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.paybolt",
-    name: "PayBolt",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.compasswallet",
-    name: "Compass Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.plasma-wallet",
-    name: "Plasma Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.cosmostation",
-    name: "Cosmostation",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.bytebank",
-    name: "ByteBank",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.unstoppabledomains",
-    name: "Unstoppable Domains",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.koalawallet",
-    name: "Koala Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.optowallet",
-    name: "Opto Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.miraiapp",
-    name: "Mirai App",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.beewallet",
-    name: "Bee Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "xyz.sequence",
-    name: "Sequence Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.fizen",
-    name: "Fizen Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "it.airgap",
-    name: "AirGap Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.thepulsewallet",
-    name: "The Pulse Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.holdstation",
-    name: "Holdstation Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.coinomi",
-    name: "Coinomi",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.trusteeglobal",
-    name: "Trustee Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.wallacy",
-    name: "Wallacy",
-    hasMobileSupport: true,
-  },
-  {
-    id: "technology.jambo",
-    name: "Jambo",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.bladewallet",
-    name: "Blade Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.keyring",
-    name: "KEYRING PRO",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.abra",
-    name: "Abra Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.premanft",
-    name: "PREMA Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "finance.voltage",
-    name: "Volt Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.bitizen",
-    name: "Bitizen",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.wigwam.wallet",
-    name: "Wigwam",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.ultimate",
-    name: "Ultimate",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.cakewallet",
-    name: "Cake Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.fizzwallet",
-    name: "Fizz",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.kucoin",
-    name: "KuCoin Web3 Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.stickey",
-    name: "Stickey Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.neonwallet",
-    name: "Neon Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.coinstats",
-    name: "CoinStats",
-    hasMobileSupport: true,
-  },
-  {
-    id: "ai.pundi",
-    name: "Pundi Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.ripio",
-    name: "Ripio Portal",
+    id: "xyz.ctrl",
+    name: "Ctrl Wallet",
     hasMobileSupport: true,
   },
   {
@@ -765,8 +140,238 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "io.harti",
-    name: "HARTi Wallet",
+    id: "com.roninchain.wallet",
+    name: "Ronin Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.okex.wallet",
+    name: "OKX Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.wemixplay",
+    name: "WEMIX Play",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.tangem",
+    name: "Tangem Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.exodus",
+    name: "Exodus",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.hashpack.wallet",
+    name: "HashPack",
+    hasMobileSupport: true,
+  },
+  {
+    id: "id.co.pintu",
+    name: "Pintu",
+    hasMobileSupport: true,
+  },
+  {
+    id: "network.blackfort",
+    name: "BlackFort Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.wigwam.wallet",
+    name: "Wigwam",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.backpack",
+    name: "Backpack",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.subwallet",
+    name: "SubWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "cc.avacus",
+    name: "Avacus",
+    hasMobileSupport: true,
+  },
+  {
+    id: "me.rainbow",
+    name: "Rainbow",
+    hasMobileSupport: true,
+  },
+  {
+    id: "so.onekey.app.wallet",
+    name: "OneKey",
+    hasMobileSupport: true,
+  },
+  {
+    id: "me.haha",
+    name: "HaHa",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.bee",
+    name: "BeeWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "ag.jup",
+    name: "Jupiter",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.keplr",
+    name: "Keplr",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.hot-labs",
+    name: "HOT Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.dcentwallet",
+    name: "D'CENT Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.kraken",
+    name: "Kraken Wallet ",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.kucoin",
+    name: "KuCoin Web3 Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.magiceden.wallet",
+    name: "Magic Eden",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.tomi",
+    name: "tomi Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.ibvm",
+    name: "IBVM Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.mewwallet",
+    name: "MEW wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.socios.app",
+    name: "Socios.com - Wallet & Tokens",
+    hasMobileSupport: true,
+  },
+  {
+    id: "xyz.argent",
+    name: "Argent",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.thorwallet",
+    name: "THORWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.internetmoney",
+    name: "Internet Money",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.mathwallet",
+    name: "MathWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.cypherhq",
+    name: "Cypher Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.novawallet",
+    name: "Nova Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.yowallet",
+    name: "YoWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.flowfoundation.wallet",
+    name: "Flow Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.kabila",
+    name: "Kabila Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.opera",
+    name: "Opera Crypto Browser",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.valoraapp",
+    name: "Valora",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.robinhood.wallet",
+    name: "Robinhood Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.chain",
+    name: "Chain",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.huddln",
+    name: "Huddln",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.core.extension",
+    name: "Core",
+    hasMobileSupport: true,
+  },
+  {
+    id: "world.freedom",
+    name: "Freedom World",
+    hasMobileSupport: true,
+  },
+  {
+    id: "money.unstoppable",
+    name: "Unstoppable Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "pk.modular",
+    name: "Modular Wallet Prod",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.wombat",
+    name: "Wombat",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.klipwallet",
+    name: "klip",
     hasMobileSupport: true,
   },
   {
@@ -775,68 +380,23 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "io.dttd",
-    name: "DTTD",
+    id: "com.sabay.wallet",
+    name: "Sabay Wallet App",
     hasMobileSupport: true,
   },
   {
-    id: "io.zelcore",
-    name: "Zelcore",
+    id: "com.zengo",
+    name: "Zengo Wallet",
     hasMobileSupport: true,
   },
   {
-    id: "org.thetatoken",
-    name: "Theta Wallet",
+    id: "xyz.joeywallet",
+    name: "Joey Wallet",
     hasMobileSupport: true,
   },
   {
-    id: "io.blocto",
-    name: "Blocto",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.tellaw",
-    name: "Tellaw Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "xyz.ctrl",
-    name: "Ctrl Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "is.callback",
-    name: "Callback",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.summonersarena",
-    name: "SA ASSISTANT",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.safemoon",
-    name: "SafeMoon",
-    hasMobileSupport: true,
-  },
-  {
-    id: "world.ixo",
-    name: "Impact Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.bitpie",
-    name: "Bitpie",
-    hasMobileSupport: true,
-  },
-  {
-    id: "net.gateweb3",
-    name: "GateWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.wallypto",
-    name: "Wallypto",
+    id: "io.tokoin",
+    name: "Tokoin | My-T Wallet",
     hasMobileSupport: true,
   },
   {
@@ -845,8 +405,468 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.lif3",
-    name: "Lif3 Wallet",
+    id: "network.cvl",
+    name: "CVL Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.leapwallet",
+    name: "Leap",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.xenea",
+    name: "XENEA Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.oasys-wallet",
+    name: "Oasys Passport",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.bitso",
+    name: "Bitso Web3 Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.enjin",
+    name: "Enjin Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.coldwallet",
+    name: "Cold Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.creditcoin.app",
+    name: "Credit Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.everspace",
+    name: "Everspace",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.zeal",
+    name: "Zeal",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.whitewallet",
+    name: "Whitewallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "ai.purewallet",
+    name: "PureWallet app",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.fastex.wallet",
+    name: "Yo Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.kriptomat",
+    name: "Kriptomat",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.ullapay",
+    name: "WOW EARN",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.atomicwallet",
+    name: "Atomic Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.pionewallet",
+    name: "PioneWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.oxalus",
+    name: "Oxalus Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "xyz.uniultra.wallet",
+    name: "U2U Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "xyz.frontier.wallet",
+    name: "Frontier",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.coolbitx.cwsapp",
+    name: "CoolWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.gooddollar",
+    name: "GoodDollar",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.cakewallet",
+    name: "Cake Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.ellipal",
+    name: "ELLIPAL",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.krystal",
+    name: "Krystal",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.monarchwallet",
+    name: "Monarch Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.burritowallet",
+    name: "Burrito",
+    hasMobileSupport: true,
+  },
+  {
+    id: "co.family.wallet",
+    name: "Family",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.mtpelerin",
+    name: "Bridge Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.keyring",
+    name: "KEYRING PRO",
+    hasMobileSupport: true,
+  },
+  {
+    id: "cc.localtrade.lab",
+    name: "LocalTrade Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "tech.okto",
+    name: "Okto",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.xcapit",
+    name: "Xcapit",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.gayawallet",
+    name: "Gaya Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.nightly",
+    name: "Nightly",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.coin98",
+    name: "Coin98 Super Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "xyz.coca",
+    name: "COCA Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.linen",
+    name: "Linen",
+    hasMobileSupport: true,
+  },
+  {
+    id: "dev.auroracloud",
+    name: "Aurora Pass",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.coinomi",
+    name: "Coinomi",
+    hasMobileSupport: true,
+  },
+  {
+    id: "my.mone",
+    name: "mOne superapp",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.alephium",
+    name: "Alephium Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.alicebob",
+    name: "Alicebob Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.koalawallet",
+    name: "Koala Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.veworld",
+    name: "VeWorld Mobile",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.withpaper",
+    name: "Paper",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.noone",
+    name: "Noone Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "network.haqq",
+    name: "HAQQ Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.ricewallet",
+    name: "RiceWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "me.iopay",
+    name: "ioPay",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.walletnow",
+    name: "NOW Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.okse",
+    name: "Okse Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "network.over",
+    name: "OverFlex",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.aktionariat",
+    name: "Aktionariat",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.paybolt",
+    name: "PayBolt",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.plasma-wallet",
+    name: "Plasma Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.bytebank",
+    name: "ByteBank",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.ethermail",
+    name: "EtherMail",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.optowallet",
+    name: "Opto Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "finance.openwallet",
+    name: "Open Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "xyz.sequence",
+    name: "Sequence Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.foxwallet",
+    name: "FoxWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.hbwallet",
+    name: "HB WALLET",
+    hasMobileSupport: true,
+  },
+  {
+    id: "it.airgap",
+    name: "AirGap Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.holdstation",
+    name: "Holdstation Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.universaleverything",
+    name: "UniversalProfiles",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.abra",
+    name: "Abra Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.thepulsewallet",
+    name: "The Pulse Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.premanft",
+    name: "PREMA Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "xyz.timelesswallet",
+    name: "Timeless Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.bitizen",
+    name: "Bitizen",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.ultimate",
+    name: "Ultimate",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.compasswallet",
+    name: "Compass Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.fizzwallet",
+    name: "Fizz",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.xovawallet",
+    name: "Xova",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.nicegram",
+    name: "Nicegram Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.zelcore",
+    name: "Zelcore",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.freighter",
+    name: "Freighter",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.stickey",
+    name: "Stickey Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.coinstats",
+    name: "CoinStats",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.harti",
+    name: "HARTi Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.dttd",
+    name: "DTTD",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.tellaw",
+    name: "Tellaw Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.klever",
+    name: "Klever Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.unstoppabledomains",
+    name: "Unstoppable Domains",
+    hasMobileSupport: true,
+  },
+  {
+    id: "is.callback",
+    name: "Callback",
+    hasMobileSupport: true,
+  },
+  {
+    id: "ai.pundi",
+    name: "Pundi Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.summonersarena",
+    name: "SA ASSISTANT",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.fizen",
+    name: "Fizen Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "fi.pillar",
+    name: "Pillar",
+    hasMobileSupport: true,
+  },
+  {
+    id: "world.ixo",
+    name: "Impact Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.thetatoken",
+    name: "Theta Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "net.gateweb3",
+    name: "GateWallet",
     hasMobileSupport: true,
   },
   {
@@ -860,8 +880,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.bitpay",
-    name: "BitPay Wallet",
+    id: "io.yusetoken",
+    name: "Yuse Wallet",
     hasMobileSupport: true,
   },
   {
@@ -870,8 +890,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "jp.co.rakuten-wallet",
-    name: "Rakuten Wallet",
+    id: "io.hyperpay",
+    name: "HyperPay",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.cosmostation",
+    name: "Cosmostation",
     hasMobileSupport: true,
   },
   {
@@ -880,28 +905,18 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
+    id: "io.wallet3",
+    name: "Wallet 3",
+    hasMobileSupport: true,
+  },
+  {
     id: "org.dota168",
     name: "MetaWallet",
     hasMobileSupport: true,
   },
   {
-    id: "com.alphawallet",
-    name: "AlphaWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.noone",
-    name: "Noone Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.myabcwallet",
-    name: "ABC Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.wallet3",
-    name: "Wallet 3",
+    id: "com.bitpie",
+    name: "Bitpie",
     hasMobileSupport: true,
   },
   {
@@ -910,43 +925,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.ambire",
-    name: "Ambire Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "cc.avacus",
-    name: "Avacus",
-    hasMobileSupport: true,
-  },
-  {
     id: "me.easy",
     name: "EASY",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.utorg",
-    name: "UTORG",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.scramberry",
-    name: "ScramberryWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.saitamatoken",
-    name: "SaitaPro",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.secuxtech",
-    name: "SecuX",
-    hasMobileSupport: true,
-  },
-  {
-    id: "finance.openwallet",
-    name: "Open Wallet",
     hasMobileSupport: true,
   },
   {
@@ -955,18 +935,43 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
+    id: "com.neonwallet",
+    name: "Neon Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.secuxtech",
+    name: "SecuX",
+    hasMobileSupport: true,
+  },
+  {
     id: "com.unitywallet",
     name: "Unity Wallet",
     hasMobileSupport: true,
   },
   {
-    id: "app.onto",
-    name: "ONTO",
+    id: "io.miraiapp",
+    name: "Mirai App",
     hasMobileSupport: true,
   },
   {
-    id: "com.companyname.swaptobe",
-    name: "TobeWallet",
+    id: "com.beexo",
+    name: "Beexo",
+    hasMobileSupport: true,
+  },
+  {
+    id: "social.halo",
+    name: "Halo Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.gemspocket",
+    name: "Gems Pocket",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.status",
+    name: "Status",
     hasMobileSupport: true,
   },
   {
@@ -975,18 +980,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "io.hyperpay",
-    name: "HyperPay",
-    hasMobileSupport: true,
-  },
-  {
     id: "id.competence",
     name: "Competence.id",
     hasMobileSupport: true,
   },
   {
-    id: "io.tradestrike",
-    name: "StrikeX Wallet",
+    id: "com.safemoon",
+    name: "SafeMoon",
     hasMobileSupport: true,
   },
   {
@@ -1000,8 +1000,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.coinsdo",
-    name: "CoinWallet",
+    id: "app.onto",
+    name: "ONTO",
     hasMobileSupport: true,
   },
   {
@@ -1010,12 +1010,22 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
+    id: "one.mixin.messenger",
+    name: "Mixin Messenger",
+    hasMobileSupport: true,
+  },
+  {
+    id: "cash.abpay",
+    name: "AB Pay",
+    hasMobileSupport: true,
+  },
+  {
     id: "ch.dssecurity",
     name: "DS Security SA",
     hasMobileSupport: true,
   },
   {
-    id: "com.concordium",
+    id: "com.concordium.wallet",
     name: "Concordium",
     hasMobileSupport: true,
   },
@@ -1025,8 +1035,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "app.status",
-    name: "Status",
+    id: "com.paliwallet",
+    name: "Pali Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1035,8 +1045,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "io.ozonewallet",
-    name: "OzoneWallet",
+    id: "com.saitamatoken",
+    name: "SaitaPro",
     hasMobileSupport: true,
   },
   {
@@ -1045,23 +1055,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "network.mrhb",
-    name: "Sahal Wallet",
+    id: "fi.stablez",
+    name: "Stablez",
     hasMobileSupport: true,
   },
   {
-    id: "com.crossmint",
-    name: "Crossmint",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.konio",
-    name: "Konio",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.legionnetwork",
-    name: "LegionNetwork",
+    id: "io.legacynetwork",
+    name: "Legacy Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1070,8 +1070,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "io.pltwallet",
-    name: "PLTwallet",
+    id: "io.bladewallet",
+    name: "Blade Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1080,23 +1080,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "io.pockie",
-    name: "pockie",
+    id: "com.webauth",
+    name: "WebAuth",
     hasMobileSupport: true,
   },
   {
-    id: "io.klever",
-    name: "Klever Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.kelp",
-    name: "Kelp",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.ethermail",
-    name: "EtherMail",
+    id: "xyz.tucop",
+    name: "TuCOP Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1105,8 +1095,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.paliwallet",
-    name: "Pali Wallet",
+    id: "io.nash",
+    name: "Nash",
     hasMobileSupport: true,
   },
   {
@@ -1120,18 +1110,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.liberawallet",
-    name: "Libera",
+    id: "io.nonbank",
+    name: "NonBank",
     hasMobileSupport: true,
   },
   {
     id: "io.armana.portal",
     name: "Armana Portal",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.nash",
-    name: "Nash",
     hasMobileSupport: true,
   },
   {
@@ -1145,18 +1130,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "world.dosi.vault",
-    name: "DOSI Vault",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.nonbank",
-    name: "NonBank",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.hbwallet",
-    name: "HB WALLET",
+    id: "com.alphawallet",
+    name: "AlphaWallet",
     hasMobileSupport: true,
   },
   {
@@ -1165,28 +1140,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "gg.indi",
-    name: "IndiGG",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.qubic.wallet",
-    name: "Qubic Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.fxwallet",
-    name: "FxWallet",
-    hasMobileSupport: true,
-  },
-  {
     id: "app.sinum",
     name: "Sinum",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.kryptogo",
-    name: "KryptoGO Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1195,68 +1150,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
+    id: "io.loopring.wallet",
+    name: "Loopring",
+    hasMobileSupport: true,
+  },
+  {
     id: "com.shapeshift",
     name: "ShapeShift",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.ready",
-    name: "Ready",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.shefi",
-    name: "SheFi",
-    hasMobileSupport: true,
-  },
-  {
-    id: "money.keychain",
-    name: "Keychain",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.beexo",
-    name: "Beexo",
-    hasMobileSupport: true,
-  },
-  {
-    id: "live.superex",
-    name: "SuperWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.getclave",
-    name: "Clave",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.bettatrade",
-    name: "Bettatrade",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.neopin",
-    name: "NEOPIN",
-    hasMobileSupport: true,
-  },
-  {
-    id: "online.puzzle",
-    name: "Puzzle Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "xyz.echooo",
-    name: "Echooo Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.get-verso",
-    name: "Verso",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.wemix",
-    name: "WemixWallet",
     hasMobileSupport: true,
   },
   {
@@ -1265,8 +1165,53 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
+    id: "money.keychain",
+    name: "Keychain",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.superhero.cordova",
+    name: "Superhero Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.bettatrade",
+    name: "Bettatrade",
+    hasMobileSupport: true,
+  },
+  {
+    id: "online.puzzle",
+    name: "Puzzle Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "gg.indi",
+    name: "IndiGG",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.tradestrike",
+    name: "StrikeX Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "xyz.echooo",
+    name: "Echooo Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.kryptogo",
+    name: "KryptoGO Wallet",
+    hasMobileSupport: true,
+  },
+  {
     id: "io.trustasset",
     name: "Trust Asset Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.utorg",
+    name: "UTORG",
     hasMobileSupport: true,
   },
   {
@@ -1275,28 +1220,28 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.bmawallet",
-    name: "BMA Wallet",
+    id: "org.rezor",
+    name: "Rezor",
     hasMobileSupport: true,
   },
   {
-    id: "io.transi",
-    name: "Transi",
+    id: "io.legionnetwork",
+    name: "LegionNetwork",
     hasMobileSupport: true,
   },
   {
-    id: "io.safecryptowallet",
-    name: "SafeWallet",
+    id: "cc.maxwallet",
+    name: "MaxWallet",
     hasMobileSupport: true,
   },
   {
-    id: "finance.plena",
-    name: "Plena-App",
+    id: "com.ripio",
+    name: "Ripio Portal",
     hasMobileSupport: true,
   },
   {
-    id: "io.certhis",
-    name: "Certhis",
+    id: "com.fxwallet",
+    name: "FxWallet",
     hasMobileSupport: true,
   },
   {
@@ -1310,23 +1255,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.pandoshi",
-    name: "Pandoshi Wallet",
-    hasMobileSupport: true,
-  },
-  {
     id: "io.guardiianwallet",
     name: "GUARDIIAN Wallet",
     hasMobileSupport: true,
   },
   {
-    id: "com.bscecowallet",
-    name: "BSC Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "co.lifedefi",
-    name: "Life DeFi",
+    id: "io.hacken.hai",
+    name: "hAI by Hacken",
     hasMobileSupport: true,
   },
   {
@@ -1335,13 +1270,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.broearn",
-    name: "Broearn Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.ttmwallet",
-    name: "MDAO Wallet",
+    id: "io.nabox",
+    name: "Nabox",
     hasMobileSupport: true,
   },
   {
@@ -1350,98 +1280,38 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.ipmb",
-    name: "IPMB Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "xyz.nestwallet",
-    name: "Nest Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.nicegram",
-    name: "Nicegram Wallet",
-    hasMobileSupport: true,
-  },
-  {
     id: "com.ballet",
     name: "Ballet Crypto",
     hasMobileSupport: true,
   },
   {
-    id: "app.omni",
-    name: "Omni",
+    id: "io.talken",
+    name: "Talken Wallet",
     hasMobileSupport: true,
   },
   {
-    id: "io.paraswap",
-    name: "ParaSwap Wallet",
+    id: "io.wallacy",
+    name: "Wallacy",
     hasMobileSupport: true,
   },
   {
-    id: "one.mixin.messenger",
-    name: "Mixin Messenger",
+    id: "network.mrhb",
+    name: "Sahal Wallet",
     hasMobileSupport: true,
   },
   {
-    id: "com.cryptokara",
-    name: "Cryptokara",
+    id: "io.pockie",
+    name: "pockie",
     hasMobileSupport: true,
   },
   {
-    id: "com.caesiumlab",
-    name: "Caesium",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.nodle",
-    name: "Nodle",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.universaleverything",
-    name: "UniversalProfiles",
-    hasMobileSupport: true,
-  },
-  {
-    id: "finance.islamicoin",
-    name: "ISLAMIwallet",
+    id: "me.astrox",
+    name: "Me Wallet",
     hasMobileSupport: true,
   },
   {
     id: "com.thirdweb",
     name: "thirdweb",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.opz",
-    name: "OPZ Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "fun.tobi",
-    name: "Tobi",
-    hasMobileSupport: true,
-  },
-  {
-    id: "trade.flooz.wallet",
-    name: "Flooz",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.talkapp",
-    name: "T+ Wallet ",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.plutope",
-    name: "Plutope",
-    hasMobileSupport: true,
-  },
-  {
-    id: "org.ecoinwallet",
-    name: "ECOIN Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1455,18 +1325,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.dextrade",
-    name: "DexTrade",
-    hasMobileSupport: true,
-  },
-  {
     id: "app.gamic",
     name: "Gamic",
-    hasMobileSupport: true,
-  },
-  {
-    id: "world.fncy",
-    name: "Fncy Mobile Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1475,8 +1335,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.3swallet",
-    name: "3S Wallet",
+    id: "network.trustkeys",
+    name: "TrustKeys Web3 SocialFi",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.caesiumlab",
+    name: "Caesium",
     hasMobileSupport: true,
   },
   {
@@ -1485,8 +1350,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.payperless",
-    name: "Payperless",
+    id: "com.hootark",
+    name: "HootArk",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.crossmint",
+    name: "Crossmint",
     hasMobileSupport: true,
   },
   {
@@ -1495,88 +1365,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "io.helixid",
-    name: "helix id",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.passpay",
-    name: "PassPay Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.kresus",
-    name: "Kresus SuperApp",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.nufinetes",
-    name: "Nufinetes",
-    hasMobileSupport: true,
-  },
-  {
-    id: "world.qoin",
-    name: "Qoin Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.copiosa",
-    name: "Copiosa",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.ancrypto",
-    name: "Ancrypto",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.keeper-wallet",
-    name: "Keeper",
-    hasMobileSupport: true,
-  },
-  {
     id: "io.bharatbox",
     name: "BharatBox App",
     hasMobileSupport: true,
   },
   {
-    id: "xyz.orion",
-    name: "Orion",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.cryptnox",
-    name: "Cryptnox Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "zone.bitverse",
-    name: "Bitverse",
-    hasMobileSupport: true,
-  },
-  {
-    id: "cc.dropp",
-    name: "Dropp",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.sinohope",
-    name: "Sinohope",
-    hasMobileSupport: true,
-  },
-  {
-    id: "ai.hacken",
-    name: "hAI by Hacken",
-    hasMobileSupport: true,
-  },
-  {
-    id: "net.spatium",
-    name: "Spatium",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.bitnovo",
-    name: "Bitnovo Wallet",
+    id: "nl.greenhood.wallet",
+    name: "Greenhood",
     hasMobileSupport: true,
   },
   {
@@ -1585,13 +1380,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "land.liker",
-    name: "LikerLand App",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.owallet",
-    name: "OWallet",
+    id: "com.kresus",
+    name: "Kresus SuperApp",
     hasMobileSupport: true,
   },
   {
@@ -1610,18 +1400,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.pierwallet",
-    name: "pier",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.talken",
-    name: "Talken Wallet",
-    hasMobileSupport: true,
-  },
-  {
     id: "com.passwallet.app",
-    name: "Pass App: Web3 Smart Wallet",
+    name: "Pass App",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.qubic.wallet",
+    name: "Qubic Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1630,18 +1415,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "pub.dg",
-    name: "DGPub App",
-    hasMobileSupport: true,
-  },
-  {
     id: "app.xverse",
-    name: "Xverse",
-    hasMobileSupport: true,
-  },
-  {
-    id: "nl.greenhood.wallet",
-    name: "Greenhood",
+    name: "Xverse Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1660,103 +1435,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "ai.spotonchain.platform",
-    name: "Spot On Chain App",
+    id: "io.myabcwallet",
+    name: "ABC Wallet",
     hasMobileSupport: true,
   },
   {
-    id: "com.tiduswallet",
-    name: "Tidus Wallet ",
-    hasMobileSupport: true,
-  },
-  {
-    id: "technology.obvious",
-    name: "Obvious",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.daffione",
-    name: "DaffiOne",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.webauth",
-    name: "WebAuth",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.tofee",
-    name: "Tofee Wallet Official",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.didwallet",
-    name: "DIDWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "xyz.bonuz",
-    name: "Bonuz Social Smart Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "social.gm2",
-    name: "GM² Social",
-    hasMobileSupport: true,
-  },
-  {
-    id: "co.cyber.wallet",
-    name: "CyberWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "me.astrox",
-    name: "Me Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "fi.pillar",
-    name: "Pillar",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.buzz-up",
-    name: "BUZZUP",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.moonstake",
-    name: "MOONSTAKE",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.hippowallet",
-    name: "Hippo Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.amazewallet",
-    name: "AmazeWallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.kriptonio",
-    name: "Kriptonio",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.altme",
-    name: "Altme",
-    hasMobileSupport: true,
-  },
-  {
-    id: "io.ukiss",
-    name: "UKISS Hub",
-    hasMobileSupport: true,
-  },
-  {
-    id: "fi.dropmate",
-    name: "Dropmate",
+    id: "io.owallet",
+    name: "OWallet",
     hasMobileSupport: true,
   },
   {
@@ -1765,43 +1450,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "io.xucre",
-    name: "Xucre",
-    hasMobileSupport: true,
-  },
-  {
     id: "net.myrenegade",
     name: "Renegade",
     hasMobileSupport: true,
   },
   {
-    id: "net.stasis",
-    name: "Stasis Wallet",
-    hasMobileSupport: true,
-  },
-  {
     id: "io.clingon",
     name: "Cling Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.humbl",
-    name: "HUMBL WALLET",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.peakdefi",
-    name: "PEAKDEFI",
-    hasMobileSupport: true,
-  },
-  {
-    id: "network.dgg",
-    name: "DGG Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "finance.panaroma",
-    name: "Panaroma Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1815,28 +1470,8 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "network.gridlock",
-    name: "Gridlock Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "network.trustkeys",
-    name: "TrustKeys Web3 SocialFi",
-    hasMobileSupport: true,
-  },
-  {
-    id: "finance.slingshot",
-    name: "Slingshot Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.mpcvault.broswerplugin",
-    name: "MPCVault | Team crypto wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "digital.minerva",
-    name: "Minerva Wallet",
+    id: "com.dokwallet",
+    name: "Dokwallet",
     hasMobileSupport: true,
   },
   {
@@ -1845,18 +1480,13 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
+    id: "io.prettygood.x",
+    name: "PrettyGood Keyboard",
+    hasMobileSupport: true,
+  },
+  {
     id: "io.earthwallet",
     name: "Earth Wallet",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.clot",
-    name: "Clot",
-    hasMobileSupport: true,
-  },
-  {
-    id: "com.alicebob",
-    name: "Alicebob Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1865,18 +1495,173 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "id.plumaa",
-    name: "Plumaa ID",
+    id: "live.superex",
+    name: "SuperWallet",
     hasMobileSupport: true,
   },
   {
-    id: "com.apollox",
-    name: "ApolloX",
+    id: "com.adftechnology",
+    name: "ADF Wallet",
     hasMobileSupport: true,
   },
   {
-    id: "io.legacynetwork",
-    name: "Legacy Wallet",
+    id: "com.bscecowallet",
+    name: "BSC Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.wallypto",
+    name: "Wallypto",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.reown",
+    name: "React Native Sample Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "finance.voltage",
+    name: "Volt Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.walletconnect",
+    name: "Swift Sample Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.passpay",
+    name: "PassPay Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "technology.obvious",
+    name: "Obvious",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.plutope",
+    name: "Plutope",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.buzz-up",
+    name: "BUZZUP",
+    hasMobileSupport: true,
+  },
+  {
+    id: "co.xellar",
+    name: "Xellar",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.kaxaa",
+    name: "KAXAA Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.shefi",
+    name: "SheFi",
+    hasMobileSupport: true,
+  },
+  {
+    id: "xyz.orion",
+    name: "Orion",
+    hasMobileSupport: true,
+  },
+  {
+    id: "world.dosi.vault",
+    name: "DOSI Vault",
+    hasMobileSupport: true,
+  },
+  {
+    id: "network.gridlock",
+    name: "Gridlock Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "finance.plena",
+    name: "Plena-App",
+    hasMobileSupport: true,
+  },
+  {
+    id: "cc.dropp",
+    name: "Dropp",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.scramberry",
+    name: "ScramberryWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "xyz.bonuz",
+    name: "Bonuz Social Smart Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.bmawallet",
+    name: "BMA Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "co.lifedefi",
+    name: "Life DeFi",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.get-verso",
+    name: "Verso",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.blocto",
+    name: "Blocto",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.pandoshi",
+    name: "Pandoshi Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.getclave",
+    name: "Clave",
+    hasMobileSupport: true,
+  },
+  {
+    id: "technology.jambo",
+    name: "Jambo",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.edge",
+    name: "Edge",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.banksocial",
+    name: "BankSocial ",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.konio",
+    name: "Konio",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.qubetics",
+    name: "QubeticsWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.imem",
+    name: "iMe Messenger & Crypto Wallet ",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.purechain",
+    name: "PureWallet",
     hasMobileSupport: true,
   },
   {
@@ -1885,13 +1670,453 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
+    id: "io.didwallet",
+    name: "DIDWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.dextrade",
+    name: "DexTrade",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.kelp",
+    name: "Kelp",
+    hasMobileSupport: true,
+  },
+  {
+    id: "xyz.nestwallet",
+    name: "Nest Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.cryptnox",
+    name: "Cryptnox Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "land.liker",
+    name: "LikerLand App",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.hippowallet",
+    name: "Hippo Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.certhis",
+    name: "Certhis",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.safecryptowallet",
+    name: "SafeWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.saify",
+    name: "Saify",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.tiduswallet",
+    name: "Tidus Wallet ",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.uptn.dapp-web",
+    name: "UPTN",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.it.onewallet",
+    name: "onewallet",
+    hasMobileSupport: true,
+  },
+  {
     id: "com.rktechworks",
     name: "ID Pocket",
     hasMobileSupport: true,
   },
   {
+    id: "com.revelator.wallet",
+    name: "Revelator Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.sinohope",
+    name: "Sinohope",
+    hasMobileSupport: true,
+  },
+  {
+    id: "network.dgg",
+    name: "DGG Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.up",
+    name: "UP.io",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.lif3",
+    name: "Lif3 Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.bimwallet",
+    name: "BIM Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "pub.dg",
+    name: "DGPub App",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.wemix",
+    name: "WemixWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.pierwallet",
+    name: "pier",
+    hasMobileSupport: true,
+  },
+  {
+    id: "net.stasis",
+    name: "Stasis Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.peakdefi",
+    name: "PEAKDEFI",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.3swallet",
+    name: "3S Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.example.subdomain",
+    name: "Key3",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.reown.appkit-lab",
+    name: "Flutter Sample Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.opz",
+    name: "OPZ Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "ai.spotonchain.platform",
+    name: "Spot On Chain App",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.dailychain.wallet",
+    name: "Daily Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.omni",
+    name: "Omni",
+    hasMobileSupport: true,
+  },
+  {
+    id: "id.plumaa",
+    name: "Plumaa ID",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.ttmwallet",
+    name: "MDAO Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.kgen",
+    name: "KGeN Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.nufinetes",
+    name: "Nufinetes",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.squirrelwallet",
+    name: "Squirrel Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "eu.trusteeglobal",
+    name: "Trustee Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.daffione",
+    name: "DaffiOne",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.saakuru.app",
+    name: "Saakuru All-in-One crypto App",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.r0ar",
+    name: "R0AR Mobile Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.nodle",
+    name: "Nodle",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.tofee",
+    name: "Tofee Wallet Official",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.pltwallet",
+    name: "PLTwallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.talkapp",
+    name: "T+ Wallet ",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.ready",
+    name: "Ready",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.w3wallet",
+    name: "W3 Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "pro.ds.app",
+    name: "Digital Shield",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.reown.docs",
+    name: "Kotlin Sample Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.apollox",
+    name: "ApolloX",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.ipmb",
+    name: "IPMB Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.payperless",
+    name: "Payperless",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.obliowallet",
+    name: "Oblio Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.keeper-wallet",
+    name: "Keeper",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.paraswap",
+    name: "ParaSwap Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.ecoinwallet",
+    name: "ECOIN Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "fi.dropmate",
+    name: "Dropmate",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.cryptokara",
+    name: "Cryptokara",
+    hasMobileSupport: true,
+  },
+  {
+    id: "co.cyber.wallet",
+    name: "CyberWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.kriptonio",
+    name: "Kriptonio",
+    hasMobileSupport: true,
+  },
+  {
+    id: "digital.minerva",
+    name: "Minerva Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.mpcvault.broswerplugin",
+    name: "MPCVault | Team crypto wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.liberawallet",
+    name: "Libera",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.helixid",
+    name: "helix id",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.broearn",
+    name: "Broearn Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.altme",
+    name: "Altme",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.herewallet",
+    name: "HERE Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.coinsdo",
+    name: "CoinWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "trade.flooz.wallet",
+    name: "Flooz",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.tapwallet",
+    name: "TAP WALLET",
+    hasMobileSupport: true,
+  },
+  {
+    id: "fun.tobi",
+    name: "Tobi",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.bitnovo",
+    name: "Bitnovo Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.xucre",
+    name: "Xucre",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.girin",
+    name: "Girin Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "finance.panaroma",
+    name: "Panaroma Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.clot",
+    name: "Clot",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.transi",
+    name: "Transi",
+    hasMobileSupport: true,
+  },
+  {
+    id: "world.qoin",
+    name: "Qoin Wallet",
+    hasMobileSupport: true,
+  },
+  {
     id: "com.greengloryglobal",
     name: "Blockaura",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.amazewallet",
+    name: "AmazeWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "zone.bitverse",
+    name: "Bitverse",
+    hasMobileSupport: true,
+  },
+  {
+    id: "social.gm2",
+    name: "GM² Social",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.ozonewallet",
+    name: "OzoneWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.ukiss",
+    name: "UKISS Hub",
+    hasMobileSupport: true,
+  },
+  {
+    id: "finance.islamicoin",
+    name: "ISLAMIwallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.copiosa",
+    name: "Copiosa",
+    hasMobileSupport: true,
+  },
+  {
+    id: "world.fncy",
+    name: "Fncy Mobile Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.moonstake",
+    name: "MOONSTAKE",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.trusteeglobal",
+    name: "Trustee Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "net.spatium",
+    name: "Spatium",
     hasMobileSupport: true,
   },
   {
@@ -1917,11 +2142,6 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
   {
     id: "pro.assure",
     name: "Assure",
-    hasMobileSupport: true,
-  },
-  {
-    id: "app.edge",
-    name: "Edge Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1970,8 +2190,148 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "app.imem",
-    name: "iMe",
+    id: "com.dexari",
+    name: "Dexari",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.cfcx",
+    name: "CFCX",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.socjsc",
+    name: "SOC Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.tokenb",
+    name: "TokenB",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.onyx",
+    name: "Onyx Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.gk8",
+    name: "GK8",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.anchorage",
+    name: "Anchorage Digital ",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.hashport.wallet",
+    name: "HashPort Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.billionwallet",
+    name: "Billion Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.dlicom",
+    name: "DLICOM",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.tychiwallet",
+    name: "Tychi Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "at.swe",
+    name: "Sweat Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "network.wali",
+    name: "Wali Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.diamante",
+    name: "DIAM Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "ai.interlinklabs",
+    name: "ITLX Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.walllet",
+    name: "walllet.com",
+    hasMobileSupport: true,
+  },
+  {
+    id: "org.lunascape",
+    name: "Lunascape Browser",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.nvxowallet",
+    name: "NVXO Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "today.paywithcrypto.wallet",
+    name: "PWC Super App",
+    hasMobileSupport: true,
+  },
+  {
+    id: "ai.iluminary",
+    name: "iLuminaryAi Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.reactwallet",
+    name: "React Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.rewardywallet",
+    name: "Rewardy Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.walletv",
+    name: "Wallet V",
+    hasMobileSupport: true,
+  },
+  {
+    id: "app.outlawgames",
+    name: "Outlaw Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.ironwallet",
+    name: "IronWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.mecowallet",
+    name: "MeCo Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.onlybulls",
+    name: "OnlyBulls Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "me.qiewallet",
+    name: "QIE Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "fund.lflabs",
+    name: "LF Wallet App",
     hasMobileSupport: true,
   },
   {
@@ -1991,7 +2351,7 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
   },
   {
     id: "com.coinbase.wallet",
-    name: "Coinbase Wallet",
+    name: "Base (formerly Coinbase Wallet)",
     hasMobileSupport: false,
   },
   {
@@ -2002,6 +2362,16 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
   {
     id: "com.brave.wallet",
     name: "Brave Wallet",
+    hasMobileSupport: false,
+  },
+  {
+    id: "fi.nu",
+    name: "NUFI",
+    hasMobileSupport: false,
+  },
+  {
+    id: "pro.hinkal.walletconnect",
+    name: "Hinkal Wallet",
     hasMobileSupport: false,
   },
   {
@@ -2027,21 +2397,6 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
   {
     id: "io.finoa",
     name: "FinoaConnect",
-    hasMobileSupport: false,
-  },
-  {
-    id: "com.blanqlabs.wallet",
-    name: "Blanq",
-    hasMobileSupport: false,
-  },
-  {
-    id: "com.walletconnect.com",
-    name: "SampleW",
-    hasMobileSupport: false,
-  },
-  {
-    id: "app.nightly",
-    name: "Nightly",
     hasMobileSupport: false,
   },
   {
@@ -2075,6 +2430,41 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: false,
   },
   {
+    id: "io.runonflux.sspwallet",
+    name: "SSP",
+    hasMobileSupport: false,
+  },
+  {
+    id: "com.blanqlabs.wallet",
+    name: "Blanq",
+    hasMobileSupport: false,
+  },
+  {
+    id: "io.hero.wallet",
+    name: "Hero Wallet",
+    hasMobileSupport: false,
+  },
+  {
+    id: "network.verified.custody",
+    name: "Verified Wallet",
+    hasMobileSupport: false,
+  },
+  {
+    id: "console.utila.io",
+    name: "Utila",
+    hasMobileSupport: false,
+  },
+  {
+    id: "com.micet.wallet",
+    name: "Micet",
+    hasMobileSupport: false,
+  },
+  {
+    id: "world.dolphinode.chain",
+    name: "NodeVault",
+    hasMobileSupport: false,
+  },
+  {
     id: "com.lootrush",
     name: "LootRush",
     hasMobileSupport: false,
@@ -2087,6 +2477,21 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
   {
     id: "xyz.abs",
     name: "Abstract Global Wallet",
+    hasMobileSupport: false,
+  },
+  {
+    id: "sh.frame",
+    name: "Frame Wallet",
+    hasMobileSupport: false,
+  },
+  {
+    id: "io.useglyph",
+    name: "Glyph Wallet",
+    hasMobileSupport: false,
+  },
+  {
+    id: "org.base.account",
+    name: "Base Account",
     hasMobileSupport: false,
   },
   {
@@ -2109,6 +2514,6 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     name: "WalletConnect",
     hasMobileSupport: false,
   },
-]) satisfies MinimalWalletInfo[];
+] as const satisfies MinimalWalletInfo[];
 
 export default ALL_MINIMAL_WALLET_INFOS;

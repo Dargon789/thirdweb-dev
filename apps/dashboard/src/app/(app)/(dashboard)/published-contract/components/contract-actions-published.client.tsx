@@ -1,10 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { shareLink } from "@/lib/shareLink";
-import { ChevronsRightIcon } from "lucide-react";
+import { ArrowUpRightIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export function PublishedActions(props: {
   publisher: string;
@@ -16,26 +15,13 @@ export function PublishedActions(props: {
   const stringifiedSearchParams = searchparams?.toString();
 
   return (
-    <div className="flex gap-3">
-      <Button
-        variant="outline"
-        className="bg-card"
-        onClick={() => {
-          shareLink({
-            title: `Deploy ${props.displayName}`,
-          });
-        }}
+    <Button asChild className="gap-2 rounded-full">
+      <Link
+        href={`/${props.publisher}/${props.contract_id}${props.version ? `/${props.version}` : ""}/deploy${stringifiedSearchParams ? `?${stringifiedSearchParams}` : ""}`}
       >
-        Share
-      </Button>
-      <Button asChild className="gap-2">
-        <Link
-          href={`/${props.publisher}/${props.contract_id}${props.version ? `/${props.version}` : ""}/deploy${stringifiedSearchParams ? `?${stringifiedSearchParams}` : ""}`}
-        >
-          Deploy Now
-          <ChevronsRightIcon className="size-4" />
-        </Link>
-      </Button>
-    </div>
+        Deploy Now
+        <ArrowUpRightIcon className="size-4" />
+      </Link>
+    </Button>
   );
 }

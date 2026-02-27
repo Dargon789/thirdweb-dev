@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getUrlToken } from "./get-url-token.js";
 
 describe.runIf(global.window !== undefined)("getUrlToken", () => {
@@ -48,10 +48,11 @@ describe.runIf(global.window !== undefined)("getUrlToken", () => {
     const result = getUrlToken();
 
     expect(result).toEqual({
-      walletId: "123",
+      authCookie: undefined,
+      authFlow: undefined,
+      authProvider: undefined,
       authResult: { token: "abc" },
-      authProvider: null,
-      authCookie: null,
+      walletId: "123",
     });
   });
 
@@ -61,10 +62,11 @@ describe.runIf(global.window !== undefined)("getUrlToken", () => {
     const result = getUrlToken();
 
     expect(result).toEqual({
-      walletId: "123",
-      authResult: undefined,
-      authProvider: null,
       authCookie: "myCookie",
+      authFlow: undefined,
+      authProvider: undefined,
+      authResult: undefined,
+      walletId: "123",
     });
 
     // Check if URL has been updated correctly
@@ -78,15 +80,72 @@ describe.runIf(global.window !== undefined)("getUrlToken", () => {
     const result = getUrlToken();
 
     expect(result).toEqual({
-      walletId: "123",
-      authResult: { token: "xyz" },
-      authProvider: "provider1",
       authCookie: "myCookie",
+      authFlow: undefined,
+      authProvider: "provider1",
+      authResult: { token: "xyz" },
+      walletId: "123",
     });
 
     // Check if URL has been updated correctly
     expect(window.location.search).toBe(
       "?walletId=123&authResult=%7B%22token%22%3A%22xyz%22%7D&authProvider=provider1&authCookie=myCookie",
     );
+  });
+
+  it("should preserve hash fragment when cleaning up URL", () => {
+    Object.defineProperty(window, "location", {
+      value: {
+        ...window.location,
+        search: "?walletId=123&authCookie=myCookie",
+        hash: "#/s:wampei.eth",
+        pathname: "/",
+      },
+      writable: true,
+    });
+
+    const pushStateSpy = vi.spyOn(window.history, "pushState");
+
+    const result = getUrlToken();
+
+    expect(result).toEqual({
+      authCookie: "myCookie",
+      authFlow: undefined,
+      authProvider: undefined,
+      authResult: undefined,
+      walletId: "123",
+    });
+
+    // Verify pushState was called with the hash preserved
+    expect(pushStateSpy).toHaveBeenCalledWith({}, "", "/#/s:wampei.eth");
+    pushStateSpy.mockRestore();
+  });
+
+  it("should parse auth params embedded inside the hash fragment", () => {
+    Object.defineProperty(window, "location", {
+      value: {
+        ...window.location,
+        search: "",
+        hash: "#/s:wampei.eth?walletId=123&authCookie=myCookie",
+        pathname: "/",
+      },
+      writable: true,
+    });
+
+    const pushStateSpy = vi.spyOn(window.history, "pushState");
+
+    const result = getUrlToken();
+
+    expect(result).toEqual({
+      authCookie: "myCookie",
+      authFlow: undefined,
+      authProvider: undefined,
+      authResult: undefined,
+      walletId: "123",
+    });
+
+    // Verify pushState preserves hash path but strips auth params from it
+    expect(pushStateSpy).toHaveBeenCalledWith({}, "", "/#/s:wampei.eth");
+    pushStateSpy.mockRestore();
   });
 });

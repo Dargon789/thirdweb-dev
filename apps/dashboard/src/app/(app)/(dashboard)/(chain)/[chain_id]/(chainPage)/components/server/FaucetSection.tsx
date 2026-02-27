@@ -1,6 +1,6 @@
 import type { ThirdwebClient } from "thirdweb";
 import type { ChainMetadata } from "thirdweb/chains";
-import { getFaucetClaimAmount } from "../../../../../../api/testnet-faucet/claim/claim-amount";
+import { getFaucetClaimAmount } from "@/utils/faucet";
 import { ChainIcon } from "../../../../components/server/chain-icon";
 import { FaucetButton } from "../client/FaucetButton";
 import { GiftIcon } from "../icons/GiftIcon";
@@ -26,7 +26,6 @@ export async function FaucetSection(props: {
             <ChainIcon
               className="-mr-2 size-12 rounded-full border p-1"
               iconUrl={props.chain.icon?.url}
-              client={client}
             />
             <GiftIcon bg="hsl(var(--background))" className="-ml-2 size-12" />
           </div>
@@ -47,8 +46,9 @@ export async function FaucetSection(props: {
           <div className="h-8" />
 
           <FaucetButton
-            chain={chain}
             amount={amountToGive}
+            chain={chain}
+            client={client}
             isLoggedIn={isLoggedIn}
           />
         </div>

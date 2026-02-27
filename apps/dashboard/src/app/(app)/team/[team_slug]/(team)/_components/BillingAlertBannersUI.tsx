@@ -1,12 +1,12 @@
 "use client";
 
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { Button } from "@/components/ui/button";
-import { useDashboardRouter } from "@/lib/DashboardRouter";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useTransition } from "react";
-import { useStripeRedirectEvent } from "../../../../(stripe)/stripe-redirect/stripeRedirectChannel";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/Spinner";
+import { useStripeRedirectEvent } from "@/hooks/stripe/redirect-event";
+import { useDashboardRouter } from "@/lib/DashboardRouter";
+import { cn } from "@/lib/utils";
 
 function BillingAlertBanner(props: {
   title: string;
@@ -54,7 +54,7 @@ function BillingAlertBanner(props: {
             "border border-red-600 bg-red-100 text-red-800 hover:bg-red-200 dark:border-red-700 dark:bg-red-900 dark:text-red-100 dark:hover:bg-red-800",
         )}
       >
-        <Link href={`/team/${props.teamSlug}/~/settings/invoices`}>
+        <Link href={`/team/${props.teamSlug}/~/billing/invoices`}>
           {props.ctaLabel}
         </Link>
       </Button>
@@ -62,14 +62,10 @@ function BillingAlertBanner(props: {
   );
 }
 
-export function PastDueBannerUI(props: {
-  teamSlug: string;
-}) {
+export function PastDueBannerUI(props: { teamSlug: string }) {
   return (
     <BillingAlertBanner
       ctaLabel="View Invoices"
-      variant="warning"
-      title="Unpaid Invoices"
       description={
         <>
           You have unpaid invoices. Service may be suspended if not paid
@@ -77,18 +73,16 @@ export function PastDueBannerUI(props: {
         </>
       }
       teamSlug={props.teamSlug}
+      title="Unpaid Invoices"
+      variant="warning"
     />
   );
 }
 
-export function ServiceCutOffBannerUI(props: {
-  teamSlug: string;
-}) {
+export function ServiceCutOffBannerUI(props: { teamSlug: string }) {
   return (
     <BillingAlertBanner
       ctaLabel="Pay Now"
-      variant="error"
-      title="Service Suspended"
       description={
         <>
           Your service has been suspended due to unpaid invoices. Pay now to
@@ -96,6 +90,8 @@ export function ServiceCutOffBannerUI(props: {
         </>
       }
       teamSlug={props.teamSlug}
+      title="Service Suspended"
+      variant="error"
     />
   );
 }
