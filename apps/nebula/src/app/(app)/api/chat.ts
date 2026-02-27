@@ -1,7 +1,6 @@
-import { NEXT_PUBLIC_NEBULA_URL } from "@/constants/env";
-// TODO - copy the source of this library to dashboard
 import { stream } from "fetch-event-stream";
-import type { NebulaTxData } from "../components/Chats";
+import { NEXT_PUBLIC_NEBULA_URL } from "@/constants/public-envs";
+import type { NebulaTxData, NebulaUserMessage } from "./types";
 
 export type NebulaContext = {
   chainIds: string[] | null;
@@ -42,7 +41,7 @@ export type NebulaSwapData = {
 };
 
 export async function promptNebula(params: {
-  message: string;
+  message: NebulaUserMessage;
   sessionId: string;
   authToken: string;
   handleStream: (res: ChatStreamedResponse) => void;
@@ -50,26 +49,26 @@ export async function promptNebula(params: {
   context: undefined | NebulaContext;
 }) {
   const body: Record<string, string | boolean | object> = {
-    message: params.message,
-    stream: true,
+    messages: [params.message],
     session_id: params.sessionId,
+    stream: true,
   };
 
   if (params.context) {
     body.context = {
       chain_ids: params.context.chainIds || [],
-      wallet_address: params.context.walletAddress,
       networks: params.context.networks,
+      wallet_address: params.context.walletAddress,
     };
   }
 
   const events = await stream(`${NEXT_PUBLIC_NEBULA_URL}/chat`, {
-    method: "POST",
+    body: JSON.stringify(body),
     headers: {
       Authorization: `Bearer ${params.authToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    method: "POST",
     signal: params.abortController.signal,
   });
 
@@ -83,18 +82,36 @@ export async function promptNebula(params: {
     switch (event.event) {
       case "delta": {
         params.handleStream({
-          event: "delta",
           data: {
             v: JSON.parse(event.data).v,
           },
+          event: "delta",
         });
         break;
       }
 
       case "presence": {
         params.handleStream({
-          event: "presence",
           data: JSON.parse(event.data),
+          event: "presence",
+        });
+        break;
+      }
+
+      case "image": {
+        const data = JSON.parse(event.data) as {
+          data: {
+            width: number;
+            height: number;
+            url: string;
+          };
+          request_id: string;
+        };
+
+        params.handleStream({
+          data: data.data,
+          event: "image",
+          request_id: data.request_id,
         });
         break;
       }
@@ -106,9 +123,10 @@ export async function promptNebula(params: {
           try {
             const parsedTxData = JSON.parse(data.data) as NebulaTxData;
             params.handleStream({
-              event: "action",
-              type: "sign_transaction",
               data: parsedTxData,
+              event: "action",
+              request_id: data.request_id,
+              type: "sign_transaction",
             });
           } catch (e) {
             console.error("failed to parse action data", e, { event });
@@ -119,9 +137,10 @@ export async function promptNebula(params: {
           try {
             const swapData = JSON.parse(data.data) as NebulaSwapData;
             params.handleStream({
-              event: "action",
-              type: "sign_swap",
               data: swapData,
+              event: "action",
+              request_id: data.request_id,
+              type: "sign_swap",
             });
           } catch (e) {
             console.error("failed to parse action data", e, { event });
@@ -131,14 +150,32 @@ export async function promptNebula(params: {
         break;
       }
 
+      case "error": {
+        const data = JSON.parse(event.data) as {
+          code: number;
+          error: {
+            message: string;
+          };
+        };
+
+        params.handleStream({
+          data: {
+            code: data.code,
+            errorMessage: data.error.message,
+          },
+          event: "error",
+        });
+        break;
+      }
+
       case "init": {
         const data = JSON.parse(event.data);
         params.handleStream({
-          event: "init",
           data: {
-            session_id: data.session_id,
             request_id: data.request_id,
+            session_id: data.session_id,
           },
+          event: "init",
         });
         break;
       }
@@ -157,9 +194,13 @@ export async function promptNebula(params: {
         };
 
         params.handleStream({
-          event: "context",
           data: contextData,
+          event: "context",
         });
+        break;
+      }
+
+      case "ping": {
         break;
       }
 
@@ -197,11 +238,22 @@ type ChatStreamedResponse =
       event: "action";
       type: "sign_transaction";
       data: NebulaTxData;
+      request_id: string;
     }
   | {
       event: "action";
       type: "sign_swap";
       data: NebulaSwapData;
+      request_id: string;
+    }
+  | {
+      event: "image";
+      data: {
+        width: number;
+        height: number;
+        url: string;
+      };
+      request_id: string;
     }
   | {
       event: "context";
@@ -209,6 +261,13 @@ type ChatStreamedResponse =
         wallet_address: string;
         chain_ids: number[];
         networks: NebulaContext["networks"];
+      };
+    }
+  | {
+      event: "error";
+      data: {
+        code: number;
+        errorMessage: string;
       };
     };
 
@@ -226,11 +285,23 @@ type ChatStreamedEvent =
       data: string;
     }
   | {
+      event: "image";
+      data: string;
+    }
+  | {
       event: "action";
       type: "sign_transaction" | "sign_swap";
       data: string;
     }
   | {
       event: "context";
+      data: string;
+    }
+  | {
+      event: "error";
+      data: string;
+    }
+  | {
+      event: "ping";
       data: string;
     };

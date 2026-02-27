@@ -1,4 +1,14 @@
 "use client";
+import { ArrowRightIcon, MessageSquareXIcon } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ThirdwebClient } from "thirdweb";
+import {
+  useActiveAccount,
+  useActiveWalletConnectionStatus,
+  useConnectedWallets,
+  useSetActiveWallet,
+} from "thirdweb/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,21 +18,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useThirdwebClient } from "@/constants/thirdweb.client";
-import { ArrowRightIcon } from "lucide-react";
-import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  useActiveAccount,
-  useActiveWalletConnectionStatus,
-  useConnectedWallets,
-  useSetActiveWallet,
-} from "thirdweb/react";
 import { type NebulaContext, promptNebula } from "../api/chat";
 import { createSession, updateSession } from "../api/session";
-import type { SessionInfo } from "../api/types";
+import type {
+  NebulaSessionHistoryMessage,
+  NebulaUserMessage,
+  SessionInfo,
+} from "../api/types";
 import { examplePrompts } from "../data/examplePrompts";
-import { newChatPageUrlStore, newSessionsStore } from "../stores";
+import { newSessionsStore } from "../stores";
 import { ChatBar, type WalletMeta } from "./ChatBar";
 import { type ChatMessage, Chats } from "./Chats";
 import { EmptyStateChatPageContent } from "./EmptyStateChatPageContent";
@@ -31,6 +35,7 @@ export function ChatPageContent(props: {
   session: SessionInfo | undefined;
   accountAddress: string;
   authToken: string;
+  client: ThirdwebClient;
   type: "landing" | "new-chat";
   initialParams:
     | {
@@ -40,60 +45,19 @@ export function ChatPageContent(props: {
     | undefined;
 }) {
   const address = useActiveAccount()?.address;
+  const connectionStatus = useActiveWalletConnectionStatus();
   const connectedWallets = useConnectedWallets();
   const setActiveWallet = useSetActiveWallet();
 
-  const client = useThirdwebClient(props.authToken);
   const [userHasSubmittedMessage, setUserHasSubmittedMessage] = useState(false);
   const [messages, setMessages] = useState<Array<ChatMessage>>(() => {
     if (props.session?.history) {
-      const _messages: ChatMessage[] = [];
-
-      for (const message of props.session.history) {
-        if (message.role === "action") {
-          try {
-            const content = JSON.parse(message.content) as {
-              session_id: string;
-              data: string;
-              type: "sign_transaction" | (string & {});
-            };
-
-            if (content.type === "sign_transaction") {
-              const txData = JSON.parse(content.data);
-              _messages.push({
-                type: "action",
-                subtype: "sign_transaction",
-                data: txData,
-              });
-            } else if (content.type === "sign_swap") {
-              const swapData = JSON.parse(content.data);
-              _messages.push({
-                type: "action",
-                subtype: "sign_swap",
-                data: swapData,
-              });
-            }
-          } catch (e) {
-            console.error("error processing message", e, { message });
-          }
-        } else {
-          _messages.push({
-            text: message.content,
-            type: message.role,
-            request_id: undefined,
-          });
-        }
-      }
-
-      return _messages;
+      return parseHistoryToMessages(props.session.history);
     }
     return [];
   });
 
-  const [hasUserUpdatedContextFilters, setHasUserUpdatedContextFilters] =
-    useState(false);
-
-  const [contextFilters, _setContextFilters] = useState<
+  const [_contextFilters, _setContextFilters] = useState<
     NebulaContext | undefined
   >(() => {
     const contextRes = props.session?.context;
@@ -102,96 +66,64 @@ export function ChatPageContent(props: {
         contextRes?.chain_ids ||
         props.initialParams?.chainIds.map((x) => x.toString()) ||
         [],
-      walletAddress: contextRes?.wallet_address || props.accountAddress || null,
       networks: "mainnet",
+      walletAddress: contextRes?.wallet_address || props.accountAddress || null,
     };
 
     return value;
   });
 
+  const contextFilters = useMemo(() => {
+    return {
+      chainIds: _contextFilters?.chainIds || [],
+      networks: _contextFilters?.networks || null,
+      walletAddress: address || _contextFilters?.walletAddress || null,
+    } satisfies NebulaContext;
+  }, [_contextFilters, address]);
+
   const setContextFilters = useCallback((v: NebulaContext | undefined) => {
     _setContextFilters(v);
-    setHasUserUpdatedContextFilters(true);
     saveLastUsedChainIds(v?.chainIds || undefined);
   }, []);
 
-  const isNewSession = !props.session;
-  const connectionStatus = useActiveWalletConnectionStatus();
-
-  // if this is a new session, user has not manually updated context
-  // update the context to the current user's wallet address and chain id
+  const shouldRunEffect = useRef(true);
+  // if this is a new session,
+  // update chains to the last used chains in context filter
+  // we have to do this in effect to avoid hydration errors
   // eslint-disable-next-line no-restricted-syntax
   useEffect(() => {
-    if (!isNewSession || hasUserUpdatedContextFilters) {
+    // if viewing a session or context is set via params - do not update context
+    if (props.session || props.initialParams?.q || !shouldRunEffect.current) {
       return;
     }
 
+    shouldRunEffect.current = false;
+
     _setContextFilters((_contextFilters) => {
-      const updatedContextFilters: NebulaContext = _contextFilters
-        ? {
-            ..._contextFilters,
-          }
-        : {
-            chainIds: [],
-            walletAddress: null,
-            networks: null,
+      try {
+        const lastUsedChainIds = getLastUsedChainIds();
+        if (lastUsedChainIds) {
+          return {
+            chainIds: lastUsedChainIds,
+            networks: _contextFilters?.networks || null,
+            walletAddress: _contextFilters?.walletAddress || null,
           };
-
-      if (!updatedContextFilters.walletAddress && address) {
-        updatedContextFilters.walletAddress = address;
-      }
-
-      if (
-        updatedContextFilters.chainIds?.length === 0 &&
-        !props.initialParams?.q
-      ) {
-        // if we have last used chains in storage, continue using them
-        try {
-          const lastUsedChainIds = getLastUsedChainIds();
-          if (lastUsedChainIds) {
-            updatedContextFilters.chainIds = lastUsedChainIds;
-            return updatedContextFilters;
-          }
-        } catch {
-          // ignore local storage errors
         }
+      } catch {
+        // ignore local storage errors
       }
 
-      return updatedContextFilters;
+      return _contextFilters;
     });
-  }, [
-    address,
-    isNewSession,
-    hasUserUpdatedContextFilters,
-    props.initialParams?.q,
-  ]);
+  }, [props.session, props.initialParams?.q]);
 
-  const [sessionId, _setSessionId] = useState<string | undefined>(
+  const [sessionId, setSessionId] = useState<string | undefined>(
     props.session?.id,
   );
 
   const [chatAbortController, setChatAbortController] = useState<
     AbortController | undefined
   >();
-
-  const setSessionId = useCallback(
-    (sessionId: string) => {
-      _setSessionId(sessionId);
-      // update page URL without reloading
-      // THIS DOES NOT WORK ANYMORE!! - NEXT JS IS MONKEY PATCHING THIS TOO
-      // Until we find a better solution, we are just not gonna update the URL
-      // window.history.replaceState({}, "", `/chat/${sessionId}`);
-
-      // if the current page is landing page, link to /chat
-      // if current page is new /chat page, link to landing page
-      if (props.type === "landing") {
-        newChatPageUrlStore.setValue("/chat");
-      } else {
-        newChatPageUrlStore.setValue("/");
-      }
-    },
-    [props.type],
-  );
 
   const [isChatStreaming, setIsChatStreaming] = useState(false);
   const [enableAutoScroll, setEnableAutoScroll] = useState(false);
@@ -204,23 +136,28 @@ export function ChatPageContent(props: {
     });
     setSessionId(session.id);
     return session;
-  }, [contextFilters, props.authToken, setSessionId]);
+  }, [contextFilters, props.authToken]);
 
   const handleSendMessage = useCallback(
-    async (message: string) => {
+    async (message: NebulaUserMessage) => {
       setUserHasSubmittedMessage(true);
       setMessages((prev) => [
         ...prev,
-        { text: message, type: "user" },
-        // instant loading indicator feedback to user
         {
-          type: "presence",
+          content: message.content,
+          type: "user",
+        },
+        {
           texts: [],
+          type: "presence",
         },
       ]);
 
       // handle hardcoded replies first
-      const lowerCaseMessage = message.toLowerCase();
+      const lowerCaseMessage = message.content
+        .find((x) => x.type === "text")
+        ?.text.toLowerCase();
+
       const interceptedReply = examplePrompts.find(
         (prompt) => prompt.message.toLowerCase() === lowerCaseMessage,
       )?.interceptedReply;
@@ -229,7 +166,7 @@ export function ChatPageContent(props: {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         setMessages((prev) => [
           ...prev.slice(0, -1),
-          { type: "assistant", text: interceptedReply, request_id: undefined },
+          { request_id: undefined, text: interceptedReply, type: "assistant" },
         ]);
 
         return;
@@ -247,14 +184,19 @@ export function ChatPageContent(props: {
           currentSessionId = session.id;
         }
 
+        const firstTextMessage =
+          message.role === "user"
+            ? message.content.find((x) => x.type === "text")?.text || ""
+            : "";
+
         // add this session on sidebar
-        if (messages.length === 0) {
+        if (messages.length === 0 && firstTextMessage) {
           const prevValue = newSessionsStore.getValue();
           newSessionsStore.setValue([
             {
-              id: currentSessionId,
-              title: message,
               created_at: new Date().toISOString(),
+              id: currentSessionId,
+              title: firstTextMessage,
               updated_at: new Date().toISOString(),
             },
             ...prevValue,
@@ -265,12 +207,12 @@ export function ChatPageContent(props: {
 
         await handleNebulaPrompt({
           abortController,
-          message,
-          sessionId: currentSessionId,
           authToken: props.authToken,
-          setMessages,
           contextFilters: contextFilters,
+          message: message,
+          sessionId: currentSessionId,
           setContextFilters,
+          setMessages,
         });
       } catch (error) {
         if (abortController.signal.aborted) {
@@ -306,14 +248,25 @@ export function ChatPageContent(props: {
       !hasDoneAutoPrompt.current
     ) {
       hasDoneAutoPrompt.current = true;
-      handleSendMessage(props.initialParams.q);
+      handleSendMessage({
+        content: [
+          {
+            text: props.initialParams.q,
+            type: "text",
+          },
+        ],
+        role: "user",
+      });
     }
   }, [props.initialParams?.q, messages.length, handleSendMessage]);
 
   const showEmptyState =
     !userHasSubmittedMessage &&
     messages.length === 0 &&
+    !props.session &&
     !props.initialParams?.q;
+
+  const sessionWithNoMessages = props.session && messages.length === 0;
 
   const connectedWalletsMeta: WalletMeta[] = connectedWallets.map((x) => ({
     address: x.getAccount()?.address || "",
@@ -327,8 +280,8 @@ export function ChatPageContent(props: {
     if (sessionId) {
       await updateSession({
         authToken: props.authToken,
-        sessionId,
         contextFilters: values,
+        sessionId,
       });
     }
   };
@@ -345,65 +298,82 @@ export function ChatPageContent(props: {
   return (
     <div className="flex grow flex-col overflow-hidden">
       <WalletDisconnectedDialog
-        open={showConnectModal}
         onOpenChange={setShowConnectModal}
+        open={showConnectModal}
       />
 
       <div className="flex grow overflow-hidden">
-        <div className="relative flex grow flex-col overflow-hidden rounded-lg pb-6">
+        <div className="relative flex grow flex-col overflow-hidden rounded-lg pb-4">
           {showEmptyState ? (
             <div className="fade-in-0 container flex max-w-[800px] grow animate-in flex-col justify-center">
               <EmptyStateChatPageContent
-                showAurora={true}
-                isConnectingWallet={connectionStatus === "connecting"}
-                sendMessage={handleSendMessage}
-                prefillMessage={props.initialParams?.q}
-                context={contextFilters}
-                setContext={setContextFilters}
+                allowImageUpload={true}
                 connectedWallets={connectedWalletsMeta}
-                activeAccountAddress={address}
+                context={contextFilters}
+                isConnectingWallet={connectionStatus === "connecting"}
+                onLoginClick={undefined}
+                prefillMessage={props.initialParams?.q}
+                sendMessage={handleSendMessage}
                 setActiveWallet={handleSetActiveWallet}
+                setContext={setContextFilters}
+                showAurora={true}
               />
             </div>
           ) : (
             <div className="fade-in-0 relative z-[0] flex max-h-full flex-1 animate-in flex-col overflow-hidden">
-              <Chats
-                messages={messages}
-                isChatStreaming={isChatStreaming}
-                authToken={props.authToken}
-                sessionId={sessionId}
-                className="min-w-0 pt-6 pb-32"
-                client={client}
-                enableAutoScroll={enableAutoScroll}
-                setEnableAutoScroll={setEnableAutoScroll}
-                sendMessage={handleSendMessage}
-              />
+              {sessionWithNoMessages && (
+                <div className="container flex max-h-full max-w-[800px] flex-1 flex-col justify-center py-8">
+                  <div className="flex flex-col items-center justify-center p-4">
+                    <div className="mb-5 rounded-full border bg-card p-3">
+                      <MessageSquareXIcon className="size-6 text-muted-foreground" />
+                    </div>
+                    <p className="mb-1 text-center text-foreground">
+                      No messages found
+                    </p>
+                    <p className="text-balance text-center text-muted-foreground text-sm">
+                      This session was aborted before receiving any messages
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {messages.length > 0 && (
+                <Chats
+                  authToken={props.authToken}
+                  className="min-w-0 pt-6 pb-32"
+                  client={props.client}
+                  enableAutoScroll={enableAutoScroll}
+                  isChatStreaming={isChatStreaming}
+                  messages={messages}
+                  sendMessage={handleSendMessage}
+                  sessionId={sessionId}
+                  setEnableAutoScroll={setEnableAutoScroll}
+                />
+              )}
 
               <div className="container max-w-[800px]">
                 <ChatBar
-                  isConnectingWallet={connectionStatus === "connecting"}
-                  showContextSelector={true}
-                  connectedWallets={connectedWalletsMeta}
-                  activeAccountAddress={address}
-                  setActiveWallet={handleSetActiveWallet}
-                  client={client}
-                  prefillMessage={undefined}
-                  sendMessage={handleSendMessage}
-                  isChatStreaming={isChatStreaming}
                   abortChatStream={() => {
                     chatAbortController?.abort();
                     setChatAbortController(undefined);
                     setIsChatStreaming(false);
-                    // if last message is presence, remove it
-                    if (messages[messages.length - 1]?.type === "presence") {
-                      setMessages((prev) => prev.slice(0, -1));
-                    }
                   }}
+                  allowImageUpload={true}
+                  client={props.client}
+                  connectedWallets={connectedWalletsMeta}
                   context={contextFilters}
+                  isChatStreaming={isChatStreaming}
+                  isConnectingWallet={connectionStatus === "connecting"}
+                  onLoginClick={undefined}
+                  placeholder="Ask Nebula"
+                  prefillMessage={undefined}
+                  sendMessage={handleSendMessage}
+                  setActiveWallet={handleSetActiveWallet}
                   setContext={(v) => {
                     setContextFilters(v);
                     handleUpdateContextFilters(v);
                   }}
+                  showContextSelector={true}
                 />
               </div>
             </div>
@@ -423,7 +393,7 @@ function WalletDisconnectedDialog(props: {
   onOpenChange: (value: boolean) => void;
 }) {
   return (
-    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+    <Dialog onOpenChange={props.onOpenChange} open={props.open}>
       <DialogContent className="p-0">
         <div className="p-6">
           <DialogHeader>
@@ -439,7 +409,7 @@ function WalletDisconnectedDialog(props: {
             <Button variant="outline">Cancel</Button>
           </DialogClose>
           <Button asChild>
-            <Link href="/login" className="gap-2">
+            <Link className="gap-2" href="/login">
               Connect Wallet
               <ArrowRightIcon className="size-4" />
             </Link>
@@ -478,9 +448,9 @@ function getLastUsedChainIds(): string[] | null {
   }
 }
 
-export async function handleNebulaPrompt(params: {
+async function handleNebulaPrompt(params: {
   abortController: AbortController;
-  message: string;
+  message: NebulaUserMessage;
   sessionId: string;
   authToken: string;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
@@ -502,108 +472,151 @@ export async function handleNebulaPrompt(params: {
 
   await promptNebula({
     abortController,
-    message,
-    sessionId,
     authToken,
+    context: contextFilters,
     handleStream(res) {
       if (abortController.signal.aborted) {
         return;
       }
 
-      if (res.event === "init") {
-        requestIdForMessage = res.data.request_id;
-      }
-
-      if (res.event === "delta") {
-        // ignore empty string delta
-        if (!res.data.v) {
+      switch (res.event) {
+        case "init": {
+          requestIdForMessage = res.data.request_id;
           return;
         }
 
-        hasReceivedResponse = true;
-        setMessages((prev) => {
-          const lastMessage = prev[prev.length - 1];
-
-          // append to previous assistant message
-          if (lastMessage?.type === "assistant") {
+        case "image": {
+          hasReceivedResponse = true;
+          setMessages((prevMessages) => {
             return [
-              ...prev.slice(0, -1),
+              ...prevMessages,
               {
-                text: lastMessage.text + res.data.v,
-                type: "assistant",
+                data: res.data,
+                request_id: res.request_id,
+                type: "image",
+              },
+            ];
+          });
+          return;
+        }
+
+        case "delta": {
+          // ignore empty string delta
+          if (!res.data.v) {
+            return;
+          }
+
+          hasReceivedResponse = true;
+          setMessages((prev) => {
+            const lastMessage = prev[prev.length - 1];
+
+            // append to previous assistant message
+            if (lastMessage?.type === "assistant") {
+              return [
+                ...prev.slice(0, -1),
+                {
+                  request_id: requestIdForMessage,
+                  text: lastMessage.text + res.data.v,
+                  type: "assistant",
+                },
+              ];
+            }
+
+            // start a new assistant message
+            return [
+              ...prev,
+              {
                 request_id: requestIdForMessage,
-              },
-            ];
-          }
-
-          // start a new assistant message
-          return [
-            ...prev,
-            {
-              text: res.data.v,
-              type: "assistant",
-              request_id: requestIdForMessage,
-            },
-          ];
-        });
-      }
-
-      if (res.event === "presence") {
-        setMessages((prev) => {
-          const lastMessage = prev[prev.length - 1];
-
-          // append to previous presence message
-          if (lastMessage?.type === "presence") {
-            return [
-              ...prev.slice(0, -1),
-              {
-                type: "presence",
-                texts: [...lastMessage.texts, res.data.data],
-              },
-            ];
-          }
-
-          // start a new presence message
-          return [...prev, { texts: [res.data.data], type: "presence" }];
-        });
-      }
-
-      if (res.event === "action") {
-        hasReceivedResponse = true;
-        if (res.type === "sign_transaction") {
-          setMessages((prevMessages) => {
-            return [
-              ...prevMessages,
-              {
-                type: "action",
-                subtype: res.type,
-                data: res.data,
+                text: res.data.v,
+                type: "assistant",
               },
             ];
           });
-        } else if (res.type === "sign_swap") {
-          setMessages((prevMessages) => {
+          return;
+        }
+
+        case "presence": {
+          setMessages((prev) => {
+            const lastMessage = prev[prev.length - 1];
+
+            // append to previous presence message
+            if (lastMessage?.type === "presence") {
+              return [
+                ...prev.slice(0, -1),
+                {
+                  texts: [...lastMessage.texts, res.data.data],
+                  type: "presence",
+                },
+              ];
+            }
+
+            // start a new presence message
+            return [...prev, { texts: [res.data.data], type: "presence" }];
+          });
+          return;
+        }
+
+        case "action": {
+          hasReceivedResponse = true;
+          switch (res.type) {
+            case "sign_transaction": {
+              setMessages((prevMessages) => {
+                return [
+                  ...prevMessages,
+                  {
+                    data: res.data,
+                    request_id: res.request_id,
+                    subtype: res.type,
+                    type: "action",
+                  },
+                ];
+              });
+              return;
+            }
+            case "sign_swap": {
+              setMessages((prevMessages) => {
+                return [
+                  ...prevMessages,
+                  {
+                    data: res.data,
+                    request_id: res.request_id,
+                    subtype: res.type,
+                    type: "action",
+                  },
+                ];
+              });
+              return;
+            }
+          }
+          return;
+        }
+
+        case "context": {
+          setContextFilters({
+            chainIds: res.data.chain_ids.map((x) => x.toString()),
+            networks: res.data.networks,
+            walletAddress: res.data.wallet_address,
+          });
+          return;
+        }
+
+        case "error": {
+          hasReceivedResponse = true;
+          setMessages((prev) => {
             return [
-              ...prevMessages,
+              ...prev,
               {
-                type: "action",
-                subtype: res.type,
-                data: res.data,
+                text: res.data.errorMessage,
+                type: "error",
               },
             ];
           });
+          return;
         }
       }
-
-      if (res.event === "context") {
-        setContextFilters({
-          chainIds: res.data.chain_ids.map((x) => x.toString()),
-          walletAddress: res.data.wallet_address,
-          networks: res.data.networks,
-        });
-      }
     },
-    context: contextFilters,
+    message,
+    sessionId,
   });
 
   // if the stream ends without any delta or tx events - we have nothing to show
@@ -622,7 +635,7 @@ export async function handleNebulaPrompt(params: {
   }
 }
 
-export function handleNebulaPromptError(params: {
+function handleNebulaPromptError(params: {
   error: unknown;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
 }) {
@@ -643,4 +656,89 @@ export function handleNebulaPromptError(params: {
 
     return newMessages;
   });
+}
+
+function parseHistoryToMessages(history: NebulaSessionHistoryMessage[]) {
+  const messages: ChatMessage[] = [];
+
+  for (const message of history) {
+    switch (message.role) {
+      case "action": {
+        try {
+          const content = JSON.parse(message.content) as {
+            session_id: string;
+            data: string;
+            type: "sign_transaction" | "sign_swap";
+            request_id: string;
+          };
+
+          if (content.type === "sign_transaction") {
+            const txData = JSON.parse(content.data);
+            messages.push({
+              data: txData,
+              request_id: content.request_id,
+              subtype: "sign_transaction",
+              type: "action",
+            });
+          } else if (content.type === "sign_swap") {
+            const swapData = JSON.parse(content.data);
+            messages.push({
+              data: swapData,
+              request_id: content.request_id,
+              subtype: "sign_swap",
+              type: "action",
+            });
+          }
+        } catch (e) {
+          console.error("error processing message", e, { message });
+        }
+        break;
+      }
+
+      case "image": {
+        const content = JSON.parse(message.content) as {
+          type: "image";
+          request_id: string;
+          data: {
+            width: number;
+            height: number;
+            url: string;
+          };
+        };
+
+        messages.push({
+          data: content.data,
+          request_id: content.request_id,
+          type: "image",
+        });
+        break;
+      }
+
+      case "user": {
+        messages.push({
+          content:
+            typeof message.content === "string"
+              ? [
+                  {
+                    text: message.content,
+                    type: "text",
+                  },
+                ]
+              : message.content,
+          type: message.role,
+        });
+        break;
+      }
+
+      case "assistant": {
+        messages.push({
+          request_id: undefined,
+          text: message.content,
+          type: message.role,
+        });
+      }
+    }
+  }
+
+  return messages;
 }
