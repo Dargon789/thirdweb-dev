@@ -2,6 +2,7 @@
 import type { TokenWithPrices } from "../../../../bridge/types/Token.js";
 import { defineChain } from "../../../../chains/utils.js";
 import type { ThirdwebClient } from "../../../../client/client.js";
+import type { SupportedFiatCurrency } from "../../../../pay/convert/type.js";
 import type { Address } from "../../../../utils/address.js";
 import { PoweredByThirdweb } from "../ConnectWallet/PoweredByTW.js";
 import { FiatValue } from "../ConnectWallet/screens/Buy/swap/FiatValue.js";
@@ -10,15 +11,19 @@ import { Button } from "../components/buttons.js";
 import { ChainName } from "../components/ChainName.js";
 import { Spacer } from "../components/Spacer.js";
 import { Text } from "../components/text.js";
-import type { UIOptions } from "./BridgeOrchestrator.js";
 import { ChainIcon } from "./common/TokenAndChain.js";
 import { WithHeader } from "./common/WithHeader.js";
+import type { DirectPaymentInfo } from "./types.js";
 
-export interface DirectPaymentProps {
-  /**
-   * Payment information for the direct payment
-   */
-  uiOptions: Extract<UIOptions, { mode: "direct_payment" }>;
+type DirectPaymentProps = {
+  paymentInfo: DirectPaymentInfo;
+  currency: SupportedFiatCurrency;
+  metadata: {
+    title: string | undefined;
+    description: string | undefined;
+    image: string | undefined;
+  };
+  buttonLabel: string | undefined;
 
   /**
    * ThirdwebClient for blockchain interactions
@@ -36,71 +41,53 @@ export interface DirectPaymentProps {
 
   /**
    * Whether to show thirdweb branding in the widget.
-   * @default true
    */
-  showThirdwebBranding?: boolean;
-}
+  showThirdwebBranding: boolean;
+};
 
 export function DirectPayment({
-  uiOptions,
+  paymentInfo,
+  metadata,
   client,
   onContinue,
   showThirdwebBranding = true,
+  buttonLabel,
+  currency,
 }: DirectPaymentProps) {
-  const chain = defineChain(uiOptions.paymentInfo.token.chainId);
+  const chain = defineChain(paymentInfo.token.chainId);
   const handleContinue = () => {
     onContinue(
-      uiOptions.paymentInfo.amount,
-      uiOptions.paymentInfo.token,
-      uiOptions.paymentInfo.sellerAddress,
+      paymentInfo.amount,
+      paymentInfo.token,
+      paymentInfo.sellerAddress,
     );
   };
-
-  const buyNow = uiOptions.buttonLabel ? (
-    <Text color="primaryButtonText" size="md">
-      {uiOptions.buttonLabel}
-    </Text>
-  ) : (
-    <Container flex="row" gap="3xs">
-      <Text color="primaryButtonText" size="md">
-        Buy Now ·
-      </Text>
-      <FiatValue
-        currency={uiOptions.currency}
-        chain={chain}
-        client={client}
-        color="primaryButtonText"
-        size="md"
-        token={uiOptions.paymentInfo.token}
-        tokenAmount={uiOptions.paymentInfo.amount}
-      />
-    </Container>
-  );
 
   return (
     <WithHeader
       client={client}
-      defaultTitle="Direct Payment"
-      uiOptions={uiOptions}
+      title={metadata.title || "Direct Payment"}
+      description={metadata.description}
+      image={metadata.image}
     >
       {/* Price section */}
       <Container
-        center="y"
         flex="row"
         gap="3xs"
         style={{
           justifyContent: "space-between",
+          alignItems: "end",
         }}
       >
         <FiatValue
-          currency={uiOptions.currency}
+          currency={currency}
           chain={chain}
           client={client}
           color="primaryText"
           size="xl"
-          token={uiOptions.paymentInfo.token}
-          tokenAmount={uiOptions.paymentInfo.amount}
-          weight={700}
+          token={paymentInfo.token}
+          tokenAmount={paymentInfo.amount}
+          weight={500}
         />
         <Container flex="row" gap="3xs">
           <Text
@@ -110,6 +97,9 @@ export function DirectPayment({
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+              opacity: 0.7,
             }}
           >
             One-time payment
@@ -117,11 +107,11 @@ export function DirectPayment({
         </Container>
       </Container>
 
-      <Spacer y="md" />
+      <Spacer y="md+" />
 
-      <Line />
+      <Line dashed />
 
-      <Spacer y="md" />
+      <Spacer y="md+" />
 
       <Container
         flex="row"
@@ -133,18 +123,12 @@ export function DirectPayment({
         <Text color="secondaryText" size="sm">
           Price
         </Text>
-        <Text
-          color="primaryText"
-          size="sm"
-          style={{
-            fontFamily: "monospace",
-          }}
-        >
-          {`${uiOptions.paymentInfo.amount} ${uiOptions.paymentInfo.token.symbol}`}
+        <Text color="primaryText" size="sm">
+          {`${paymentInfo.amount} ${paymentInfo.token.symbol}`}
         </Text>
       </Container>
 
-      <Spacer y="xs" />
+      <Spacer y="sm" />
 
       {/* Network section */}
       <Container
@@ -165,32 +149,29 @@ export function DirectPayment({
             color="primaryText"
             short
             size="sm"
-            style={{
-              fontFamily: "monospace",
-            }}
           />
         </Container>
       </Container>
 
-      <Spacer y="md" />
+      <Spacer y="md+" />
 
-      <Line />
+      <Line dashed />
 
-      <Spacer y="lg" />
+      <Spacer y="md+" />
 
       {/* Action button */}
       <Container flex="column">
         <Button fullWidth onClick={handleContinue} variant="primary">
-          {buyNow}
+          {buttonLabel || "Buy Now"}
         </Button>
 
         {showThirdwebBranding ? (
           <div>
-            <Spacer y="md" />
+            <Spacer y="md+" />
             <PoweredByThirdweb />
           </div>
         ) : null}
-        <Spacer y="lg" />
+        <Spacer y="md+" />
       </Container>
     </WithHeader>
   );

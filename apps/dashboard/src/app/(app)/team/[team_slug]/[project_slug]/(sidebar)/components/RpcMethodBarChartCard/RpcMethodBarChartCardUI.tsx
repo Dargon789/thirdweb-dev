@@ -109,14 +109,14 @@ export function RpcMethodBarChartCardUI({
 
   return (
     <Card>
-      <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0">
-        <div className="flex flex-1 flex-col justify-center gap-1 p-6">
+      <CardHeader className="flex flex-col items-stretch space-y-0 p-0">
+        <div className="flex flex-1 flex-col justify-center gap-1 p-6 pb-0">
           <CardTitle className="font-semibold text-lg">RPC Methods</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="px-2 sm:p-6 sm:pl-0">
         <ChartContainer
-          className="aspect-auto h-[250px] w-full pt-6"
+          className="aspect-auto h-[275px] w-full pt-6"
           config={chartConfig}
         >
           <RechartsBarChart

@@ -63,6 +63,7 @@ export function LaunchTokenStatus(props: {
   teamSlug: string;
   projectSlug: string;
   teamPlan: Team["billingPlan"];
+  isLegacyPlan: boolean;
 }) {
   const formValues = props.values;
   const { createTokenFunctions } = props;
@@ -230,6 +231,8 @@ export function LaunchTokenStatus(props: {
               : "ERC20Asset",
           error: errorMessage,
           step: currentStep.id,
+          is_testnet: chainMetadata?.testnet,
+          chainId: Number(formValues.chain),
         });
 
         updateStatus(i, {
@@ -247,6 +250,8 @@ export function LaunchTokenStatus(props: {
         formValues.saleMode === "drop-erc20:token-drop"
           ? "DropERC20"
           : "ERC20Asset",
+      chainId: Number(formValues.chain),
+      is_testnet: chainMetadata?.testnet,
     });
 
     if (contractAddressRef.current) {
@@ -354,6 +359,7 @@ export function LaunchTokenStatus(props: {
             </div>
             <GatedSwitch
               currentPlan={props.teamPlan}
+              isLegacyPlan={props.isLegacyPlan}
               requiredPlan="starter"
               switchProps={{
                 checked: isGasless,

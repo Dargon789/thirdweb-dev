@@ -414,7 +414,7 @@ const reactNativeRedirects = {
 
 const unityRedirects = {
   // top level
-  "/unity": "/unity/v5",
+  "/unity": "/unity/v6",
   // blocks
   "/unity/blocks/getblock": "/unity/v4/blocks/getblock",
   "/unity/blocks/getblockwithtransactions":
@@ -738,6 +738,18 @@ const paymentRedirects = {
   "/connect/pay/buy-with-fiat": "/payments",
   "/connect/pay/enable-test-mode": "/payments",
   "/connect/pay/guides/enable-test-mode": "/payments",
+  "/payments/sell": "/bridge/sell",
+  "/payments/swap": "/bridge/swap",
+  "/payments/tokens": "/bridge/tokens",
+  "/payments/routes": "/bridge/routes",
+  "/payments/x402": "/x402",
+  "/payments/x402/:path*": "/x402/:path*",
+  "/payments/fund": "/bridge/fund",
+  "/payments/products": "/bridge/products",
+  "/payments/transactions": "/bridge/transactions",
+  "/payments/send": "/bridge/send",
+  "/payments/webhooks": "/bridge/webhooks",
+  "/payments/custom-data": "/bridge/custom-data",
 };
 
 const contractRedirects = {
@@ -1081,6 +1093,10 @@ const walletRefactorRedirects = {
   "/typescript/v5/supported-wallets/:path*": "/wallets/external-wallets",
 };
 
+const bridgeRedirects = {
+  "/bridge/bridge-widget-script": "/bridge/bridge-widget/script",
+};
+
 /**
  * @type {import('next').NextConfig['redirects']}
  */
@@ -1103,6 +1119,7 @@ export const redirects = async () => {
     ...createRedirects(glossaryRedirects),
     ...createRedirects(payRedirects),
     ...createRedirects(walletRefactorRedirects),
+    ...createRedirects(bridgeRedirects),
   ];
 };
 

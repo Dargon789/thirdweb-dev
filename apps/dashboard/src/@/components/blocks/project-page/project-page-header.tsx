@@ -23,7 +23,7 @@ type Action =
       component: React.ReactNode;
     };
 
-function Action(props: { action: Action; variant?: "default" | "secondary" }) {
+function Action(props: { action: Action; variant?: "default" | "outline" }) {
   const action = props.action;
 
   return "component" in action ? (
@@ -31,10 +31,7 @@ function Action(props: { action: Action; variant?: "default" | "secondary" }) {
   ) : (
     <Button
       asChild
-      className={cn(
-        "rounded-full",
-        props.variant === "secondary" && "border border-border",
-      )}
+      className={cn("rounded-full")}
       size="sm"
       variant={props.variant}
     >
@@ -60,7 +57,7 @@ export type ProjectPageHeaderProps = {
   icon: React.FC<{ className?: string }>;
   isProjectIcon?: boolean;
   actions: {
-    primary: Action;
+    primary?: Action;
     secondary?: Action;
   } | null;
 
@@ -69,13 +66,16 @@ export type ProjectPageHeaderProps = {
     href: string;
   };
 
+  className?: string;
   // TODO: add task card component
   task?: never;
 };
 
 export function ProjectPageHeader(props: ProjectPageHeaderProps) {
   return (
-    <header className="container max-w-7xl py-6 relative">
+    <header
+      className={cn("container max-w-7xl py-6 relative", props.className)}
+    >
       {/* top row */}
       <div className="flex justify-between items-start mb-4">
         {/* left - icon */}
@@ -114,7 +114,7 @@ export function ProjectPageHeader(props: ProjectPageHeaderProps) {
           {props.actions && (
             <div className="hidden lg:flex items-center gap-3">
               {props.actions.secondary && (
-                <Action action={props.actions.secondary} variant="secondary" />
+                <Action action={props.actions.secondary} variant="outline" />
               )}
 
               {props.actions.primary && (
@@ -132,7 +132,7 @@ export function ProjectPageHeader(props: ProjectPageHeaderProps) {
             {props.title}
           </h2>
           {/* description */}
-          <p className="text-sm text-muted-foreground line-clamp-3 md:line-clamp-2">
+          <p className="text-sm text-muted-foreground text-pretty">
             {props.description}
           </p>
         </div>
@@ -145,7 +145,7 @@ export function ProjectPageHeader(props: ProjectPageHeaderProps) {
             )}
 
             {props.actions?.secondary && (
-              <Action action={props.actions.secondary} variant="secondary" />
+              <Action action={props.actions.secondary} variant="outline" />
             )}
           </div>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircleIcon, RefreshCcwIcon, XIcon } from "lucide-react";
+import { BrainIcon, RefreshCcwIcon, XIcon } from "lucide-react";
 import { lazy, Suspense, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -10,7 +10,7 @@ const Chat = lazy(() =>
   import("./chat").then((mod) => ({ default: mod.Chat })),
 );
 
-export function ChatButton() {
+export function ChatButton(props: { className?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
   const closeModal = useCallback(() => setIsOpen(false), []);
@@ -20,14 +20,14 @@ export function ChatButton() {
     <>
       {/* Inline Button (not floating) */}
       <Button
-        className="gap-2 rounded-full shadow-lg"
+        className={cn("gap-2 rounded-full bg-background", props.className)}
         onClick={() => {
           setIsOpen(true);
           setHasBeenOpened(true);
         }}
-        variant="default"
+        variant="outline"
       >
-        <MessageCircleIcon className="size-4" />
+        <BrainIcon className="size-4 text-muted-foreground" />
         Ask AI
       </Button>
 

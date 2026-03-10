@@ -10,9 +10,11 @@ import type {
   InjectedSupportedWalletIds,
   WCSupportedWalletIds,
 } from "./__generated__/wallet-ids.js";
+import { baseAccountWalletSDK } from "./base-account/base-account-wallet.js";
+import { getBaseAccountWebProvider } from "./base-account/base-account-web.js";
 import { coinbaseWalletSDK } from "./coinbase/coinbase-wallet.js";
 import { getCoinbaseWebProvider } from "./coinbase/coinbase-web.js";
-import { COINBASE } from "./constants.js";
+import { BASE_ACCOUNT, COINBASE } from "./constants.js";
 import { isEcosystemWallet } from "./ecosystem/is-ecosystem-wallet.js";
 import { ecosystemWallet } from "./in-app/web/ecosystem.js";
 import { inAppWallet } from "./in-app/web/in-app.js";
@@ -118,6 +120,30 @@ import type {
  *
  * [View Coinbase wallet creation options](https://portal.thirdweb.com/references/typescript/v5/CoinbaseWalletCreationOptions)
  *
+ * ## Connecting with Base Account SDK
+ *
+ * ```ts
+ * import { createWallet } from "thirdweb/wallets";
+ * import { base, baseSepolia } from "thirdweb/chains";
+ *
+ * // For mainnet
+ * const baseWallet = createWallet("org.base.account", {
+ *   appMetadata: {
+ *     name: "My App",
+ *     url: "https://my-app.com",
+ *     description: "my app description",
+ *     logoUrl: "https://path/to/my-app/logo.svg",
+ *   },
+ *   chains: [base], // specify supported chains (use baseSepolia for testnet)
+ * });
+ *
+ * const account = await baseWallet.connect({
+ *  client,
+ * });
+ * ```
+ *
+ * [View Base Account wallet creation options](https://portal.thirdweb.com/references/typescript/v5/BaseAccountWalletCreationOptions)
+ *
  * ## Connecting with a smart wallet
  *
  * ```ts
@@ -183,6 +209,19 @@ export function createWallet<const ID extends WalletId>(
           return showCoinbasePopup(provider);
         },
         providerFactory: () => getCoinbaseWebProvider(options),
+      }) as Wallet<ID>;
+    }
+    /**
+     * BASE ACCOUNT SDK WALLET
+     * -> uses the new @base-org/account SDK for Base smart wallet integration
+     */
+    case id === BASE_ACCOUNT: {
+      const options = creationOptions as CreateWalletArgs<
+        typeof BASE_ACCOUNT
+      >[1];
+      return baseAccountWalletSDK({
+        createOptions: options,
+        providerFactory: () => getBaseAccountWebProvider(options),
       }) as Wallet<ID>;
     }
     /**
@@ -341,34 +380,35 @@ export function createWallet<const ID extends WalletId>(
                             }
                             return;
                           }
+                          // on desktop, create a QR overlay
+                          else {
+                            try {
+                              const { createQROverlay } = await import(
+                                "./wallet-connect/qr-overlay.js"
+                              );
 
-                          try {
-                            // on desktop, create a QR overlay
-                            const { createQROverlay } = await import(
-                              "./wallet-connect/qr-overlay.js"
-                            );
+                              // Clean up any existing overlay
+                              if (qrOverlay) {
+                                qrOverlay.destroy();
+                              }
 
-                            // Clean up any existing overlay
-                            if (qrOverlay) {
-                              qrOverlay.destroy();
+                              // Create new QR overlay
+                              qrOverlay = createQROverlay(uri, {
+                                theme:
+                                  wcOptions.walletConnect?.qrModalOptions
+                                    ?.themeMode ?? "dark",
+                                qrSize: 280,
+                                showCloseButton: true,
+                                onCancel: () => {
+                                  wcOptions.walletConnect?.onCancel?.();
+                                },
+                              });
+                            } catch (error) {
+                              console.error(
+                                "Failed to create QR overlay:",
+                                error,
+                              );
                             }
-
-                            // Create new QR overlay
-                            qrOverlay = createQROverlay(uri, {
-                              theme:
-                                wcOptions.walletConnect?.qrModalOptions
-                                  ?.themeMode ?? "dark",
-                              qrSize: 280,
-                              showCloseButton: true,
-                              onCancel: () => {
-                                wcOptions.walletConnect?.onCancel?.();
-                              },
-                            });
-                          } catch (error) {
-                            console.error(
-                              "Failed to create QR overlay:",
-                              error,
-                            );
                           }
                         }
                       }),
@@ -483,6 +523,8 @@ export function createWallet<const ID extends WalletId>(
         id,
         subscribe: emitter.subscribe,
         switchChain: async (c) => {
+          // TODO: this should actually throw an error if the chain switch fails
+          // but our useSwitchActiveWalletChain hook currently doesn't handle this
           try {
             await handleSwitchChain(c);
             chain = c;

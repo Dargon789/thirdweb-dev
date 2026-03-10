@@ -220,10 +220,10 @@ export function ProjectGeneralSettingsPageUI(props: {
   const projectLayout = `/team/${props.teamSlug}/${props.project.slug}`;
 
   const paths = {
-    aaConfig: `${projectLayout}/settings/account-abstraction`,
+    aaConfig: `${projectLayout}/wallets/sponsored-gas/configuration`,
     afterDeleteRedirectTo: `/team/${props.teamSlug}`,
-    inAppConfig: `${projectLayout}/settings/wallets`,
-    payConfig: `${projectLayout}/settings/payments`,
+    inAppConfig: `${projectLayout}/wallets/user-wallets/configuration`,
+    payConfig: `${projectLayout}/bridge/configuration`,
   };
 
   const { project } = props;
@@ -539,7 +539,12 @@ function AllowedDomainsSetting(props: {
 
   return (
     <SettingsCard
-      bottomText="This is only applicable for web applications"
+      bottomText={
+        <>
+          This is only applicable for web applications. Changes to domain
+          restrictions may take up to 5 minutes to take effect
+        </>
+      }
       errorText={form.getFieldState("domains", form.formState).error?.message}
       header={{
         description:

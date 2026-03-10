@@ -1,10 +1,8 @@
 "use client";
 import { useMutation } from "@tanstack/react-query";
-import { createEoa } from "@thirdweb-dev/vault-sdk";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { engineCloudProxy } from "@/actions/proxies";
 import type { Project } from "@/api/project/projects";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,16 +15,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/Spinner";
 import { useDashboardRouter } from "@/lib/DashboardRouter";
-import { initVaultClient } from "../../lib/vault.client";
+import { cn } from "@/lib/utils";
+import { createProjectServerWallet } from "../../lib/vault.client";
 
-export default function CreateServerWallet(props: {
+export function CreateServerWallet(props: {
   project: Project;
   teamSlug: string;
-  managementAccessToken: string | undefined;
+  setAsProjectWallet?: boolean;
+  button?: {
+    size?: "default" | "sm" | "lg";
+    iconClassName?: string;
+  };
 }) {
   const router = useDashboardRouter();
   const [label, setLabel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+
+  const managementAccessToken =
+    props.project.services?.find((service) => service.name === "engineCloud")
+      ?.managementAccessToken ?? undefined;
 
   const createEoaMutation = useMutation({
     mutationFn: async ({
@@ -36,49 +43,17 @@ export default function CreateServerWallet(props: {
       managementAccessToken: string;
       label: string;
     }) => {
-      const vaultClient = await initVaultClient();
-
-      const eoa = await createEoa({
-        client: vaultClient,
-        request: {
-          auth: {
-            accessToken: managementAccessToken,
-          },
-          options: {
-            metadata: {
-              label,
-              projectId: props.project.id,
-              teamId: props.project.teamId,
-              type: "server-wallet",
-            },
-          },
-        },
-      });
-
-      if (!eoa.success) {
-        throw new Error("Failed to create eoa");
-      }
-
-      // no need to await this, it's not blocking
-      engineCloudProxy({
-        body: JSON.stringify({
-          signerAddress: eoa.data.address,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-id": props.project.publishableKey,
-          "x-team-id": props.project.teamId,
-        },
-        method: "POST",
-        pathname: "/cache/smart-account",
-      }).catch((err) => {
-        console.warn("failed to cache server wallet", err);
+      const wallet = await createProjectServerWallet({
+        label,
+        managementAccessToken,
+        project: props.project,
+        setAsProjectWallet: props.setAsProjectWallet,
       });
 
       router.refresh();
       setModalOpen(false);
-
-      return eoa;
+      setLabel("");
+      return wallet;
     },
     onError: (error) => {
       toast.error(error.message);
@@ -86,12 +61,12 @@ export default function CreateServerWallet(props: {
   });
 
   const handleCreateServerWallet = async () => {
-    if (!props.managementAccessToken) {
+    if (!managementAccessToken) {
       router.push(`/team/${props.teamSlug}/${props.project.slug}/vault`);
     } else {
       await createEoaMutation.mutateAsync({
         label,
-        managementAccessToken: props.managementAccessToken,
+        managementAccessToken: managementAccessToken,
       });
     }
   };
@@ -101,21 +76,32 @@ export default function CreateServerWallet(props: {
   return (
     <>
       <Button
-        className="gap-1.5 rounded-full bg-background"
+        className="gap-1.5 rounded-full bg-background text-foreground"
         variant="outline"
+        size={props.button?.size}
         onClick={() =>
-          props.managementAccessToken
+          managementAccessToken
             ? setModalOpen(true)
             : router.push(`/team/${props.teamSlug}/${props.project.slug}/vault`)
         }
       >
         {isLoading ? (
-          <Spinner className="size-4" />
+          <Spinner
+            className={cn(
+              "size-4 text-muted-foreground",
+              props.button?.iconClassName,
+            )}
+          />
         ) : (
-          <PlusIcon className="size-4 text-muted-foreground" />
+          <PlusIcon
+            className={cn(
+              "size-4 text-muted-foreground",
+              props.button?.iconClassName,
+            )}
+          />
         )}
 
-        {props.managementAccessToken
+        {managementAccessToken
           ? isLoading
             ? "Creating..."
             : "Create Server Wallet"

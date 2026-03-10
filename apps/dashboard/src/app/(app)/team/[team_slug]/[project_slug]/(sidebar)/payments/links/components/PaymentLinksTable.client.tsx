@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LinkIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { type PropsWithChildren, useState } from "react";
 import { toast } from "sonner";
 import { toTokens } from "thirdweb";
@@ -40,26 +40,42 @@ import { ErrorState } from "../../components/ErrorState";
 import { formatTokenAmount } from "../../components/format";
 import { CreatePaymentLinkButton } from "./CreatePaymentLinkButton.client";
 
-export function PaymentLinksTable(props: { clientId: string; teamId: string }) {
+export function PaymentLinksTable(props: {
+  clientId: string;
+  teamId: string;
+  projectWalletAddress?: string;
+  authToken: string;
+}) {
   return (
     <section>
       <div className="mb-4">
-        <h2 className="font-semibold text-xl tracking-tight">Payments</h2>
+        <h2 className="font-semibold text-xl tracking-tight">Your Payments</h2>
         <p className="text-muted-foreground text-sm">
-          Payments you have created in this project.
+          The payments you have created in this project
         </p>
       </div>
-      <PaymentLinksTableInner clientId={props.clientId} teamId={props.teamId} />
+      <PaymentLinksTableInner
+        clientId={props.clientId}
+        projectWalletAddress={props.projectWalletAddress}
+        teamId={props.teamId}
+        authToken={props.authToken}
+      />
     </section>
   );
 }
 
-function PaymentLinksTableInner(props: { clientId: string; teamId: string }) {
+function PaymentLinksTableInner(props: {
+  clientId: string;
+  teamId: string;
+  projectWalletAddress?: string;
+  authToken: string;
+}) {
   const paymentLinksQuery = useQuery({
     queryFn: async () => {
       return getPaymentLinks({
         clientId: props.clientId,
         teamId: props.teamId,
+        authToken: props.authToken,
       });
     },
     queryKey: ["payment-links", props.clientId, props.teamId],
@@ -71,6 +87,7 @@ function PaymentLinksTableInner(props: { clientId: string; teamId: string }) {
       return await Promise.all(
         paymentLinks.map(async (paymentLink) => {
           const { data } = await getPayments({
+            authToken: props.authToken,
             clientId: props.clientId,
             teamId: props.teamId,
             paymentLinkId: paymentLink.id,
@@ -114,16 +131,17 @@ function PaymentLinksTableInner(props: { clientId: string; teamId: string }) {
   if (!paymentLinksQuery.isLoading && paymentLinksQuery.data?.length === 0) {
     return (
       <EmptyState
-        icon={LinkIcon}
         title="No payments configured yet"
         description="Create a payment to receive any token in seconds."
         buttons={[
           <CreatePaymentLinkButton
             key="create-payment-link"
             clientId={props.clientId}
+            projectWalletAddress={props.projectWalletAddress}
             teamId={props.teamId}
+            authToken={props.authToken}
           >
-            <Button className="gap-1" variant="default" size="sm">
+            <Button className="gap-2 rounded-full" variant="default" size="sm">
               <PlusIcon className="size-4" />
               Create Payment
             </Button>
@@ -216,6 +234,7 @@ function PaymentLinksTableInner(props: { clientId: string; teamId: string }) {
                         clientId={props.clientId}
                         teamId={props.teamId}
                         paymentLinkId={paymentLink.id}
+                        authToken={props.authToken}
                       >
                         <Button size="icon" variant="ghost">
                           <TrashIcon className="size-4" strokeWidth={1} />
@@ -265,6 +284,7 @@ function DeletePaymentLinkButton(
     paymentLinkId: string;
     clientId: string;
     teamId: string;
+    authToken: string;
   }>,
 ) {
   const [open, setOpen] = useState(false);
@@ -275,6 +295,7 @@ function DeletePaymentLinkButton(
         clientId: props.clientId,
         teamId: props.teamId,
         paymentLinkId: id,
+        authToken: props.authToken,
       });
       return null;
     },

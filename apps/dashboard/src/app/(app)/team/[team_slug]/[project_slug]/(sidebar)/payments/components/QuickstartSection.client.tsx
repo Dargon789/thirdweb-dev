@@ -15,6 +15,8 @@ export function QuickStartSection(props: {
   projectSlug: string;
   clientId: string;
   teamId: string;
+  projectWalletAddress?: string;
+  authToken: string;
 }) {
   return (
     <section>
@@ -30,7 +32,6 @@ export function QuickStartSection(props: {
           description="Create hosted payment UIs to receive any token in seconds."
           icon={LinkIcon}
           id="payment_links"
-          color="violet"
           badge={{
             label: "New",
             variant: "success",
@@ -44,11 +45,12 @@ export function QuickStartSection(props: {
           action={
             <CreatePaymentLinkButton
               clientId={props.clientId}
+              projectWalletAddress={props.projectWalletAddress}
               teamId={props.teamId}
+              authToken={props.authToken}
             >
               <Button
-                className="w-full gap-2 group text-foreground"
-                size="sm"
+                className="w-full gap-2 group text-foreground bg-background"
                 variant="outline"
               >
                 <PlusIcon className="size-4" />
@@ -63,14 +65,13 @@ export function QuickStartSection(props: {
           icon={BadgeDollarSignIcon}
           id="fees"
           setupTime={1}
-          color="violet"
           features={[
             "Fees on every purchase",
             "Custom percentage",
             "Directly to your wallet",
           ]}
           link={{
-            href: `/team/${props.teamSlug}/${props.projectSlug}/settings/payments`,
+            href: `/team/${props.teamSlug}/${props.projectSlug}/bridge/configuration`,
             label: "Configure Fees",
           }}
         />
@@ -79,7 +80,6 @@ export function QuickStartSection(props: {
           description="Instantly add payments to your React app with prebuilt components."
           icon={CodeIcon}
           id="components"
-          color="violet"
           setupTime={2}
           features={[
             "Drop-in components",
@@ -87,9 +87,8 @@ export function QuickStartSection(props: {
             "Transactions, products, and direct payments",
           ]}
           link={{
-            href: "https://portal.thirdweb.com/payments/products",
+            href: "https://portal.thirdweb.com/bridge/products",
             label: "Get Started",
-            target: "_blank",
           }}
         />
       </div>

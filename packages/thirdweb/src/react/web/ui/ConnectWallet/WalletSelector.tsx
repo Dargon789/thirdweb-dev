@@ -1,6 +1,6 @@
 "use client";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Chain } from "../../../../chains/types.js";
 import type { ThirdwebClient } from "../../../../client/client.js";
 import type { InjectedSupportedWalletIds } from "../../../../wallets/__generated__/wallet-ids.js";
@@ -18,7 +18,8 @@ import {
 } from "../../../core/design-system/index.js";
 import { useSetSelectionData } from "../../providers/wallet-ui-states-provider.js";
 import { sortWallets } from "../../utils/sortWallets.js";
-import { LoadingScreen } from "../../wallets/shared/LoadingScreen.js";
+import InAppWalletSelectionUI from "../../wallets/in-app/InAppWalletSelectionUI.js";
+import { LAST_USED_BADGE_VERTICAL_RESERVED_SPACE } from "../components/badge.js";
 import {
   Container,
   Line,
@@ -38,14 +39,11 @@ import { OutlineWalletIcon } from "./icons/OutlineWalletIcon.js";
 import type { ConnectLocale } from "./locale/types.js";
 import { SmartConnectUI } from "./Modal/SmartWalletConnectUI.js";
 import { useScreenContext } from "./Modal/screen.js";
+import { getLastUsedWalletId } from "./Modal/storage.js";
 import { TOS } from "./Modal/TOS.js";
 import { PoweredByThirdweb } from "./PoweredByTW.js";
 import { WalletButtonEl, WalletEntryButton } from "./WalletEntryButton.js";
 import { WalletTypeRowButton } from "./WalletTypeRowButton.js";
-
-const InAppWalletSelectionUI = /* @__PURE__ */ lazy(
-  () => import("../../wallets/in-app/InAppWalletSelectionUI.js"),
-);
 
 // const localWalletId = "local";
 const inAppWalletId: WalletId = "inApp";
@@ -140,6 +138,7 @@ const WalletSelectorInner: React.FC<WalletSelectorProps> = (props) => {
   const [approvedTOS, setApprovedTOS] = useState(false);
 
   const installedWallets = getInstalledWallets();
+  const lastUsedWalletId = useMemo(() => getLastUsedWalletId(), []);
   const propsWallets = props.wallets;
   let _wallets: Wallet[] = [...propsWallets];
 
@@ -202,7 +201,7 @@ const WalletSelectorInner: React.FC<WalletSelectorProps> = (props) => {
       title={props.modalHeader.title}
     />
   ) : (
-    <Container center="y" flex="row" gap="xxs">
+    <Container center="y" flex="row" gap="xs" className="tw-header">
       {!props.meta.titleIconUrl ? null : (
         <Img
           client={props.client}
@@ -222,6 +221,12 @@ const WalletSelectorInner: React.FC<WalletSelectorProps> = (props) => {
 
   const connectAWallet = (
     <WalletTypeRowButton
+      className="tw-select-connect-a-wallet-button"
+      lastUsedBadge={
+        !!lastUsedWalletId &&
+        lastUsedWalletId !== "inApp" &&
+        !lastUsedWalletId.startsWith("ecosystem.")
+      }
       client={props.client}
       disabled={props.meta.requireApproval && !approvedTOS}
       icon={OutlineWalletIcon}
@@ -234,6 +239,7 @@ const WalletSelectorInner: React.FC<WalletSelectorProps> = (props) => {
 
   const newToWallets = (
     <Container
+      className="tw-get-started-container"
       flex="row"
       style={{
         justifyContent: "space-between",
@@ -322,7 +328,7 @@ const WalletSelectorInner: React.FC<WalletSelectorProps> = (props) => {
       bottomSection = (
         <>
           <Line />
-          <Container flex="column" gap="md" p="md">
+          <Container flex="column" gap="md" px="lg" py="md+">
             {newToWallets}
             {continueAsGuest}
           </Container>
@@ -489,6 +495,7 @@ const WalletSelectorInner: React.FC<WalletSelectorProps> = (props) => {
   return (
     <Container
       animate="fadein"
+      className="tw-wallet-selection"
       flex="column"
       fullHeight
       scrollY
@@ -498,7 +505,7 @@ const WalletSelectorInner: React.FC<WalletSelectorProps> = (props) => {
     >
       {/* Header */}
       {showHeader && (
-        <Container p="lg">
+        <Container px="lg" pt="lg" pb="xs">
           {isWalletGroupExpanded ? (
             <ModalHeader
               onBack={() => {
@@ -515,12 +522,11 @@ const WalletSelectorInner: React.FC<WalletSelectorProps> = (props) => {
       {/* Body */}
       <Container
         expand
-        px="md"
         scrollY
         style={
           !showHeader
             ? {
-                paddingTop: spacing.lg,
+                paddingTop: spacing.md,
               }
             : {
                 paddingTop: "2px",
@@ -528,28 +534,30 @@ const WalletSelectorInner: React.FC<WalletSelectorProps> = (props) => {
         }
       >
         {!showHeader && isWalletGroupExpanded && (
-          <Container
-            center="y"
-            flex="row"
-            style={{
-              padding: spacing.sm,
-              paddingTop: 0,
-            }}
-          >
-            <IconButton
-              onClick={() => {
-                setIsWalletGroupExpanded(false);
-              }}
+          <Container px="md">
+            <Container
+              center="y"
+              flex="row"
               style={{
-                gap: spacing.xxs,
-                paddingBlock: spacing.xxs,
-                paddingRight: spacing.xs,
-                transform: `translateX(-${spacing.xs})`,
+                padding: spacing.sm,
+                paddingTop: 0,
               }}
             >
-              <ChevronLeftIcon height={iconSize.sm} width={iconSize.sm} />
-              {props.connectLocale.goBackButton}
-            </IconButton>
+              <IconButton
+                onClick={() => {
+                  setIsWalletGroupExpanded(false);
+                }}
+                style={{
+                  gap: spacing.xxs,
+                  paddingBlock: spacing.xxs,
+                  paddingRight: spacing.xs,
+                  transform: `translateX(-${spacing.xs})`,
+                }}
+              >
+                <ChevronLeftIcon height={iconSize.sm} width={iconSize.sm} />
+                {props.connectLocale.goBackButton}
+              </IconButton>
+            </Container>
           </Container>
         )}
 
@@ -603,11 +611,16 @@ const WalletSelection: React.FC<{
   const wallets = sortWallets(props.wallets, props.recommendedWallets);
   const { screen } = useScreenContext();
   const setSelectionData = useSetSelectionData();
+
+  const lastUsedWalletId = useMemo(() => getLastUsedWalletId(), []);
+
   return (
     <WalletList
       style={{
         maxHeight: "370px",
         minHeight: "100%",
+        paddingTop:
+          props.size === "wide" ? 0 : LAST_USED_BADGE_VERTICAL_RESERVED_SPACE,
       }}
     >
       {wallets.map((wallet) => {
@@ -620,23 +633,22 @@ const WalletSelection: React.FC<{
             // data-full-width={!!walletConfig.selectUI}
           >
             {wallet.id === "inApp" && props.size === "compact" ? (
-              <Suspense fallback={<LoadingScreen height="195px" />}>
-                <InAppWalletSelectionUI
-                  chain={props.chain}
-                  client={props.client}
-                  connectLocale={props.connectLocale}
-                  disabled={props.disabled}
-                  done={() => props.done(wallet)}
-                  goBack={props.goBack}
-                  recommendedWallets={props.recommendedWallets}
-                  select={() => props.selectWallet(wallet)}
-                  size={props.size}
-                  wallet={wallet as Wallet<"inApp">}
-                />
-              </Suspense>
+              <InAppWalletSelectionUI
+                chain={props.chain}
+                client={props.client}
+                connectLocale={props.connectLocale}
+                disabled={props.disabled}
+                done={() => props.done(wallet)}
+                goBack={props.goBack}
+                recommendedWallets={props.recommendedWallets}
+                select={() => props.selectWallet(wallet)}
+                size={props.size}
+                wallet={wallet as Wallet<"inApp">}
+              />
             ) : (
               <WalletEntryButton
-                badge={undefined}
+                className="tw-wallet-select-wallet-button"
+                badge={lastUsedWalletId === wallet.id ? "Last used" : undefined}
                 client={props.client}
                 connectLocale={props.connectLocale}
                 isActive={isActive}
@@ -655,7 +667,7 @@ const WalletSelection: React.FC<{
       })}
 
       {props.onShowAll && props.showAllWallets !== false && (
-        <ButtonContainer>
+        <ButtonContainer className="tw-show-all-wallets-button">
           <WalletButtonEl onClick={props.onShowAll}>
             <ShowAllWalletsIcon>
               <div data-dot />
@@ -707,7 +719,7 @@ const ShowAllWalletsIcon = /* @__PURE__ */ StyledDiv(() => {
     },
     alignItems: "center",
     backgroundColor: theme.colors.tertiaryBg,
-    border: `2px solid ${theme.colors.borderColor}`,
+    border: `1px solid ${theme.colors.borderColor}`,
     borderRadius: radius.md,
     display: "grid",
     gap: spacing["4xs"],
@@ -732,7 +744,7 @@ const WalletList = /* @__PURE__ */ StyledUl({
   margin: "-2px",
   marginBottom: 0,
   // to show the box-shadow of inputs that overflows
-  padding: "2px",
+  paddingInline: spacing.md,
   paddingBottom: spacing.lg,
 });
 

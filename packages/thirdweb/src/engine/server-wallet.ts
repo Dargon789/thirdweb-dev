@@ -189,8 +189,8 @@ export function serverWallet(options: ServerWalletOptions): ServerWallet {
         };
       case "EIP7702":
         return {
+          ...executionOptions,
           chainId,
-          from: address,
           type: "EIP7702",
         };
     }
@@ -332,6 +332,7 @@ export function serverWallet(options: ServerWalletOptions): ServerWallet {
       if (args.simulate) {
         serializedTransaction = await toSerializableTransaction({
           transaction: args.transaction,
+          from: address,
         });
       } else {
         const [to, data, value] = await Promise.all([

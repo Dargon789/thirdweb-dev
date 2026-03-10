@@ -7,6 +7,8 @@ import {
   getInvoicePaymentUrl,
 } from "../../../utils/billing";
 
+export const dynamic = "force-dynamic";
+
 export default async function CheckoutPage(props: {
   params: Promise<{
     team_slug: string;
@@ -15,15 +17,21 @@ export default async function CheckoutPage(props: {
   searchParams: Promise<{
     amount?: string;
     invoice_id?: string;
+    project_id?: string;
+    chain_id?: string | string[];
   }>;
 }) {
-  const params = await props.params;
+  const [params, searchParams] = await Promise.all([
+    props.params,
+    props.searchParams,
+  ]);
+
+  console.log("params", params);
+  console.log("searchParams", searchParams);
 
   switch (params.sku) {
     case "topup": {
-      const amountUSD = Number.parseInt(
-        (await props.searchParams).amount || "10",
-      );
+      const amountUSD = Number.parseInt(searchParams.amount || "10");
       if (Number.isNaN(amountUSD)) {
         return <StripeRedirectErrorPage errorMessage="Invalid amount" />;
       }
@@ -41,7 +49,7 @@ export default async function CheckoutPage(props: {
       break;
     }
     case "invoice": {
-      const invoiceId = (await props.searchParams).invoice_id;
+      const invoiceId = searchParams.invoice_id;
       if (!invoiceId) {
         return <StripeRedirectErrorPage errorMessage="Invalid invoice ID" />;
       }
@@ -57,10 +65,12 @@ export default async function CheckoutPage(props: {
       redirect(invoice);
       break;
     }
+
     default: {
       const response = await getBillingCheckoutUrl({
         sku: decodeURIComponent(params.sku) as Exclude<ProductSKU, null>,
         teamSlug: params.team_slug,
+        params: searchParams,
       });
 
       if (response.status === "error") {

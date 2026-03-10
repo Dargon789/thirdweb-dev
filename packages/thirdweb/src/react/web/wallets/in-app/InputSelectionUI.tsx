@@ -6,6 +6,7 @@ import {
   radius,
   spacing,
 } from "../../../core/design-system/index.js";
+import { LastUsedBadge } from "../../ui/components/badge.js";
 import { IconButton } from "../../ui/components/buttons.js";
 import { Input, InputContainer } from "../../ui/components/formElements.js";
 import { Spacer } from "../../ui/components/Spacer.js";
@@ -14,6 +15,7 @@ import { CountrySelector, getCountrySelector } from "./CountrySelector.js";
 import type { SupportedSmsCountry } from "./supported-sms-countries.js";
 
 export function InputSelectionUI(props: {
+  className?: string;
   onSelect: (data: string) => void;
   placeholder: string;
   name: string;
@@ -25,6 +27,7 @@ export function InputSelectionUI(props: {
   disabled?: boolean;
   defaultSmsCountryCode?: SupportedSmsCountry;
   allowedSmsCountryCodes?: SupportedSmsCountry[];
+  lastUsedBadge: boolean;
 }) {
   const [countryCodeInfo, setCountryCodeInfo] = useState(
     props.defaultSmsCountryCode
@@ -63,6 +66,7 @@ export function InputSelectionUI(props: {
       }}
     >
       <InputContainer
+        className={props.className}
         data-error={renderingError}
         style={{
           display: "flex",
@@ -70,6 +74,8 @@ export function InputSelectionUI(props: {
           position: "relative",
         }}
       >
+        {props.lastUsedBadge && <LastUsedBadge />}
+
         {props.format === "phone" && (
           <CountrySelector
             allowedCountryCodes={props.allowedSmsCountryCodes}

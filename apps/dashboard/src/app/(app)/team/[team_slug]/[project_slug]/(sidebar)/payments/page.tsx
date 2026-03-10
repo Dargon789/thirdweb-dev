@@ -1,17 +1,15 @@
 import { Button } from "@workspace/ui/components/button";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, WebhookIcon } from "lucide-react";
 import { redirect } from "next/navigation";
-import { ResponsiveSearchParamsProvider } from "responsive-rsc";
 import { getAuthToken } from "@/api/auth-token";
 import { getProject } from "@/api/project/projects";
 import { ProjectPage } from "@/components/blocks/project-page/project-page";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
 import { PayIcon } from "@/icons/PayIcon";
+import { getProjectWallet } from "@/lib/server/project-wallet";
 import { loginRedirect } from "@/utils/redirects";
 import { AdvancedSection } from "./components/AdvancedSection.client";
-import { PayAnalytics } from "./components/PayAnalytics";
 import { QuickStartSection } from "./components/QuickstartSection.client";
-import { getUniversalBridgeFiltersFromSearchParams } from "./components/time";
 import { CreatePaymentLinkButton } from "./links/components/CreatePaymentLinkButton.client";
 import { PaymentLinksTable } from "./links/components/PaymentLinksTable.client";
 
@@ -20,14 +18,8 @@ export default async function Page(props: {
     team_slug: string;
     project_slug: string;
   }>;
-  searchParams: Promise<{
-    from?: string | undefined | string[];
-    to?: string | undefined | string[];
-    interval?: string | undefined | string[];
-  }>;
 }) {
   const [params, authToken] = await Promise.all([props.params, getAuthToken()]);
-
   const project = await getProject(params.team_slug, params.project_slug);
 
   if (!authToken) {
@@ -38,14 +30,7 @@ export default async function Page(props: {
     redirect(`/team/${params.team_slug}`);
   }
 
-  const searchParams = await props.searchParams;
-
-  const { range, interval } = getUniversalBridgeFiltersFromSearchParams({
-    defaultRange: "last-30",
-    from: searchParams.from,
-    interval: searchParams.interval,
-    to: searchParams.to,
-  });
+  const projectWallet = await getProjectWallet(project);
 
   const client = getClientThirdwebClient({
     jwt: authToken,
@@ -60,9 +45,8 @@ export default async function Page(props: {
         icon: PayIcon,
         description: (
           <>
-            Payments allow you to create advanced payment flows to monetize your
-            app through <br className="max-sm:hidden" /> product sales, peer to
-            peer payments, token sales, and more.
+            Payments allows developers accept crypto payments for goods and
+            services
           </>
         ),
         actions: {
@@ -70,7 +54,9 @@ export default async function Page(props: {
             component: (
               <CreatePaymentLinkButton
                 clientId={project.publishableKey}
+                projectWalletAddress={projectWallet?.address}
                 teamId={project.teamId}
+                authToken={authToken}
               >
                 <Button className="gap-1.5 rounded-full" size="sm">
                   <PlusIcon className="size-4" />
@@ -79,9 +65,14 @@ export default async function Page(props: {
               </CreatePaymentLinkButton>
             ),
           },
+          secondary: {
+            href: `/team/${params.team_slug}/${params.project_slug}/bridge/webhooks`,
+            label: "Webhooks",
+            icon: <WebhookIcon className="size-3.5 text-muted-foreground" />,
+          },
         },
         settings: {
-          href: `/team/${params.team_slug}/${params.project_slug}/settings/payments`,
+          href: `/team/${params.team_slug}/${params.project_slug}/bridge/configuration`,
         },
         links: [
           {
@@ -90,40 +81,32 @@ export default async function Page(props: {
           },
           {
             type: "playground",
-            href: "https://playground.thirdweb.com/payments/ui-components",
+            href: "https://playground.thirdweb.com/bridge",
           },
           {
             type: "api",
-            href: "https://api.thirdweb.com/reference#tag/payments",
+            href: "https://api.thirdweb.com/reference#tag/x402",
           },
-          {
-            type: "webhooks",
-            href: `/team/${params.team_slug}/${params.project_slug}/webhooks/payments`,
-          },
-          // {
-          //   type: "settings",
-          //   href: `/team/${params.team_slug}/${params.project_slug}/settings/payments`,
-          // },
         ],
       }}
       footer={{
         center: {
           links: [
             {
-              href: "https://playground.thirdweb.com/payments/ui-components",
-              label: "UI Component",
+              href: "https://playground.thirdweb.com/bridge/buy-widget",
+              label: "Buy Widget",
             },
             {
-              href: "https://playground.thirdweb.com/connect/payments/fund-wallet",
-              label: "Buy Crypto",
+              href: "https://playground.thirdweb.com/bridge/checkout-widget",
+              label: "Checkout Widget",
             },
             {
-              href: "https://playground.thirdweb.com/connect/payments/commerce",
-              label: "Checkout",
+              href: "https://playground.thirdweb.com/bridge/transaction-widget",
+              label: "Transaction Widget",
             },
             {
-              href: "https://playground.thirdweb.com/connect/payments/transactions",
-              label: "Transactions",
+              href: "https://playground.thirdweb.com/bridge/swap-widget",
+              label: "Swap Widget",
             },
           ],
           title: "Demos",
@@ -160,36 +143,27 @@ export default async function Page(props: {
         },
       }}
     >
-      <ResponsiveSearchParamsProvider value={searchParams}>
-        <div className="flex flex-col gap-12">
-          <PayAnalytics
-            client={client}
-            interval={interval}
-            projectClientId={project.publishableKey}
-            projectId={project.id}
-            range={range}
-            teamId={project.teamId}
-            authToken={authToken}
-          />
+      <div className="flex flex-col gap-12">
+        <PaymentLinksTable
+          clientId={project.publishableKey}
+          projectWalletAddress={projectWallet?.address}
+          teamId={project.teamId}
+          authToken={authToken}
+        />
+        <QuickStartSection
+          projectSlug={params.project_slug}
+          teamSlug={params.team_slug}
+          clientId={project.publishableKey}
+          projectWalletAddress={projectWallet?.address}
+          teamId={project.teamId}
+          authToken={authToken}
+        />
 
-          <PaymentLinksTable
-            clientId={project.publishableKey}
-            teamId={project.teamId}
-          />
-
-          <QuickStartSection
-            projectSlug={params.project_slug}
-            teamSlug={params.team_slug}
-            clientId={project.publishableKey}
-            teamId={project.teamId}
-          />
-
-          <AdvancedSection
-            projectSlug={params.project_slug}
-            teamSlug={params.team_slug}
-          />
-        </div>
-      </ResponsiveSearchParamsProvider>
+        <AdvancedSection
+          teamSlug={params.team_slug}
+          projectSlug={params.project_slug}
+        />
+      </div>
     </ProjectPage>
   );
 }

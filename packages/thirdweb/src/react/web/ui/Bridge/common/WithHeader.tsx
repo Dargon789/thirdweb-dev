@@ -1,61 +1,67 @@
 import type { ThirdwebClient } from "../../../../../client/client.js";
 import { resolveScheme } from "../../../../../utils/ipfs.js";
 import { useCustomTheme } from "../../../../core/design-system/CustomThemeProvider.js";
-import { radius } from "../../../../core/design-system/index.js";
+import { radius, spacing } from "../../../../core/design-system/index.js";
 import { Container } from "../../components/basic.js";
 import { Spacer } from "../../components/Spacer.js";
 import { Text } from "../../components/text.js";
-import type { UIOptions } from "../BridgeOrchestrator.js";
 
-export function WithHeader({
-  children,
-  uiOptions,
-  defaultTitle,
-  client,
-}: {
+export function WithHeader(props: {
   children: React.ReactNode;
-  uiOptions: UIOptions;
-  defaultTitle: string;
+  title: string | undefined;
+  description: string | undefined;
+  image: string | undefined;
   client: ThirdwebClient;
 }) {
   const theme = useCustomTheme();
+
   return (
     <Container flex="column">
       {/* image */}
-      {uiOptions.metadata?.image && (
+      {props.image && (
         <div
+          className="tw-header-image"
           style={{
             aspectRatio: "16/9",
             backgroundColor: theme.colors.tertiaryBg,
-            backgroundImage: `url(${getUrl(client, uiOptions.metadata.image)})`,
+            backgroundImage: `url(${getUrl(props.client, props.image)})`,
             backgroundPosition: "center",
             backgroundSize: "cover",
             borderRadius: `${radius.md} ${radius.md} 0 0`,
+            marginBottom: spacing.xxs,
             overflow: "hidden",
             width: "100%",
           }}
         />
       )}
-      <Container flex="column" px="lg">
-        <Spacer y="lg" />
 
-        {/* title */}
-        <Text color="primaryText" size="lg" weight={700}>
-          {uiOptions.metadata?.title || defaultTitle}
-        </Text>
+      <Container flex="column" px="md">
+        <Spacer y="md" />
 
-        {/* Description */}
-        {uiOptions.metadata?.description && (
+        {(props.title || props.description) && (
           <>
-            <Spacer y="xs" />
-            <Text color="secondaryText" size="sm">
-              {uiOptions.metadata?.description}
-            </Text>
+            {/* title */}
+            {props.title && (
+              <Text color="primaryText" size="lg" weight={500} trackingTight>
+                {props.title}
+              </Text>
+            )}
+
+            {/* Description */}
+            {props.description && (
+              <>
+                <Spacer y="xxs" />
+                <Text color="secondaryText" size="sm" multiline>
+                  {props.description}
+                </Text>
+              </>
+            )}
+
+            <Spacer y="md" />
           </>
         )}
 
-        <Spacer y="lg" />
-        {children}
+        {props.children}
       </Container>
     </Container>
   );

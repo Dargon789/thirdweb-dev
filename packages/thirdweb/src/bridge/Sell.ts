@@ -9,7 +9,7 @@ import { ApiError } from "./types/Errors.js";
 import type { PreparedQuote, Quote } from "./types/Quote.js";
 
 /**
- * Retrieves a Universal Bridge quote for the provided sell intent. The quote will specify the expected `destinationAmount` that will be received in exchange for the specified `originAmount`, which is specified with the `sellAmountWei` option.
+ * Retrieves a Bridge quote for the provided sell intent. The quote will specify the expected `destinationAmount` that will be received in exchange for the specified `originAmount`, which is specified with the `sellAmountWei` option.
  *
  * @example
  * ```typescript
@@ -200,7 +200,7 @@ export declare namespace quote {
 }
 
 /**
- * Prepares a **finalized** Universal Bridge quote for the provided sell request with transaction data. This function will return everything `quote` does, with the addition of a series of prepared transactions and the associated expiration timestamp.
+ * Prepares a **finalized** Bridge quote for the provided sell request with transaction data. This function will return everything `quote` does, with the addition of a series of prepared transactions and the associated expiration timestamp.
  *
  * @example
  * ```typescript
@@ -352,6 +352,7 @@ export async function prepare(
     purchaseData,
     maxSteps,
     paymentLinkId,
+    slippageToleranceBps,
   } = options;
 
   const clientFetch = getClientFetch(client);
@@ -370,6 +371,7 @@ export async function prepare(
       receiver,
       sellAmountWei: amount.toString(),
       sender,
+      slippageToleranceBps,
     }),
     headers: {
       "Content-Type": "application/json",
@@ -448,6 +450,8 @@ export declare namespace prepare {
     purchaseData?: PurchaseData;
     /** Maximum number of steps in the route */
     maxSteps?: number;
+    /** The maximum slippage in basis points (bps) allowed for the transaction. */
+    slippageToleranceBps?: number;
     /**
      * @hidden
      */

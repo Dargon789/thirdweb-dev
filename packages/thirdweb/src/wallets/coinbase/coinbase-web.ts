@@ -188,7 +188,17 @@ function createAccount({
     onTransactionRequested: async () => {
       // make sure to show the coinbase popup BEFORE doing any transaction preprocessing
       // otherwise the popup might get blocked in safari
-      await showCoinbasePopup(provider);
+      // but only if using cb smart wallet (web based)
+      if (window.localStorage) {
+        // this is the local storage key for the signer type in the cb web sdk
+        // value can be "scw" (web) or "walletlink" (mobile wallet)
+        const signerType = window.localStorage.getItem(
+          "-CBWSDK:SignerConfigurator:SignerType",
+        );
+        if (signerType === "scw") {
+          await showCoinbasePopup(provider);
+        }
+      }
     },
     async sendTransaction(tx: SendTransactionOption) {
       const transactionHash = (await provider.request({
@@ -307,6 +317,22 @@ function createAccount({
           params: [options.id],
         })) as GetCallsStatusRawResponse;
         return toGetCallsStatusResponse(rawResponse);
+      } catch (error) {
+        if (/unsupport|not support/i.test((error as Error).message)) {
+          throw new Error(
+            `${COINBASE} does not support wallet_getCallsStatus, reach out to them directly to request EIP-5792 support.`,
+          );
+        }
+        throw error;
+      }
+    },
+    async getCallsStatusRaw(options) {
+      try {
+        const rawResponse = (await provider.request({
+          method: "wallet_getCallsStatus",
+          params: [options.id],
+        })) as GetCallsStatusRawResponse;
+        return rawResponse;
       } catch (error) {
         if (/unsupport|not support/i.test((error as Error).message)) {
           throw new Error(
@@ -464,6 +490,16 @@ async function switchChainCoinbaseWalletSDK(
   provider: ProviderInterface,
   chain: Chain,
 ) {
+  // check if chain is already connected
+  const connectedChainId = (await provider.request({
+    method: "eth_chainId",
+  })) as string | number;
+  const connectedChain = getCachedChain(normalizeChainId(connectedChainId));
+  if (connectedChain?.id === chain.id) {
+    // chain is already connected, no need to switch
+    return;
+  }
+
   const chainIdHex = numberToHex(chain.id);
 
   try {

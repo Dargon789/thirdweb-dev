@@ -91,3 +91,8 @@ if (REDIS_URL) {
     REDIS_URL,
   );
 }
+
+// DO NOT TAINT THESE VALUES (for now)
+export const GROWTH_PLAN_SKU = process.env.GROWTH_PLAN_SKU || "";
+export const PAYMENT_METHOD_CONFIGURATION =
+  process.env.PAYMENT_METHOD_CONFIGURATION || "";

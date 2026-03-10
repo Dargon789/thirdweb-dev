@@ -4,6 +4,7 @@ import type { AsyncStorage } from "../../utils/storage/AsyncStorage.js";
 import { timeoutPromise } from "../../utils/timeoutPromise.js";
 import { isEcosystemWallet } from "../ecosystem/is-ecosystem-wallet.js";
 import { ClientScopedStorage } from "../in-app/core/authentication/client-scoped-storage.js";
+import { linkAccount } from "../in-app/core/authentication/linkAccount.js";
 import type {
   AuthArgsType,
   AuthStoredTokenWithCookieReturnType,
@@ -28,7 +29,6 @@ type AutoConnectCoreProps = {
   connectOverride?: (
     walletOrFn: Wallet | (() => Promise<Wallet>),
   ) => Promise<Wallet | null>;
-  getInstalledWallets?: () => Wallet[];
   setLastAuthProvider?: (
     authProvider: AuthArgsType["strategy"],
     storage: AsyncStorage,
@@ -69,7 +69,6 @@ const _autoConnectCore = async ({
   createWalletFn,
   manager,
   connectOverride,
-  getInstalledWallets,
   setLastAuthProvider,
 }: AutoConnectCoreProps): Promise<boolean> => {
   const { wallets, onConnect } = props;
@@ -84,6 +83,24 @@ const _autoConnectCore = async ({
   ]);
 
   const urlToken = getUrlToken();
+
+  // Handle linking flow: autoconnect with stored credentials, then link the new profile
+  if (urlToken?.authFlow === "link" && urlToken.authResult) {
+    const linkingResult = await handleLinkingFlow({
+      client: props.client,
+      connectOverride,
+      createWalletFn,
+      manager,
+      onConnect,
+      props,
+      setLastAuthProvider,
+      storage,
+      timeout,
+      urlToken,
+      wallets,
+    });
+    return linkingResult;
+  }
 
   // If an auth cookie is found and this site supports the wallet, we'll set the auth cookie in the client storage
   const wallet = wallets.find((w) => w.id === urlToken?.walletId);
@@ -120,7 +137,13 @@ const _autoConnectCore = async ({
   // in that case, we default to the passed chain to connect to
   const lastConnectedChain =
     (await getLastConnectedChain(storage)) || props.chain;
-  const availableWallets = [...wallets, ...(getInstalledWallets?.() ?? [])];
+  const availableWallets = lastConnectedWalletIds.map((id) => {
+    const specifiedWallet = wallets.find((w) => w.id === id);
+    if (specifiedWallet) {
+      return specifiedWallet;
+    }
+    return createWalletFn(id as WalletId);
+  });
   const activeWallet =
     lastActiveWalletId &&
     (availableWallets.find((w) => w.id === lastActiveWalletId) ||
@@ -148,22 +171,12 @@ const _autoConnectCore = async ({
 
     try {
       // connected wallet could be activeWallet or smart wallet
-      const connectedWallet = await (connectOverride
+      await (connectOverride
         ? connectOverride(activeWallet)
         : manager.connect(activeWallet, {
             accountAbstraction: props.accountAbstraction,
             client: props.client,
           }));
-      if (connectedWallet) {
-        autoConnected = true;
-        try {
-          onConnect?.(connectedWallet);
-        } catch {
-          // ignore
-        }
-      } else {
-        manager.activeWalletConnectionStatusStore.setValue("disconnected");
-      }
     } catch (e) {
       if (e instanceof Error) {
         console.warn("Error auto connecting wallet:", e.message);
@@ -212,8 +225,154 @@ const _autoConnectCore = async ({
     });
   }
   manager.isAutoConnecting.setValue(false);
+
+  const connectedActiveWallet = manager.activeWalletStore.getValue();
+  const allConnectedWallets = manager.connectedWallets.getValue();
+  if (connectedActiveWallet) {
+    autoConnected = true;
+    try {
+      onConnect?.(connectedActiveWallet, allConnectedWallets);
+    } catch (e) {
+      console.error("Error calling onConnect callback:", e);
+    }
+  } else {
+    manager.activeWalletConnectionStatusStore.setValue("disconnected");
+  }
+
   return autoConnected; // useQuery needs a return value
 };
+
+/**
+ * Handles the linking flow when returning from an OAuth redirect with authFlow=link.
+ * This autoconnects using stored credentials, then links the new profile from the URL token.
+ * @internal
+ */
+async function handleLinkingFlow(params: {
+  client: ThirdwebClient;
+  urlToken: NonNullable<ReturnType<typeof getUrlToken>>;
+  wallets: Wallet[];
+  storage: AsyncStorage;
+  manager: ConnectionManager;
+  onConnect?: (wallet: Wallet, connectedWallets: Wallet[]) => void;
+  timeout: number;
+  connectOverride?: (
+    walletOrFn: Wallet | (() => Promise<Wallet>),
+  ) => Promise<Wallet | null>;
+  createWalletFn: (id: WalletId) => Wallet;
+  setLastAuthProvider?: (
+    authProvider: AuthArgsType["strategy"],
+    storage: AsyncStorage,
+  ) => Promise<void>;
+  props: AutoConnectProps & { wallets: Wallet[] };
+}): Promise<boolean> {
+  const {
+    client,
+    connectOverride,
+    createWalletFn,
+    manager,
+    onConnect,
+    props,
+    setLastAuthProvider,
+    storage,
+    timeout,
+    urlToken,
+    wallets,
+  } = params;
+
+  // Get stored wallet credentials (not from URL)
+  const [storedConnectedWalletIds, storedActiveWalletId] = await Promise.all([
+    getStoredConnectedWalletIds(storage),
+    getStoredActiveWalletId(storage),
+  ]);
+  const lastConnectedChain =
+    (await getLastConnectedChain(storage)) || props.chain;
+
+  if (!storedActiveWalletId || !storedConnectedWalletIds) {
+    console.warn("No stored wallet found for linking flow");
+    manager.isAutoConnecting.setValue(false);
+    return false;
+  }
+
+  // Update auth provider if provided
+  if (urlToken.authProvider) {
+    await setLastAuthProvider?.(urlToken.authProvider, storage);
+  }
+
+  // Find or create the active wallet from stored credentials
+  const activeWallet =
+    wallets.find((w) => w.id === storedActiveWalletId) ||
+    createWalletFn(storedActiveWalletId);
+
+  // Autoconnect WITHOUT the URL token (use stored credentials)
+  manager.activeWalletConnectionStatusStore.setValue("connecting");
+  try {
+    await timeoutPromise(
+      handleWalletConnection({
+        authResult: undefined, // Don't use URL token for connection
+        client,
+        lastConnectedChain,
+        wallet: activeWallet,
+      }),
+      {
+        message: `AutoConnect timeout: ${timeout}ms limit exceeded.`,
+        ms: timeout,
+      },
+    );
+
+    await (connectOverride
+      ? connectOverride(activeWallet)
+      : manager.connect(activeWallet, {
+          accountAbstraction: props.accountAbstraction,
+          client,
+        }));
+  } catch (e) {
+    console.warn("Failed to auto-connect for linking:", e);
+    manager.activeWalletConnectionStatusStore.setValue("disconnected");
+    manager.isAutoConnecting.setValue(false);
+    return false;
+  }
+
+  // Now link the new profile using URL auth token
+  const ecosystem = isEcosystemWallet(activeWallet)
+    ? {
+        id: activeWallet.id,
+        partnerId: activeWallet.getConfig()?.partnerId,
+      }
+    : undefined;
+
+  const clientStorage = new ClientScopedStorage({
+    clientId: client.clientId,
+    ecosystem,
+    storage,
+  });
+
+  try {
+    await linkAccount({
+      client,
+      ecosystem,
+      storage: clientStorage,
+      tokenToLink: urlToken.authResult!.storedToken.cookieString,
+    });
+  } catch (e) {
+    console.error("Failed to link profile after redirect:", e);
+    // Continue - user is still connected, just linking failed
+  }
+
+  manager.isAutoConnecting.setValue(false);
+
+  const connectedWallet = manager.activeWalletStore.getValue();
+  const allConnectedWallets = manager.connectedWallets.getValue();
+  if (connectedWallet) {
+    try {
+      onConnect?.(connectedWallet, allConnectedWallets);
+    } catch (e) {
+      console.error("Error calling onConnect callback:", e);
+    }
+    return true;
+  }
+
+  return false;
+}
 
 /**
  * @internal

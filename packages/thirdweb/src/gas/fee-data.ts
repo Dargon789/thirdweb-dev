@@ -47,6 +47,7 @@ const FORCE_GAS_PRICE_CHAIN_IDS = [
   2020, // Ronin Mainnet
   2021, // Ronin Testnet (Saigon)
   98866, // Plume mainnet
+  1417429182, // Wilderworld Zephyr Testnet
 ];
 
 /**
@@ -242,7 +243,7 @@ function getGasStationUrl(chainId: 137 | 80002): string {
     case 137:
       return "https://gasstation.polygon.technology/v2";
     case 80002:
-      return "https://gasstation-testnet.polygon.technology/v2";
+      return "https://gasstation.polygon.technology/amoy";
   }
 }
 

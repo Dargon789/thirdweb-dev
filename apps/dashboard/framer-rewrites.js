@@ -10,6 +10,8 @@ module.exports = [
   "/wallets",
   "/account-abstraction",
   "/payments",
+  "/x402",
+  "/nexus",
   "/auth",
   "/in-app-wallets",
   "/transactions",
@@ -19,6 +21,7 @@ module.exports = [
   "/rpc",
   "/insight",
   "/storage",
+  "/gateway",
   // -- end scale category
 
   // -- ai
@@ -64,4 +67,8 @@ module.exports = [
   "/enterprise",
   "/token",
   "/vault",
+  "/monetize/bridge",
+  // ai
+  "/ai-privacy-policy",
+  "/ai-terms",
 ];

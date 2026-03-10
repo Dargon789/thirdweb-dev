@@ -16,6 +16,7 @@ import {
 } from "@/icons";
 import { cn } from "@/lib/utils";
 import { CodeClient } from "../code/code.client";
+import { Button } from "../ui/button";
 
 type AuthMethod =
   | "email"
@@ -28,6 +29,9 @@ type AuthMethod =
   | "telegram"
   | "farcaster"
   | "github"
+  | "line"
+  | "tiktok"
+  | "epic"
   | "passkey"
   | "wallet"
   | "guest"
@@ -54,6 +58,9 @@ const authMethods: { id: AuthMethod; label: string; description: string }[] = [
   { id: "telegram", label: "Telegram", description: "Telegram OAuth" },
   { id: "farcaster", label: "Farcaster", description: "Farcaster OAuth" },
   { id: "github", label: "GitHub", description: "GitHub OAuth" },
+  { id: "line", label: "Line", description: "Line OAuth" },
+  { id: "tiktok", label: "TikTok", description: "TikTok OAuth" },
+  { id: "epic", label: "Epic Games", description: "Epic Games OAuth" },
   { id: "passkey", label: "Passkey", description: "WebAuthn passkey" },
   {
     id: "wallet",
@@ -243,6 +250,9 @@ const account = await wallet.connect({
     case "telegram":
     case "farcaster":
     case "github":
+    case "line":
+    case "tiktok":
+    case "epic":
       return (
         baseSetup +
         `// ${authMethod.charAt(0).toUpperCase() + authMethod.slice(1)} OAuth
@@ -560,6 +570,9 @@ function PrebuiltUIExample() {
     case "telegram":
     case "farcaster":
     case "github":
+    case "line":
+    case "tiktok":
+    case "epic":
       return (
         baseSetup +
         `      await wallet.connect({\n        client,\n        strategy: "${authMethod}",\n      });\n` +
@@ -638,7 +651,10 @@ var address = await wallet.LoginWithOtp("123456");`
     case "x":
     case "telegram":
     case "farcaster":
-    case "github": {
+    case "github":
+    case "line":
+    case "tiktok":
+    case "epic": {
       const providerMap: Record<string, string> = {
         google: "Google",
         apple: "Apple",
@@ -648,6 +664,9 @@ var address = await wallet.LoginWithOtp("123456");`
         telegram: "Telegram",
         farcaster: "Farcaster",
         github: "Github",
+        line: "Line",
+        tiktok: "TikTok",
+        epic: "Epic",
       };
       return (
         baseSetup +
@@ -745,7 +764,10 @@ var wallet = await ThirdwebManager.Instance.ConnectWallet(options);`
     case "x":
     case "telegram":
     case "farcaster":
-    case "github": {
+    case "github":
+    case "line":
+    case "tiktok":
+    case "epic": {
       const providerMap: Record<string, string> = {
         google: "Google",
         apple: "Apple",
@@ -755,6 +777,9 @@ var wallet = await ThirdwebManager.Instance.ConnectWallet(options);`
         telegram: "Telegram",
         farcaster: "Farcaster",
         github: "Github",
+        line: "Line",
+        tiktok: "TikTok",
+        epic: "Epic",
       };
       return (
         baseSetup +
@@ -811,10 +836,8 @@ var wallet = await ThirdwebManager.Instance.ConnectWallet(options);`
   }
 };
 
-const getUnrealSnippet = (authMethod: AuthMethod): string => {
-  return `// ${authMethod.charAt(0).toUpperCase() + authMethod.slice(1)} authentication in Unreal Engine
-// Use the Blueprint nodes for ${authMethod} authentication
-// See the Unreal Engine documentation for specific Blueprint setup`;
+const getUnrealSnippet = (_authMethod: AuthMethod): string => {
+  return `For Unreal Engine implementation, see the [Unreal Engine SDK documentation](/unreal-engine).`;
 };
 
 function AuthMethodsTabsContent() {
@@ -849,16 +872,15 @@ function AuthMethodsTabsContent() {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {authMethods.map((method) => (
-            <button
+            <Button
               type="button"
+              variant="outline"
               key={method.id}
               onClick={() => setSelectedAuth(method.id)}
               className={cn(
-                "overflow-hidden text-ellipsis px-3 py-1.5  transition-colors duration-300 hover:text-foreground text-sm rounded-lg hover:bg-violet-800/15",
-                selectedAuth === method.id
-                  ? "font-medium text-foreground bg-violet-800/25 border border-violet-800"
-                  : "",
-                "flex flex-row justify-start items-start gap-3",
+                "overflow-hidden text-ellipsis text-sm rounded-lg hover:bg-accent justify-start gap-3 h-auto py-3 rounded-xl",
+                selectedAuth === method.id &&
+                  "font-medium text-foreground bg-accent",
               )}
             >
               <img
@@ -866,8 +888,8 @@ function AuthMethodsTabsContent() {
                 className="size-5 shrink-0"
                 src={getSocialIcon(method.id)}
               />
-              <div className="font-medium">{method.label}</div>
-            </button>
+              <div>{method.label}</div>
+            </Button>
           ))}
         </div>
       </div>
@@ -899,36 +921,68 @@ function AuthMethodsTabsContent() {
                 value={platform.id}
                 className="mt-4"
               >
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex size-5 items-center justify-center">
-                      <IconComponent />
-                    </span>
-                    <h4 className="font-medium">
-                      {authMethods.find((m) => m.id === selectedAuth)?.label}{" "}
-                      authentication with {platform.label}
-                    </h4>
+                {platform.id === "unreal" ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex size-5 items-center justify-center">
+                        <IconComponent />
+                      </span>
+                      <h4 className="font-medium">
+                        {authMethods.find((m) => m.id === selectedAuth)?.label}{" "}
+                        authentication with {platform.label}
+                      </h4>
+                    </div>
+                    <a
+                      href="/unreal-engine"
+                      className="block p-4 border rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1">
+                          <UnrealEngineIcon />
+                        </div>
+                        <div>
+                          <h5 className="font-medium mb-1">
+                            Unreal Engine SDK
+                          </h5>
+                          <p className="text-sm text-muted-foreground">
+                            Learn more about the Unreal Engine SDK
+                          </p>
+                        </div>
+                      </div>
+                    </a>
                   </div>
-                  <div className="relative space-y-4">
-                    {getCodeSnippet(selectedAuth, platform.id).map(
-                      (code, i) => (
-                        <CodeClient
-                          key={`${platform.id}-${i}`}
-                          code={code}
-                          lang={
-                            platform.id === "http"
-                              ? "http"
-                              : platform.id === "dotnet" ||
-                                  platform.id === "unity"
-                                ? "csharp"
-                                : "typescript"
-                          }
-                          className="text-sm"
-                        />
-                      ),
-                    )}
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex size-5 items-center justify-center">
+                        <IconComponent />
+                      </span>
+                      <h4 className="font-medium">
+                        {authMethods.find((m) => m.id === selectedAuth)?.label}{" "}
+                        authentication with {platform.label}
+                      </h4>
+                    </div>
+                    <div className="relative space-y-4">
+                      {getCodeSnippet(selectedAuth, platform.id).map(
+                        (code, i) => (
+                          <CodeClient
+                            key={`${platform.id}-${i}`}
+                            code={code}
+                            lang={
+                              platform.id === "http"
+                                ? "http"
+                                : platform.id === "dotnet" ||
+                                    platform.id === "unity"
+                                  ? "csharp"
+                                  : "typescript"
+                            }
+                            className="text-sm"
+                          />
+                        ),
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </TabsContent>
             );
           })}

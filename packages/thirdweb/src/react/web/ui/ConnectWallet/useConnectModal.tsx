@@ -8,6 +8,7 @@ import type { AppMetadata } from "../../../../wallets/types.js";
 import type { WalletId } from "../../../../wallets/wallet-types.js";
 import type { Theme } from "../../../core/design-system/index.js";
 import type { SiweAuthOptions } from "../../../core/hooks/auth/useSiweAuth.js";
+import type { OnConnectCallback } from "../../../core/hooks/connection/types.js";
 import { SetRootElementContext } from "../../../core/providers/RootElementContext.js";
 import { WalletUIStatesProvider } from "../../providers/wallet-ui-states-provider.js";
 import { canFitWideModal } from "../../utils/canFitWideModal.js";
@@ -90,7 +91,7 @@ export function useConnectModal() {
 
 function Modal(
   props: UseConnectModalOptions & {
-    onConnect: (wallet: Wallet) => void;
+    onConnect: OnConnectCallback;
     onClose: () => void;
     connectLocale: ConnectLocale;
   },
@@ -117,6 +118,7 @@ function Modal(
       termsOfServiceUrl: props.termsOfServiceUrl,
       title: props.title,
       titleIconUrl: props.titleIcon,
+      requireApproval: props.requireApproval,
     };
   }, [
     props.privacyPolicyUrl,
@@ -124,6 +126,7 @@ function Modal(
     props.termsOfServiceUrl,
     props.title,
     props.titleIcon,
+    props.requireApproval,
   ]);
 
   return (
@@ -448,6 +451,22 @@ export type UseConnectModalOptions = {
    * Refer to the [`SiweAuthOptions`](https://portal.thirdweb.com/references/typescript/v5/SiweAuthOptions) for more details
    */
   auth?: SiweAuthOptions;
+
+  /**
+   * Require terms of service and privacy policy to be accepted before connecting an in-app wallet.
+   *
+   * By default it's `false`
+   * @example
+   * ```tsx
+   * function Example() {
+   *   const { connect } = useConnectModal();
+   *   return <button onClick={() => connect({ client, requireApproval: true })}>
+   *     Connect
+   *   </button>
+   * }
+   * ```
+   */
+  requireApproval?: boolean;
 };
 
 // TODO: consilidate Button/Embed/Modal props into one type with extras

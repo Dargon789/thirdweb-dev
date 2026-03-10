@@ -2,7 +2,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import type { ProjectEmbeddedWalletsService } from "@thirdweb-dev/service-utils";
-import { CircleAlertIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { type UseFormReturn, useFieldArray, useForm } from "react-hook-form";
@@ -13,7 +13,6 @@ import type { Project } from "@/api/project/projects";
 import type { Team } from "@/api/team/get-team";
 import { FileInput } from "@/components/blocks/FileInput";
 import { GatedSwitch } from "@/components/blocks/GatedSwitch";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { DynamicHeight } from "@/components/ui/DynamicHeight";
 import {
@@ -31,7 +30,6 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { UnderlineLink } from "@/components/ui/UnderlineLink";
 import { planToTierRecordForGating } from "@/constants/planToTierRecord";
-import { updateProjectClient } from "@/hooks/useApi";
 import { cn } from "@/lib/utils";
 import {
   type ApiKeyEmbeddedWalletsValidationSchema,
@@ -47,6 +45,7 @@ type InAppWalletSettingsPageProps = {
   teamId: string;
   teamSlug: string;
   teamPlan: Team["billingPlan"];
+  isLegacyPlan: boolean;
   smsCountryTiers: SMSCountryTiers;
   client: ThirdwebClient;
 };
@@ -55,82 +54,6 @@ type UpdateAPIKeyTrackingData = {
   hasCustomBranding: boolean;
   hasCustomJwt: boolean;
   hasCustomAuthEndpoint: boolean;
-};
-
-export function InAppWalletSettingsPage(props: InAppWalletSettingsPageProps) {
-  const updateProject = useMutation({
-    mutationFn: async (projectValues: Partial<Project>) => {
-      await updateProjectClient(
-        {
-          projectId: props.project.id,
-          teamId: props.teamId,
-        },
-        projectValues,
-      );
-    },
-  });
-
-  function handleUpdateProject(projectValues: Partial<Project>) {
-    updateProject.mutate(projectValues, {
-      onError: (err) => {
-        toast.error("Failed to update an API Key");
-        console.error(err);
-      },
-      onSuccess: () => {
-        toast.success("In-App Wallet API Key configuration updated");
-      },
-    });
-  }
-
-  return (
-    <InAppWalletSettingsPageUI
-      {...props}
-      isUpdating={updateProject.isPending}
-      smsCountryTiers={props.smsCountryTiers}
-      updateApiKey={handleUpdateProject}
-    />
-  );
-}
-
-const InAppWalletSettingsPageUI: React.FC<
-  InAppWalletSettingsPageProps & {
-    updateApiKey: (
-      projectValues: Partial<Project>,
-      trackingData: UpdateAPIKeyTrackingData,
-    ) => void;
-    isUpdating: boolean;
-    smsCountryTiers: SMSCountryTiers;
-  }
-> = (props) => {
-  const embeddedWalletService = props.project.services.find(
-    (service) => service.name === "embeddedWallets",
-  );
-
-  if (!embeddedWalletService) {
-    return (
-      <Alert variant="warning">
-        <CircleAlertIcon className="size-5" />
-        <AlertTitle>In-App wallets service is disabled</AlertTitle>
-        <AlertDescription>
-          Enable In-App wallets service in the{" "}
-          <UnderlineLink
-            href={`/team/${props.teamSlug}/${props.project.slug}/settings`}
-          >
-            project settings
-          </UnderlineLink>{" "}
-          to configure settings
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  return (
-    <InAppWalletSettingsUI
-      {...props}
-      client={props.client}
-      embeddedWalletService={embeddedWalletService}
-    />
-  );
 };
 
 export const InAppWalletSettingsUI: React.FC<
@@ -191,7 +114,7 @@ export const InAppWalletSettingsUI: React.FC<
     ) {
       return toast.error("Custom JSON Web Token configuration is invalid", {
         description:
-          "To use In-App Wallets with Custom JSON Web Token, provide JWKS URI and AUD.",
+          "To use User Wallets with Custom JSON Web Token, provide JWKS URI and AUD.",
         dismissible: true,
         duration: 9000,
       });
@@ -202,7 +125,7 @@ export const InAppWalletSettingsUI: React.FC<
         "Custom Authentication Endpoint configuration is invalid",
         {
           description:
-            "To use In-App Wallets with Custom Authentication Endpoint, provide a valid URL.",
+            "To use User Wallets with Custom Authentication Endpoint, provide a valid URL.",
           dismissible: true,
           duration: 9000,
         },
@@ -248,6 +171,7 @@ export const InAppWalletSettingsUI: React.FC<
           teamPlan={props.teamPlan}
           teamSlug={props.teamSlug}
           isUpdating={props.isUpdating}
+          isLegacyPlan={props.isLegacyPlan}
         />
 
         <NativeAppsFieldset form={form} isUpdating={props.isUpdating} />
@@ -274,6 +198,7 @@ export const InAppWalletSettingsUI: React.FC<
             requiredPlan={authRequiredPlan}
             teamPlan={props.teamPlan}
             teamSlug={props.teamSlug}
+            isLegacyPlan={props.isLegacyPlan}
           />
 
           <div className="my-5 border-t border-dashed" />
@@ -283,6 +208,7 @@ export const InAppWalletSettingsUI: React.FC<
             requiredPlan={authRequiredPlan}
             teamPlan={props.teamPlan}
             teamSlug={props.teamSlug}
+            isLegacyPlan={props.isLegacyPlan}
           />
 
           <div className="my-5 border-t border-dashed" />
@@ -293,6 +219,7 @@ export const InAppWalletSettingsUI: React.FC<
             smsCountryTiers={props.smsCountryTiers}
             teamPlan={props.teamPlan}
             teamSlug={props.teamSlug}
+            isLegacyPlan={props.isLegacyPlan}
           />
         </Fieldset>
       </form>
@@ -305,6 +232,7 @@ function BrandingFieldset(props: {
   teamPlan: Team["billingPlan"];
   teamSlug: string;
   requiredPlan: Team["billingPlan"];
+  isLegacyPlan: boolean;
   client: ThirdwebClient;
   isUpdating: boolean;
 }) {
@@ -325,6 +253,7 @@ function BrandingFieldset(props: {
         <GatedSwitch
           currentPlan={props.teamPlan}
           requiredPlan={props.requiredPlan}
+          isLegacyPlan={props.isLegacyPlan}
           switchProps={{
             checked: !!props.form.watch("branding"),
             id: "branding-switch",
@@ -469,6 +398,7 @@ function SMSCountryFields(props: {
   teamPlan: Team["billingPlan"];
   requiredPlan: Team["billingPlan"];
   teamSlug: string;
+  isLegacyPlan: boolean;
 }) {
   return (
     <div>
@@ -480,6 +410,7 @@ function SMSCountryFields(props: {
         <GatedSwitch
           currentPlan={props.teamPlan}
           requiredPlan={props.requiredPlan}
+          isLegacyPlan={props.isLegacyPlan}
           switchProps={{
             checked: !!props.form.watch("smsEnabledCountryISOs").length,
             id: "sms-switch",
@@ -524,6 +455,7 @@ function JSONWebTokenFields(props: {
   teamPlan: Team["billingPlan"];
   teamSlug: string;
   requiredPlan: Team["billingPlan"];
+  isLegacyPlan: boolean;
 }) {
   return (
     <div>
@@ -546,6 +478,7 @@ function JSONWebTokenFields(props: {
         <GatedSwitch
           currentPlan={props.teamPlan}
           requiredPlan={props.requiredPlan}
+          isLegacyPlan={props.isLegacyPlan}
           switchProps={{
             checked: !!props.form.watch("customAuthentication"),
             id: "authentication-switch",
@@ -611,6 +544,7 @@ function AuthEndpointFields(props: {
   teamPlan: Team["billingPlan"];
   teamSlug: string;
   requiredPlan: Team["billingPlan"];
+  isLegacyPlan: boolean;
 }) {
   const expandCustomAuthEndpointField =
     props.form.watch("customAuthEndpoint") !== undefined;
@@ -637,6 +571,7 @@ function AuthEndpointFields(props: {
         <GatedSwitch
           currentPlan={props.teamPlan}
           requiredPlan={props.requiredPlan}
+          isLegacyPlan={props.isLegacyPlan}
           switchProps={{
             checked: expandCustomAuthEndpointField,
             id: "auth-endpoint-switch",

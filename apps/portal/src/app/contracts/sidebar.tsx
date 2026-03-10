@@ -56,6 +56,14 @@ export const sidebar: SideBar = {
           href: `${slug}/arbitrum-stylus/airdrop-contract`,
           name: "Stylus Airdrop Contract",
         },
+        {
+          href: `${slug}/arbitrum-stylus/zk-mint`,
+          name: "Stylus Zk Mint",
+        },
+        {
+          href: `${slug}/arbitrum-stylus/minting-modules`,
+          name: "Stylus Minting Modules",
+        },
       ],
       name: "Arbitrum Stylus",
     },
@@ -63,7 +71,7 @@ export const sidebar: SideBar = {
       isCollapsible: false,
       links: [
         {
-          href: "https://api.thirdweb.com/reference#tag/contracts",
+          href: "/reference#tag/gateway",
           icon: <CodeIcon />,
           name: "HTTP API",
         },

@@ -1,4 +1,5 @@
-import * as parserBabel from "prettier/plugins/babel";
+import estreePlugin from "prettier/plugins/estree";
+import typescriptPlugin from "prettier/plugins/typescript";
 import { format } from "prettier/standalone";
 import { type BundledLanguage, codeToHtml } from "shiki";
 
@@ -20,12 +21,11 @@ export async function getCodeHtml(
     ignoreFormattingErrors?: boolean;
   },
 ) {
-  const estreePlugin = await import("prettier/plugins/estree");
   const formattedCode = isPrettierSupportedLang(lang)
     ? await format(code, {
-        parser: "babel-ts",
-        plugins: [parserBabel, estreePlugin.default],
-        printWidth: 60,
+        parser: "typescript",
+        plugins: [estreePlugin, typescriptPlugin],
+        printWidth: 80,
       }).catch((e) => {
         if (!options?.ignoreFormattingErrors) {
           console.error(e);

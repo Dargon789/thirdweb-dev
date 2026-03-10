@@ -1,28 +1,25 @@
 import {
   ArrowLeftRightIcon,
-  BlocksIcon,
   BotIcon,
   BoxIcon,
   CircleUserIcon,
-  CreditCardIcon,
   DollarSignIcon,
   GlobeIcon,
   ImageIcon,
   LinkIcon,
   LockIcon,
   PanelTopIcon,
-  PencilIcon,
   PlaneIcon,
   RectangleHorizontalIcon,
   RssIcon,
-  ScanTextIcon,
   ShieldIcon,
-  ShoppingBagIcon,
+  SquareIcon,
   SquircleDashedIcon,
   StampIcon,
   UserIcon,
   WalletCardsIcon,
 } from "lucide-react";
+import { SmartAccountIcon } from "../../icons/SmartAccountIcon";
 
 export type FeatureCardMetadata = {
   icon: React.FC<{ className?: string }>;
@@ -75,12 +72,25 @@ export const walletsFeatureCards: FeatureCardMetadata[] = [
     description:
       "Get user profiles across apps like ENS, Lens, Farcaster, and more",
   },
-
   {
     icon: BoxIcon,
     title: "Headless Components",
     link: "/wallets/headless",
     description: "Components for rendering various wallet related information",
+  },
+  {
+    icon: ArrowLeftRightIcon,
+    title: "Transactions",
+    description:
+      "Interfaces to transact onchain with features such as monitoring, gas sponsorship etc",
+    link: "/transactions",
+  },
+  {
+    icon: SmartAccountIcon,
+    title: "Account Abstraction",
+    description:
+      "Gasless or permissioned transactions utilizing EIP-4337 and 7702 specs",
+    link: "/account-abstraction",
   },
 ];
 
@@ -105,83 +115,45 @@ export const headlessComponentsFeatureCards: FeatureCardMetadata[] = [
   },
 ];
 
-export const transactionsFeatureCards: FeatureCardMetadata[] = [
+export const bridgeFeatureCards: FeatureCardMetadata[] = [
   {
-    icon: PlaneIcon,
-    title: "Airdrop Tokens",
-    link: "/transactions/airdrop-tokens",
+    icon: SquareIcon,
+    title: "Bridge Widget",
+    link: "/bridge/bridge-widget",
     description:
-      "Airdrop any token with a few lines of code with gas sponsorship, optional.",
+      "A widget for bridging tokens with cross-chain support and fiat onramp",
   },
   {
-    icon: StampIcon,
-    title: "Mint NFTs",
-    link: "/transactions/mint-tokens",
+    icon: SquareIcon,
+    title: "Swap Widget",
+    link: "/bridge/swap-widget",
+    description: "A widget for swapping tokens with cross-chain support",
+  },
+  {
+    icon: SquareIcon,
+    title: "Buy Widget",
+    link: "/bridge/buy-widget",
     description:
-      "Gasless and efficient token minting with just a wallet address",
-  },
-
-  {
-    icon: RssIcon,
-    title: "Webhooks",
-    link: "/transactions/webhooks",
-    description:
-      "Receive real-time notifications for transactions and wallet events.",
-  },
-];
-
-export const contractsFeatureCards: FeatureCardMetadata[] = [
-  {
-    icon: ScanTextIcon,
-    title: "Read Contract",
-    link: "/contracts/read",
-    description: "Read data from any contract on any EVM",
+      "A widget to buy tokens with fiat onramp support or cross-chain swaps",
   },
   {
-    icon: PencilIcon,
-    title: "Write Contract",
-    link: "/contracts/write",
-    description: "Send transactions from the connected wallet",
-  },
-  {
-    icon: BlocksIcon,
-    title: "Pre-Built Extensions",
-    link: "/contracts/extensions",
-    description: "High-level read and write functions",
-  },
-  {
-    icon: RssIcon,
-    title: "Listen Contract Events",
-    link: "/contracts/events",
-    description: "Subscribe to any contract event",
-  },
-];
-
-export const paymentsFeatureCards: FeatureCardMetadata[] = [
-  {
-    icon: BoxIcon,
-    title: "Payments UI Components",
-    link: "/payments/ui-components",
-    description: "Onramp, swap, and bridge over 1,000+ crypto tokens",
-  },
-  {
-    icon: ShoppingBagIcon,
-    title: "Buy Crypto",
-    link: "/payments/fund-wallet",
-    description:
-      "Buy any token with ability to customize theme, amounts, and more",
-  },
-  {
-    icon: CreditCardIcon,
-    title: "Checkout",
-    link: "/payments/commerce",
+    icon: SquareIcon,
+    title: "Checkout Widget",
+    link: "/bridge/checkout-widget",
     description:
       "Enable crypto payments for services and get notified on each sale",
   },
   {
-    icon: ArrowLeftRightIcon,
-    title: "Transactions",
-    link: "/payments/transactions",
+    icon: SquareIcon,
+    title: "Transaction Widget",
+    link: "/bridge/transaction-widget",
+    description:
+      "Enable users to pay for onchain transactions with fiat or crypto",
+  },
+  {
+    icon: RectangleHorizontalIcon,
+    title: "Transaction Button",
+    link: "/bridge/transaction-button",
     description:
       "Enable users to pay for onchain transactions with fiat or crypto",
   },
@@ -245,5 +217,46 @@ export const aiFeatureCards: FeatureCardMetadata[] = [
     title: "AI SDK Integration",
     link: "/ai/ai-sdk",
     description: "Use the thirdweb blockchain models with the Vercel AI SDK",
+  },
+];
+
+export const x402FeatureCards: FeatureCardMetadata[] = [
+  {
+    icon: DollarSignIcon,
+    title: "x402",
+    link: "/x402",
+    description:
+      "Use the x402 payment protocol to pay for API calls using any web3 wallet",
+  },
+];
+
+export const transactionsFeatureCards: FeatureCardMetadata[] = [
+  {
+    icon: UserIcon,
+    title: "From User Wallets",
+    link: "/transactions/users",
+    description: "Transactions from user wallets with monitoring and retries.",
+  },
+  {
+    icon: PlaneIcon,
+    title: "Airdrop Tokens",
+    link: "/transactions/airdrop-tokens",
+    description:
+      "Airdrop any token with a few lines of code with gas sponsorship, optional.",
+  },
+  {
+    icon: StampIcon,
+    title: "Mint NFTs",
+    link: "/transactions/mint-tokens",
+    description:
+      "Gasless and efficient token minting with just a wallet address",
+  },
+
+  {
+    icon: RssIcon,
+    title: "Webhooks",
+    link: "/transactions/webhooks",
+    description:
+      "Receive real-time notifications for transactions and wallet events.",
   },
 ];

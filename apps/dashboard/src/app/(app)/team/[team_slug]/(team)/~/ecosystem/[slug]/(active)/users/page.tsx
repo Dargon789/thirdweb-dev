@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getAuthToken } from "@/api/auth-token";
 import { fetchEcosystem } from "@/api/team/ecosystems";
 import { getTeamBySlug } from "@/api/team/get-team";
-import { InAppWalletUsersPageContent } from "@/components/in-app-wallet-users-content/in-app-wallet-users-content";
+import { UserWalletsTable } from "@/components/in-app-wallet-users-content/user-wallets-table";
 import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
 import { loginRedirect } from "@/utils/redirects";
 
@@ -30,7 +30,7 @@ export default async function EcosystemUsersPage(props: {
   });
 
   return (
-    <InAppWalletUsersPageContent
+    <UserWalletsTable
       authToken={authToken}
       client={client}
       ecosystemSlug={ecosystem.slug}

@@ -110,14 +110,11 @@ export async function connectWC(
   }
 
   let optionalChains: Chain[] | undefined = wcOptions?.optionalChains;
-  let chainToRequest = options.chain;
+  const chainToRequest = options.chain;
 
   // ignore the given options chains - and set the safe supported chains
   if (walletId === "global.safe") {
     optionalChains = chainsToRequestForSafe.map(getCachedChain);
-    if (chainToRequest && !optionalChains.includes(chainToRequest)) {
-      chainToRequest = undefined;
-    }
   }
 
   // For UniversalProvider, we still need chain configuration for session management
@@ -132,7 +129,7 @@ export async function connectWC(
     ...(wcOptions?.pairingTopic
       ? { pairingTopic: wcOptions?.pairingTopic }
       : {}),
-    namespaces: {
+    optionalNamespaces: {
       [NAMESPACE]: {
         chains: chainsToRequest,
         events: ["chainChanged", "accountsChanged"],
@@ -157,14 +154,8 @@ export async function connectWC(
   );
   const currentChainId = chainsToRequest[0]?.split(":")[1] || 1;
   const providerChainId = normalizeChainId(currentChainId);
-  const accounts: string[] = await provider.request(
-    {
-      method: "eth_requestAccounts",
-      params: [],
-    },
-    `eip155:${providerChainId}`,
-  );
-  const address = accounts[0];
+  const account = firstAccountOn(provider.session, `eip155:1`); // grab the address from mainnet if available
+  const address = account;
   if (!address) {
     throw new Error("No accounts found on provider.");
   }
@@ -200,6 +191,110 @@ export async function connectWC(
     walletInfo,
     sessionHandler,
   );
+}
+
+async function ensureTargetChain(
+  provider: Awaited<ReturnType<typeof initProvider>>,
+  chain: Chain,
+  walletInfo: WalletInfo,
+) {
+  if (!provider.session) {
+    throw new Error("No session found on provider.");
+  }
+  const TARGET_CAIP = `eip155:${chain.id}`;
+  const TARGET_HEX = numberToHex(chain.id);
+
+  // Fast path: already enabled
+  if (hasChainEnabled(provider.session, TARGET_CAIP)) {
+    provider.setDefaultChain(TARGET_CAIP);
+    return;
+  }
+
+  // 1) Try switch
+  try {
+    await requestAndOpenWallet({
+      provider,
+      payload: {
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: TARGET_HEX }],
+      },
+      chain: TARGET_CAIP, // route to target
+      walletInfo,
+    });
+    provider.setDefaultChain(TARGET_CAIP);
+    return;
+  } catch (err: any) {
+    const code = err?.code ?? err?.data?.originalError?.code;
+    // 4001 user rejected; stop
+    if (code === 4001) throw new Error("User rejected chain switch");
+    // fall through on 4902 or unknown -> try add
+  }
+
+  // 2) Add the chain via any chain we already have
+  const routeChain = anyRoutableChain(provider.session);
+  if (!routeChain)
+    throw new Error("No routable chain to send wallet_addEthereumChain");
+
+  try {
+    await requestAndOpenWallet({
+      provider,
+      payload: {
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: TARGET_HEX,
+            chainName: chain.name,
+            nativeCurrency: chain.nativeCurrency,
+            rpcUrls: [chain.rpc],
+            blockExplorerUrls: [chain.blockExplorers?.[0]?.url ?? ""],
+          },
+        ],
+      },
+      chain: routeChain, // route via known-good chain, not the target
+      walletInfo,
+    });
+  } catch (err: any) {
+    const code = err?.code ?? err?.data?.originalError?.code;
+    if (code === 4001) throw new Error("User rejected add chain");
+    throw new Error(`Add chain failed: ${err?.message || String(err)}`);
+  }
+
+  // 3) Re-try switch after add
+  await requestAndOpenWallet({
+    provider,
+    payload: {
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: TARGET_HEX }],
+    },
+    chain: TARGET_CAIP,
+    walletInfo,
+  });
+  provider.setDefaultChain(TARGET_CAIP);
+
+  // 4) Verify enablement
+  if (!hasChainEnabled(provider.session, TARGET_CAIP)) {
+    throw new Error("Target chain still not enabled by wallet");
+  }
+}
+
+type WCSession = Awaited<ReturnType<typeof UniversalProvider.init>>["session"];
+
+function getNS(session: WCSession) {
+  return session?.namespaces?.eip155;
+}
+function hasChainEnabled(session: WCSession, caip: string) {
+  const ns = getNS(session);
+  return !!ns?.accounts?.some((a) => a.startsWith(`${caip}:`));
+}
+function firstAccountOn(session: WCSession, caip: string): string | null {
+  const ns = getNS(session);
+  const hit =
+    ns?.accounts?.find((a) => a.startsWith(`${caip}:`)) || ns?.accounts[0];
+  return hit ? (hit.split(":")[2] ?? null) : null;
+}
+function anyRoutableChain(session: WCSession): string | null {
+  const ns = getNS(session);
+  return ns?.accounts?.[0]?.split(":")?.slice(0, 2)?.join(":") ?? null; // e.g. "eip155:1"
 }
 
 /**
@@ -287,17 +382,6 @@ async function initProvider(
   const { UniversalProvider } = await import(
     "@walletconnect/universal-provider"
   );
-
-  let optionalChains: Chain[] | undefined = wcOptions?.optionalChains;
-  let chainToRequest = options.chain;
-
-  // ignore the given options chains - and set the safe supported chains
-  if (walletId === "global.safe") {
-    optionalChains = chainsToRequestForSafe.map(getCachedChain);
-    if (chainToRequest && !optionalChains.includes(chainToRequest)) {
-      chainToRequest = undefined;
-    }
-  }
 
   const provider = await UniversalProvider.init({
     metadata: {
@@ -545,14 +629,17 @@ function onConnect(
     account,
     chain,
     disconnect,
-    (newChain) => switchChainWC(provider, newChain),
+    (newChain) => switchChainWC(provider, newChain, walletInfo),
   ];
 }
 
-async function switchChainWC(provider: WCProvider, chain: Chain) {
-  const chainId = chain.id;
+async function switchChainWC(
+  provider: WCProvider,
+  chain: Chain,
+  walletInfo: WalletInfo,
+) {
   try {
-    provider.setDefaultChain(`eip155:${chainId}`);
+    await ensureTargetChain(provider, chain, walletInfo);
   } catch (error) {
     const message =
       typeof error === "string" ? error : (error as ProviderRpcError)?.message;
@@ -605,7 +692,10 @@ function getChainsToRequest(options: {
     chainIds.push(chain.id);
   }
 
-  if (!options.chain && optionalChains.length === 0) {
+  // always include mainnet
+  // many wallets only support a handful of chains, but mainnet is always supported
+  // we will add additional chains in switchChain if needed
+  if (!chainIds.includes(1)) {
     rpcMap[1] = getCachedChain(1).rpc;
     chainIds.push(1);
   }
@@ -632,4 +722,5 @@ const chainsToRequestForSafe = [
   1101, // Polygon zkEVM Mainnet
   324, // zkSync Era mainnet
   534352, // Scroll mainnet
+  80094, // Berachain mainnet
 ];

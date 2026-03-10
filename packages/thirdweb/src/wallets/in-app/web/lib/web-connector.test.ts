@@ -104,10 +104,10 @@ describe("InAppWebConnector.connect", () => {
     });
 
     expect(siweAuthenticate).toHaveBeenCalledWith({
-      chain: ethereum,
       client: TEST_CLIENT,
       ecosystem: undefined,
       wallet: mockWallet,
+      chain: ethereum,
     });
   });
 

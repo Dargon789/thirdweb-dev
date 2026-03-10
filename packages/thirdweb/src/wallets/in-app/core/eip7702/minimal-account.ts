@@ -96,6 +96,70 @@ async function getDelegationContractAddress(args: {
   );
 }
 
+/**
+ * Creates an EIP-7702 account that enables EOA (Externally Owned Account) delegation
+ * to smart contract functionality. This allows an EOA to delegate its code execution
+ * to a minimal account contract, enabling features like batch transactions and sponsored gas.
+ *
+ * The minimal account leverages EIP-7702 authorization to delegate the EOA's code to a
+ * MinimalAccount contract, allowing the EOA to execute smart contract functions while
+ * maintaining its original address and private key control.
+ *
+ * @param args - Configuration object for creating the minimal account
+ * @param args.client - The thirdweb client instance for blockchain interactions
+ * @param args.adminAccount - The EOA account that will be delegated to the minimal account contract
+ * @param args.sponsorGas - Optional flag to enable sponsored gas transactions via bundler
+ *
+ * @returns An Account object with enhanced capabilities including batch transactions and EIP-5792 support
+ *
+ * @example
+ * ```typescript
+ * import { createThirdwebClient, sendBatchTransaction } from "thirdweb";
+ * import { privateKeyToAccount } from "thirdweb/wallets";
+ * import { create7702MinimalAccount } from "thirdweb/wallets/in-app";
+ * import { sepolia } from "thirdweb/chains";
+ *
+ * // Create a client
+ * const client = createThirdwebClient({
+ *   clientId: "your-client-id"
+ * });
+ *
+ * // Create an EOA account
+ * const adminAccount = privateKeyToAccount({
+ *   client,
+ *   privateKey: "0x..."
+ * });
+ *
+ * // Wrap it with a EIP-7702 account
+ * const minimal7702Account = create7702MinimalAccount({
+ *   client,
+ *   adminAccount,
+ *   sponsorGas: true // Enable sponsored transactions
+ * });
+ *
+ * // Send a batch of transactions
+ * const result = await sendBatchTransaction({
+ *   account: minimal7702Account,
+ *   transactions: [
+ *   {
+ *     to: "0x...",
+ *     data: "0x...",
+ *     value: 0n,
+ *     chainId: sepolia.id
+ *   },
+ *   {
+ *     to: "0x...",
+ *     data: "0x...",
+ *     value: 0n,
+ *     chainId: sepolia.id
+ *   }
+ * ]});
+ *
+ * console.log("Batch transaction hash:", result.transactionHash);
+ * ```
+ *
+ * @wallet
+ */
 export const create7702MinimalAccount = (args: {
   client: ThirdwebClient;
   adminAccount: Account;
@@ -116,36 +180,49 @@ export const create7702MinimalAccount = (args: {
       abi: MinimalAccountAbi,
     });
     // check if account has been delegated already
-    let authorization: SignedAuthorization | undefined;
+    let authorization: SignedAuthorization | undefined =
+      firstTx.authorizationList?.[0];
     const delegationContractAddress = await getDelegationContractAddress({
       client,
       chain,
     });
-    const isMinimalAccount = await is7702MinimalAccount(
-      eoaContract,
-      delegationContractAddress,
-    );
-    if (!isMinimalAccount) {
-      // if not, sign authorization
-      let nonce = firstTx.nonce
-        ? BigInt(firstTx.nonce)
-        : BigInt(
-            await getNonce({
-              client,
-              address: adminAccount.address,
-              chain,
-            }),
-          );
-      nonce += sponsorGas ? 0n : 1n;
-      const auth = await adminAccount.signAuthorization?.({
-        address: getAddress(delegationContractAddress),
-        chainId: firstTx.chainId,
-        nonce,
-      });
-      if (!auth) {
-        throw new Error("Failed to sign authorization");
+    if (
+      authorization &&
+      authorization.address?.toLowerCase() !==
+        delegationContractAddress.toLowerCase()
+    ) {
+      throw new Error(
+        `Authorization address does not match expected delegation contract address. Expected ${delegationContractAddress} but got ${authorization.address}`,
+      );
+    }
+    // if the tx already has an authorization, use it, otherwise sign one
+    if (!authorization) {
+      const isMinimalAccount = await is7702MinimalAccount(
+        eoaContract,
+        delegationContractAddress,
+      );
+      if (!isMinimalAccount) {
+        // if not, sign authorization
+        let nonce = firstTx.nonce
+          ? BigInt(firstTx.nonce)
+          : BigInt(
+              await getNonce({
+                client,
+                address: adminAccount.address,
+                chain,
+              }),
+            );
+        nonce += sponsorGas ? 0n : 1n;
+        const auth = await adminAccount.signAuthorization?.({
+          address: getAddress(delegationContractAddress),
+          chainId: firstTx.chainId,
+          nonce,
+        });
+        if (!auth) {
+          throw new Error("Failed to sign authorization");
+        }
+        authorization = auth;
       }
-      authorization = auth;
     }
     if (sponsorGas) {
       // send transaction from executor, needs signature
@@ -264,6 +341,7 @@ export const create7702MinimalAccount = (args: {
       const id = await inAppWalletSendCalls({
         account: minimalAccount,
         calls: options.calls,
+        chain,
       });
       return { chain, client, id };
     },
@@ -272,6 +350,12 @@ export const create7702MinimalAccount = (args: {
         "../eip5792/in-app-wallet-calls.js"
       );
       return inAppWalletGetCallsStatus(options);
+    },
+    getCallsStatusRaw: async (options) => {
+      const { inAppWalletGetCallsStatusRaw } = await import(
+        "../eip5792/in-app-wallet-calls.js"
+      );
+      return inAppWalletGetCallsStatusRaw(options);
     },
     getCapabilities: async (options) => {
       return {

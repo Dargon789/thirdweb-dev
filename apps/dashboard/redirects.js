@@ -115,6 +115,16 @@ const projectPageRedirects = [
     permanent: false,
     source: `${projectRoute}/connect/analytics`,
   },
+  {
+    destination: `${projectRoute}/gateway/indexer/:path*`,
+    permanent: false,
+    source: `${projectRoute}/insight/:path*`,
+  },
+  {
+    destination: `${projectRoute}/gateway/rpc/:path*`,
+    permanent: false,
+    source: `${projectRoute}/rpc/:path*`,
+  },
 ];
 
 const teamPageRedirects = [
@@ -472,6 +482,16 @@ async function redirects() {
     {
       source: "/support/:path*",
       destination: "/team/~/~/support",
+      permanent: false,
+    },
+    {
+      source: "/routes",
+      destination: "/tokens",
+      permanent: false,
+    },
+    {
+      source: "/payments/x402",
+      destination: "/x402",
       permanent: false,
     },
   ];

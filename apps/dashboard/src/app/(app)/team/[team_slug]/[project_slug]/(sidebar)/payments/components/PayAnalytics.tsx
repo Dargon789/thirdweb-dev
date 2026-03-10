@@ -67,76 +67,82 @@ export async function PayAnalytics(props: {
     walletDataPromise,
   ]);
 
-  const hasVolume = volumeData.some((d) => d.amountUsdCents > 0);
-  const hasWallet = walletData.some((d) => d.count > 0);
-
-  if (!hasVolume && !hasWallet) {
-    return null;
-  }
-
   return (
     <div>
-      <div className="mb-4 flex justify-start">
-        <PayAnalyticsFilter />
-      </div>
-      <ResponsiveSuspense
-        fallback={
-          <div className="flex flex-col gap-6">
-            <Skeleton className="h-[350px] border rounded-xl" />
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-              <Skeleton className="h-[350px] border rounded-xl" />
-              <Skeleton className="h-[350px] border rounded-xl" />
-            </div>
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-              <Skeleton className="h-[350px] border rounded-xl" />
-              <Skeleton className="h-[350px] border rounded-xl" />
-            </div>
-            <Skeleton className="h-[500px] border rounded-xl" />
-          </div>
-        }
-        searchParamsUsed={["from", "to", "interval"]}
-      >
-        <div className="flex flex-col gap-10 lg:gap-6">
-          <GridWithSeparator>
-            <div className="flex items-center border-border border-b pb-6 xl:border-none xl:pb-0">
-              <TotalVolumePieChart
-                data={volumeData?.filter((x) => x.status === "completed") || []}
-              />
-            </div>
-            <TotalPayVolume
-              data={volumeData?.filter((x) => x.status === "completed") || []}
-              dateFormat={dateFormat}
-            />
-          </GridWithSeparator>
-
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <CardContainer>
-              <Payouts
-                data={volumeData?.filter((x) => x.status === "completed") || []}
-                dateFormat={dateFormat}
-              />
-            </CardContainer>
-            <CardContainer>
-              <PaymentsSuccessRate data={volumeData || []} />
-            </CardContainer>
-          </div>
-
-          <GridWithSeparator>
-            <div className="border-border border-b pb-6 xl:border-none xl:pb-0">
-              <PayNewCustomers
-                data={walletData || []}
-                dateFormat={dateFormat}
-              />
-            </div>
-            <PayCustomersTable client={props.client} data={walletData || []} />
-          </GridWithSeparator>
-          <PaymentHistory
-            client={props.client}
-            projectClientId={props.projectClientId}
-            teamId={props.teamId}
-          />
+      <div>
+        <div className="mb-4 flex justify-start">
+          <PayAnalyticsFilter />
         </div>
-      </ResponsiveSuspense>
+        <ResponsiveSuspense
+          fallback={
+            <div className="flex flex-col gap-6">
+              <Skeleton className="h-[350px] border rounded-xl" />
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <Skeleton className="h-[350px] border rounded-xl" />
+                <Skeleton className="h-[350px] border rounded-xl" />
+              </div>
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <Skeleton className="h-[350px] border rounded-xl" />
+                <Skeleton className="h-[350px] border rounded-xl" />
+              </div>
+              <Skeleton className="h-[500px] border rounded-xl" />
+            </div>
+          }
+          searchParamsUsed={["from", "to", "interval"]}
+        >
+          <div className="flex flex-col gap-10 lg:gap-6">
+            <GridWithSeparator>
+              <div className="flex items-center border-border border-b pb-6 xl:border-none xl:pb-0">
+                <TotalVolumePieChart
+                  data={
+                    volumeData?.filter((x) => x.status === "completed") || []
+                  }
+                />
+              </div>
+              <TotalPayVolume
+                data={volumeData?.filter((x) => x.status === "completed") || []}
+                dateFormat={dateFormat}
+              />
+            </GridWithSeparator>
+
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <CardContainer>
+                <Payouts
+                  data={
+                    volumeData?.filter((x) => x.status === "completed") || []
+                  }
+                  dateFormat={dateFormat}
+                />
+              </CardContainer>
+              <CardContainer>
+                <PaymentsSuccessRate data={volumeData || []} />
+              </CardContainer>
+            </div>
+
+            <GridWithSeparator>
+              <div className="border-border border-b pb-6 xl:border-none xl:pb-0">
+                <PayNewCustomers
+                  data={walletData || []}
+                  dateFormat={dateFormat}
+                />
+              </div>
+              <PayCustomersTable
+                client={props.client}
+                data={walletData || []}
+              />
+            </GridWithSeparator>
+          </div>
+        </ResponsiveSuspense>
+      </div>
+
+      <div className="h-10" />
+
+      <PaymentHistory
+        client={props.client}
+        projectClientId={props.projectClientId}
+        teamId={props.teamId}
+        authToken={props.authToken}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
+import { cn } from "@workspace/ui/lib/utils";
 import { payAppThirdwebClient } from "app/pay/constants";
 import { useTheme } from "next-themes";
-import { useEffect } from "react";
 import { createThirdwebClient, NATIVE_TOKEN_ADDRESS, toTokens } from "thirdweb";
 import { AutoConnect, CheckoutWidget } from "thirdweb/react";
 import { checksumAddress } from "thirdweb/utils";
@@ -11,6 +11,7 @@ import {
   reportPaymentLinkBuySuccessful,
 } from "@/analytics/report";
 import { useV5DashboardChain } from "@/hooks/chains/v5-adapter";
+import { getSDKTheme } from "@/utils/sdk-component-theme";
 
 export function PayPageWidget({
   chainId,
@@ -21,7 +22,6 @@ export function PayPageWidget({
   name,
   image,
   redirectUri,
-  theme,
   purchaseData,
   clientId,
 }: {
@@ -34,17 +34,10 @@ export function PayPageWidget({
   image?: string;
   redirectUri?: string;
   clientId: string | undefined;
-  theme?: "light" | "dark";
   purchaseData: Record<string, unknown> | undefined;
 }) {
-  const { theme: browserTheme, setTheme } = useTheme();
+  const { theme } = useTheme();
 
-  // eslint-disable-next-line no-restricted-syntax
-  useEffect(() => {
-    if (theme) {
-      setTheme(theme);
-    }
-  }, [theme, setTheme]);
   const chain = useV5DashboardChain(chainId);
 
   return (
@@ -55,6 +48,7 @@ export function PayPageWidget({
         }
       />
       <CheckoutWidget
+        theme={getSDKTheme(theme === "light" ? "light" : "dark")}
         connectOptions={{
           wallets: [
             createWallet("io.metamask"),
@@ -70,7 +64,12 @@ export function PayPageWidget({
         client={
           clientId ? createThirdwebClient({ clientId }) : payAppThirdwebClient
         }
-        image={image}
+        className={cn(
+          "shadow-xl",
+          !image &&
+            "[&_.tw-header-image]:invert dark:[&_.tw-header-image]:invert-0",
+        )}
+        image={image || "/assets/pay/general-pay.png"}
         name={name}
         onSuccess={() => {
           reportPaymentLinkBuySuccessful();
@@ -87,7 +86,6 @@ export function PayPageWidget({
         paymentLinkId={paymentLinkId}
         purchaseData={purchaseData}
         seller={checksumAddress(recipientAddress)}
-        theme={theme ?? (browserTheme === "light" ? "light" : "dark")}
         tokenAddress={
           token.address === NATIVE_TOKEN_ADDRESS
             ? undefined

@@ -49,6 +49,7 @@ export function CreateTokenAssetPage(props: {
   teamSlug: string;
   projectSlug: string;
   teamPlan: Team["billingPlan"];
+  isLegacyPlan: boolean;
 }) {
   const activeAccount = useActiveAccount();
   const addContractToProject = useAddContractToProject();
@@ -178,12 +179,14 @@ export function CreateTokenAssetPage(props: {
       teamId: props.teamId,
     });
 
+    const chainMetadata = getChain(Number(params.values.chain));
     reportContractDeployed({
       address: contractAddress,
       chainId: Number(params.values.chain),
-      contractName: "DropERC20",
+      contractName: "ERC20Asset",
       deploymentType: "asset",
       publisher: account.address,
+      is_testnet: chainMetadata.testnet,
     });
 
     contractAddressRef.current = contractAddress;
@@ -299,12 +302,15 @@ export function CreateTokenAssetPage(props: {
       teamId: props.teamId,
     });
 
+    const chainMetadata = getChain(Number(values.chain));
+
     reportContractDeployed({
       address: contractAddress,
       chainId: Number(values.chain),
       contractName: "DropERC20",
       deploymentType: "asset",
       publisher: "deployer.thirdweb.eth",
+      is_testnet: chainMetadata.testnet,
     });
 
     return {
@@ -438,6 +444,7 @@ export function CreateTokenAssetPage(props: {
   return (
     <CreateTokenAssetPageUI
       accountAddress={props.accountAddress}
+      isLegacyPlan={props.isLegacyPlan}
       client={props.client}
       createTokenFunctions={{
         ERC20Asset: {

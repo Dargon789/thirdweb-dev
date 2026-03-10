@@ -29,7 +29,7 @@ export function DocLayout(props: DocLayoutProps) {
         "container relative flex flex-col gap-12 xl:grid",
         props.sideBar.links.length > 0
           ? props.showTableOfContents !== false
-            ? "xl:grid-cols-[220px_720px_1fr]"
+            ? "xl:grid-cols-[220px_820px_1fr]"
             : "xl:grid-cols-[220px_1160px]"
           : props.showTableOfContents !== false
             ? "xl:grid-cols-[960px_1fr]"
@@ -49,7 +49,7 @@ export function DocLayout(props: DocLayoutProps) {
           <DocSidebar {...props.sideBar} header={props.sidebarHeader} />
         </aside>
       )}
-      <div className="sticky top-sticky-top-height z-stickyMobileSidebar border-b bg-background py-4 xl:hidden">
+      <div className="sticky top-sticky-top-height z-stickyMobileSidebar border-b bg-card/50 backdrop-blur-xl p-4 xl:hidden -mx-4">
         <DocSidebarMobile {...props.sideBar} header={props.sidebarHeader} />
       </div>
       <main
@@ -57,12 +57,7 @@ export function DocLayout(props: DocLayoutProps) {
         data-no-llm={props.noLLM}
         data-noindex={props.noIndex}
       >
-        <div className="grow xl:mt-6">
-          <h5 className="mb-2 text-sm font-semibold text-violet-500">
-            {props.sideBar.name}
-          </h5>
-          {props.children}
-        </div>
+        <div className="grow xl:mt-6">{props.children}</div>
         <div className="mt-16 xl:mt-20">
           <PageFooter
             editPageButton={props.editPageButton}

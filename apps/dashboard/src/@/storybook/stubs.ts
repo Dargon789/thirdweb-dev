@@ -30,6 +30,7 @@ export function teamStub(id: string, billingPlan: Team["billingPlan"]): Team {
     billingPlan: billingPlan,
     billingStatus: "validPayment",
     canCreatePublicChains: null,
+    isLegacyPlan: false,
     capabilities: {
       bundler: {
         enabled: true,
@@ -248,7 +249,7 @@ export function teamSubscriptionsStub(
           // In-App Wallets
           {
             amount: usage.inAppWalletAmount?.amount || 0,
-            description: `${usage.inAppWalletAmount?.quantity || 0} x In-App Wallets (Tier 1 at $0.00 / month)`,
+            description: `${usage.inAppWalletAmount?.quantity || 0} x User Wallets (Tier 1 at $0.00 / month)`,
             thirdwebSku: "usage:in_app_wallet",
           },
           // AA Sponsorship
@@ -278,4 +279,33 @@ export function newAccountStub(overrides?: Partial<Account>): Account {
     name: undefined,
     ...overrides,
   };
+}
+
+export function randomLorem(length: number) {
+  const loremWords = [
+    "lorem",
+    "ipsum",
+    "dolor",
+    "sit",
+    "amet",
+    "consectetur",
+    "adipiscing",
+    "elit",
+    "sed",
+    "do",
+    "eiusmod",
+    "tempor",
+    "incididunt",
+    "ut",
+    "labore",
+    "et",
+    "dolore",
+    "magna",
+    "aliqua",
+  ];
+
+  return Array.from({ length }, () => {
+    const randomIndex = Math.floor(Math.random() * loremWords.length);
+    return loremWords[randomIndex];
+  }).join(" ");
 }

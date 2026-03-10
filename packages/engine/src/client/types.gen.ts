@@ -17,6 +17,19 @@ export type TransactionsFilterNested = {
 	filters: Array<TransactionsFilterValue | TransactionsFilterNested>;
 };
 
+export type SolanaTransactionsFilterValue = {
+	field: "id" | "chainId" | "signerAddress" | "signature";
+	values: Array<string>;
+	operation: "AND" | "OR";
+};
+
+export type SolanaTransactionsFilterNested = {
+	operation: "AND" | "OR";
+	filters: Array<
+		SolanaTransactionsFilterValue | SolanaTransactionsFilterNested
+	>;
+};
+
 /**
  * EVM Address
  * Used to represent an EVM address. This is a string of length 42 with a `0x` prefix. Non-checksummed addresses are also supported, but will be converted to checksummed.
@@ -113,6 +126,21 @@ export type BatchResultItemEncodeResultSuccessItemEngineError =
 						type: "BUNDLER_ERROR";
 				  }
 				| {
+						/**
+						 * Solana chain identifier
+						 */
+						chain_id: string;
+						/**
+						 * Human-readable error message
+						 */
+						message: string;
+						/**
+						 * Structured error kind
+						 */
+						kind: SolanaRpcErrorKind;
+						type: "SOLANA_RPC_ERROR";
+				  }
+				| {
 						message: string;
 						type: "VAULT_ERROR";
 				  }
@@ -148,6 +176,9 @@ export type BatchResultItemEncodeResultSuccessItemEngineError =
 						message: string;
 						type: "THIRDWEB_ERROR";
 				  }
+				| (SerialisableAwsSignerError & {
+						type: "AWS_KMS_SIGNER_ERROR";
+				  })
 				| {
 						message: string;
 						type: "INTERNAL_ERROR";
@@ -200,6 +231,21 @@ export type BatchResultItemReadResultSuccessItemEngineError =
 						type: "BUNDLER_ERROR";
 				  }
 				| {
+						/**
+						 * Solana chain identifier
+						 */
+						chain_id: string;
+						/**
+						 * Human-readable error message
+						 */
+						message: string;
+						/**
+						 * Structured error kind
+						 */
+						kind: SolanaRpcErrorKind;
+						type: "SOLANA_RPC_ERROR";
+				  }
+				| {
 						message: string;
 						type: "VAULT_ERROR";
 				  }
@@ -235,6 +281,9 @@ export type BatchResultItemReadResultSuccessItemEngineError =
 						message: string;
 						type: "THIRDWEB_ERROR";
 				  }
+				| (SerialisableAwsSignerError & {
+						type: "AWS_KMS_SIGNER_ERROR";
+				  })
 				| {
 						message: string;
 						type: "INTERNAL_ERROR";
@@ -296,6 +345,21 @@ export type BatchResultItemSignResultDataEngineError =
 						type: "BUNDLER_ERROR";
 				  }
 				| {
+						/**
+						 * Solana chain identifier
+						 */
+						chain_id: string;
+						/**
+						 * Human-readable error message
+						 */
+						message: string;
+						/**
+						 * Structured error kind
+						 */
+						kind: SolanaRpcErrorKind;
+						type: "SOLANA_RPC_ERROR";
+				  }
+				| {
 						message: string;
 						type: "VAULT_ERROR";
 				  }
@@ -331,6 +395,9 @@ export type BatchResultItemSignResultDataEngineError =
 						message: string;
 						type: "THIRDWEB_ERROR";
 				  }
+				| (SerialisableAwsSignerError & {
+						type: "AWS_KMS_SIGNER_ERROR";
+				  })
 				| {
 						message: string;
 						type: "INTERNAL_ERROR";
@@ -382,6 +449,11 @@ export type CancelResult =
 			};
 	  }
 	| "NOT_FOUND";
+
+/**
+ * Commitment Level
+ */
+export type CommitmentLevel = "confirmed" | "finalized";
 
 /**
  * Represents a contract function call with parameters
@@ -472,11 +544,40 @@ export type ContractWrite = ContractCall & {
 /**
  * EIP-7702 Execution Options
  */
-export type Eip7702ExecutionOptions = {
+export type Eip7702ExecutionOptions =
+	| Eip7702OwnerExecution
+	| Eip7702SessionKeyExecution;
+
+/**
+ * EIP-7702 Owner Execution
+ */
+export type Eip7702OwnerExecution = {
 	/**
-	 * The EOA address that will sign the EIP-7702 transaction
+	 * The delegated EOA address
 	 */
 	from: AddressDef;
+	/**
+	 * Optional fleet ID to route the transaction to a specific bundler fleet
+	 */
+	fleetId?: string | null;
+};
+
+/**
+ * EIP-7702 Session Key Execution
+ */
+export type Eip7702SessionKeyExecution = {
+	/**
+	 * The session key address is your server wallet, which has been granted a session key to the `account_address`
+	 */
+	sessionKeyAddress: AddressDef;
+	/**
+	 * The account address is the address of a delegated account you want to execute the transaction on. This account has granted a session key to the `session_key_address`
+	 */
+	accountAddress: AddressDef;
+	/**
+	 * Optional fleet ID to route the transaction to a specific bundler fleet
+	 */
+	fleetId?: string | null;
 };
 
 export type EmptyIdempotencySetResponse = {
@@ -735,6 +836,8 @@ export type InnerTransaction = (null | TransactionTypeData) & {
 	gasLimit?: number | null;
 };
 
+export type InstructionDataEncoding = "hex" | "base64";
+
 export type MessageFormatDef = "text" | "hex";
 
 /**
@@ -752,6 +855,29 @@ export type MessageInput = {
 };
 
 export type MulticallDocType = boolean | AddressDef;
+
+/**
+ * Pubkey
+ */
+export type PubkeyDef = string;
+
+/**
+ * Response for a queued Solana transaction
+ */
+export type QueuedSolanaTransactionResponse = {
+	/**
+	 * The idempotency key for this transaction
+	 */
+	transactionId: string;
+	/**
+	 * The Solana chain
+	 */
+	chainId: SolanaChainId;
+	/**
+	 * The signer address
+	 */
+	signerAddress: string;
+};
 
 /**
  * # QueuedTransaction
@@ -880,6 +1006,24 @@ export type RpcErrorResponse = {
 };
 
 /**
+ * Request to send a Solana transaction
+ */
+export type SendSolanaTransactionRequest = SolanaTransactionInput & {
+	/**
+	 * Idempotency key for this transaction (defaults to random UUID)
+	 */
+	idempotencyKey?: string;
+	/**
+	 * Solana execution options
+	 */
+	executionOptions: SolanaExecutionOptions;
+	/**
+	 * Webhook options for transaction status notifications
+	 */
+	webhookOptions?: Array<WebhookOptions>;
+};
+
+/**
  * Incoming transaction request, parsed into InnerTransaction
  * Exposed API will have varying `params` but will all parse into InnerTransaction before execution
  */
@@ -888,6 +1032,67 @@ export type SendTransactionRequest = {
 	params: Array<InnerTransaction>;
 	webhookOptions?: Array<WebhookOptions>;
 };
+
+export type SerialisableAwsSdkError =
+	| {
+			message: string;
+			type: "CONSTRUCTION_FAILURE";
+	  }
+	| {
+			message: string;
+			type: "TIMEOUT_ERROR";
+	  }
+	| {
+			message: string;
+			type: "DISPATCH_FAILURE";
+	  }
+	| {
+			message: string;
+			type: "RESPONSE_ERROR";
+	  }
+	| {
+			message: string;
+			type: "SERVICE_ERROR";
+	  }
+	| {
+			message: string;
+			type: "OTHER";
+	  };
+
+export type SerialisableAwsSignerError =
+	| {
+			aws_sdk_error: SerialisableAwsSdkError;
+			type: "SIGN";
+	  }
+	| {
+			aws_sdk_error: SerialisableAwsSdkError;
+			type: "GET_PUBLIC_KEY";
+	  }
+	| {
+			message: string;
+			type: "K256";
+	  }
+	| {
+			message: string;
+			type: "SPKI";
+	  }
+	| {
+			message: string;
+			type: "HEX";
+	  }
+	| {
+			type: "SIGNATURE_NOT_FOUND";
+	  }
+	| {
+			type: "PUBLIC_KEY_NOT_FOUND";
+	  }
+	| {
+			message: string;
+			type: "UNKNOWN";
+	  }
+	| {
+			type: "SIGNATURE_RECOVERY_FAILED";
+	  };
 
 export type SerializableReqwestError =
 	| {
@@ -988,6 +1193,30 @@ export type SignResultData = {
 };
 
 /**
+ * Request to sign a Solana transaction
+ */
+export type SignSolanaTransactionRequest = SolanaTransactionInput & {
+	/**
+	 * Solana execution options
+	 */
+	executionOptions: SolanaExecutionOptions;
+};
+
+/**
+ * Data returned from successful signing
+ */
+export type SignSolanaTransactionResponse = {
+	/**
+	 * The signature (base58-encoded)
+	 */
+	signature: string;
+	/**
+	 * The signed serialized transaction (base64-encoded)
+	 */
+	signedTransaction: string;
+};
+
+/**
  * Request to sign typed data
  */
 export type SignTypedDataRequest = {
@@ -1062,6 +1291,211 @@ export type SigningOptions =
 	  };
 
 /**
+ * Account metadata for Solana instructions
+ */
+export type SolanaAccountMeta = {
+	/**
+	 * Public key of the account
+	 */
+	pubkey: PubkeyDef;
+	/**
+	 * Whether the account should sign the transaction
+	 */
+	isSigner: boolean;
+	/**
+	 * Whether the account is writable
+	 */
+	isWritable: boolean;
+};
+
+/**
+ * Solana chain identifier
+ */
+export type SolanaChainId = "solana:mainnet" | "solana:devnet" | "solana:local";
+
+/**
+ * ### Solana Execution Options
+ * This struct configures Solana transaction execution.
+ *
+ * Solana execution sends transactions directly to Solana RPC nodes with
+ * support for priority fees, compute budgets, and commitment levels.
+ *
+ * ### Use Cases
+ * - SOL transfers
+ * - SPL token operations
+ * - Program interactions (NFTs, DeFi, etc.)
+ * - Arbitrary instruction composition
+ *
+ * ### Features
+ * - Versioned transactions with address lookup tables
+ * - Priority fee configuration for faster inclusion
+ * - Compute budget optimization
+ * - Configurable commitment levels
+ * - Blockhash retry mechanism
+ */
+export type SolanaExecutionOptions = {
+	/**
+	 * The Solana address (public key) to send transactions from
+	 * This account must have sufficient SOL to pay for transaction fees
+	 */
+	signerAddress: PubkeyDef;
+	/**
+	 * Solana chain to use
+	 */
+	chainId: SolanaChainId;
+	/**
+	 * Maximum number of times to retry fetching a new blockhash if transaction fails
+	 * Default: 0 (fail fast)
+	 * Max: 1000
+	 */
+	maxBlockhashRetries?: number;
+	/**
+	 * Commitment level for transaction confirmation
+	 * Options: "processed", "confirmed", "finalized"
+	 * Default: "finalized"
+	 */
+	commitment?: CommitmentLevel;
+	priorityFee?: null | SolanaPriorityFee;
+	/**
+	 * Compute unit limit for the transaction. If omitted, the transaction will use the default compute unit limit. If provided, engine will add the compute budget instruction to the transaction.
+	 */
+	computeUnitLimit?: number | null;
+};
+
+/**
+ * Solana instruction data provided by the user
+ * This is a simplified representation that will be converted to a proper Instruction
+ */
+export type SolanaInstructionData = {
+	/**
+	 * Program ID to invoke
+	 */
+	programId: PubkeyDef;
+	/**
+	 * Account keys that will be passed to the program
+	 */
+	accounts: Array<SolanaAccountMeta>;
+	/**
+	 * Instruction data (hex-encoded or base64)
+	 */
+	data: string;
+	encoding: InstructionDataEncoding;
+};
+
+/**
+ * Solana Priority Fee
+ */
+export type SolanaPriorityFee =
+	| {
+			type: "auto";
+	  }
+	| {
+			microLamportsPerUnit: number;
+			type: "manual";
+	  }
+	| {
+			percentile: number;
+			type: "percentile";
+	  };
+
+/**
+ * Solana-specific RPC error types
+ */
+export type SolanaRpcErrorKind =
+	| {
+			message: string;
+			kind?: string | null;
+			type: "IO";
+	  }
+	| {
+			message: string;
+			status?: number | null;
+			type: "REQWEST";
+	  }
+	| {
+			code: number;
+			message: string;
+			/**
+			 * Structured error data from Solana RPC
+			 */
+			data: SolanaRpcResponseErrorData;
+			type: "RPC_ERROR";
+	  }
+	| {
+			message: string;
+			line?: number | null;
+			column?: number | null;
+			type: "SERDE_JSON";
+	  }
+	| {
+			error_type: string;
+			message: string;
+			type: "TRANSACTION_ERROR";
+	  }
+	| {
+			message: string;
+			type: "SIGNING_ERROR";
+	  }
+	| {
+			message: string;
+			type: "CUSTOM";
+	  }
+	| {
+			message: string;
+			type: "UNKNOWN";
+	  };
+
+/**
+ * Serializable version of Solana's RpcResponseErrorData
+ */
+export type SolanaRpcResponseErrorData =
+	| {
+			type: "EMPTY";
+	  }
+	| {
+			/**
+			 * Error message from simulation
+			 */
+			err?: string | null;
+			/**
+			 * Logs from simulation
+			 */
+			logs?: Array<string> | null;
+			/**
+			 * Accounts used in simulation
+			 */
+			accounts?: unknown;
+			/**
+			 * Units consumed during simulation
+			 */
+			units_consumed?: number | null;
+			/**
+			 * Return data from the transaction
+			 */
+			return_data?: unknown;
+			type: "SEND_TRANSACTION_PREFLIGHT_FAILURE";
+	  }
+	| {
+			num_slots_behind?: number | null;
+			type: "NODE_UNHEALTHY";
+	  };
+
+/**
+ * Input for Solana transaction - either build from instructions or use pre-built
+ */
+export type SolanaTransactionInput =
+	| SolanaTransactionInputInstructions
+	| SolanaTransactionInputSerialized;
+
+export type SolanaTransactionInputInstructions = {
+	instructions: Array<SolanaInstructionData>;
+};
+
+export type SolanaTransactionInputSerialized = {
+	transaction: string;
+};
+
+/**
  * Execution Option Variants
  * All supported specific execution options are contained here
  */
@@ -1086,9 +1520,45 @@ export type SuccessResponseEmptyIdempotencySetResponse = {
 	};
 };
 
+export type SuccessResponseQueuedSolanaTransactionResponse = {
+	/**
+	 * Response for a queued Solana transaction
+	 */
+	result: {
+		/**
+		 * The idempotency key for this transaction
+		 */
+		transactionId: string;
+		/**
+		 * The Solana chain
+		 */
+		chainId: SolanaChainId;
+		/**
+		 * The signer address
+		 */
+		signerAddress: string;
+	};
+};
+
 export type SuccessResponseQueuedTransactionsResponse = {
 	result: {
 		transactions: Array<QueuedTransaction>;
+	};
+};
+
+export type SuccessResponseSignSolanaTransactionResponse = {
+	/**
+	 * Data returned from successful signing
+	 */
+	result: {
+		/**
+		 * The signature (base58-encoded)
+		 */
+		signature: string;
+		/**
+		 * The signed serialized transaction (base64-encoded)
+		 */
+		signedTransaction: string;
 	};
 };
 
@@ -1410,6 +1880,58 @@ export type EncodeContractResponses = {
 export type EncodeContractResponse =
 	EncodeContractResponses[keyof EncodeContractResponses];
 
+export type SendSolanaTransactionData = {
+	/**
+	 * Solana transaction request
+	 */
+	body: SendSolanaTransactionRequest;
+	headers?: {
+		/**
+		 * Vault access token
+		 */
+		"x-vault-access-token"?: string | null;
+	};
+	path?: never;
+	query?: never;
+	url: "/v1/solana/transaction";
+};
+
+export type SendSolanaTransactionResponses = {
+	/**
+	 * Solana transaction queued successfully
+	 */
+	202: SuccessResponseQueuedSolanaTransactionResponse;
+};
+
+export type SendSolanaTransactionResponse =
+	SendSolanaTransactionResponses[keyof SendSolanaTransactionResponses];
+
+export type SignSolanaTransactionData = {
+	/**
+	 * Sign Solana transaction request
+	 */
+	body: SignSolanaTransactionRequest;
+	headers?: {
+		/**
+		 * Vault access token
+		 */
+		"x-vault-access-token"?: string | null;
+	};
+	path?: never;
+	query?: never;
+	url: "/v1/solana/sign/transaction";
+};
+
+export type SignSolanaTransactionResponses = {
+	/**
+	 * Successfully signed Solana transaction
+	 */
+	200: SuccessResponseSignSolanaTransactionResponse;
+};
+
+export type SignSolanaTransactionResponse2 =
+	SignSolanaTransactionResponses[keyof SignSolanaTransactionResponses];
+
 export type CancelTransactionData = {
 	body?: never;
 	path: {
@@ -1510,6 +2032,135 @@ export type CreateAccountResponses = {
 export type CreateAccountResponse =
 	CreateAccountResponses[keyof CreateAccountResponses];
 
+export type ListSolanaAccountsData = {
+	body?: never;
+	headers?: {
+		/**
+		 * Vault Access Token used to access your EOA
+		 */
+		"x-vault-access-token"?: string;
+	};
+	path?: never;
+	query?: {
+		page?: number;
+		limit?: number;
+	};
+	url: "/v1/solana/accounts";
+};
+
+export type ListSolanaAccountsResponses = {
+	/**
+	 * Solana accounts retrieved
+	 */
+	200: {
+		result: {
+			accounts: Array<{
+				/**
+				 * Base58 encoded Solana public key
+				 */
+				publicKey: string;
+				label?: string;
+				createdAt: string;
+				updatedAt: string;
+			}>;
+			pagination: {
+				totalCount: number;
+				page: number;
+				limit: number;
+			};
+		};
+	};
+};
+
+export type ListSolanaAccountsResponse =
+	ListSolanaAccountsResponses[keyof ListSolanaAccountsResponses];
+
+export type CreateSolanaAccountData = {
+	body?: {
+		label: string;
+	};
+	headers?: {
+		/**
+		 * Vault Access Token used to access your EOA
+		 */
+		"x-vault-access-token"?: string;
+	};
+	path?: never;
+	query?: never;
+	url: "/v1/solana/accounts";
+};
+
+export type CreateSolanaAccountResponses = {
+	/**
+	 * Solana account retrieved
+	 */
+	200: {
+		result: {
+			/**
+			 * Base58 encoded Solana public key
+			 */
+			publicKey: string;
+			label?: string;
+			createdAt: string;
+			updatedAt: string;
+		};
+	};
+	/**
+	 * Solana account created
+	 */
+	201: {
+		result: {
+			/**
+			 * Base58 encoded Solana public key
+			 */
+			publicKey: string;
+			label?: string;
+			createdAt: string;
+			updatedAt: string;
+		};
+	};
+};
+
+export type CreateSolanaAccountResponse =
+	CreateSolanaAccountResponses[keyof CreateSolanaAccountResponses];
+
+export type SignSolanaMessageData = {
+	body?: {
+		/**
+		 * Base58 encoded Solana public key
+		 */
+		from: string;
+		message: string;
+		format?: "text" | "hex";
+	};
+	headers?: {
+		/**
+		 * Vault Access Token used to access your EOA
+		 */
+		"x-vault-access-token"?: string;
+	};
+	path?: never;
+	query?: never;
+	url: "/v1/solana/sign-message";
+};
+
+export type SignSolanaMessageResponses = {
+	/**
+	 * Message signed
+	 */
+	200: {
+		result: {
+			/**
+			 * Base58 encoded signature
+			 */
+			signature: string;
+		};
+	};
+};
+
+export type SignSolanaMessageResponse =
+	SignSolanaMessageResponses[keyof SignSolanaMessageResponses];
+
 export type GetTransactionsData = {
 	body?: never;
 	path?: never;
@@ -1552,6 +2203,7 @@ export type GetTransactionsResponses = {
 					  }
 					| Array<unknown>;
 				transactionHash: string | null;
+				status: string | null;
 				confirmedAt: string | null;
 				confirmedAtBlockNumber: string | null;
 				enrichedData:
@@ -1712,6 +2364,7 @@ export type SearchTransactionsResponses = {
 					  }
 					| Array<unknown>;
 				transactionHash: string | null;
+				status: string | null;
 				confirmedAt: string | null;
 				confirmedAtBlockNumber: string | null;
 				enrichedData:
@@ -1876,6 +2529,277 @@ export type SearchActivityLogsResponses = {
 
 export type SearchActivityLogsResponse =
 	SearchActivityLogsResponses[keyof SearchActivityLogsResponses];
+
+export type GetSolanaTransactionsData = {
+	body?: never;
+	path?: never;
+	query?: {
+		page?: number;
+		limit?: number;
+		id?: string;
+		chainId?: string;
+		signerAddress?: string;
+		signature?: string;
+		status?: "QUEUED" | "SUBMITTED" | "CONFIRMED" | "FAILED";
+		sortBy?: "createdAt" | "confirmedAt";
+		sortDirection?: "asc" | "desc";
+	};
+	url: "/v1/solana/transactions";
+};
+
+export type GetSolanaTransactionsResponses = {
+	/**
+	 * Solana Transactions
+	 */
+	200: {
+		result: {
+			transactions: Array<{
+				id: string;
+				clientId: string;
+				chainId: string;
+				signerAddress: string;
+				transactionParams:
+					| (string | number | boolean | null)
+					| {
+							[key: string]: unknown;
+					  }
+					| Array<unknown>;
+				signature: string | null;
+				status: string | null;
+				confirmedAt: string | null;
+				confirmedAtSlot: string | null;
+				blockTime: number | null;
+				enrichedData:
+					| (string | number | boolean | null)
+					| {
+							[key: string]: unknown;
+					  }
+					| Array<unknown>;
+				executionParams:
+					| (string | number | boolean | null)
+					| {
+							[key: string]: unknown;
+					  }
+					| Array<unknown>;
+				executionResult:
+					| (string | number | boolean | null)
+					| {
+							[key: string]: unknown;
+					  }
+					| Array<unknown>
+					| null;
+				createdAt: string;
+				errorMessage: string | null;
+				cancelledAt: string | null;
+			}>;
+			pagination: {
+				totalCount: number;
+				page: number;
+				limit: number;
+			};
+		};
+	};
+};
+
+export type GetSolanaTransactionsResponse =
+	GetSolanaTransactionsResponses[keyof GetSolanaTransactionsResponses];
+
+export type SearchSolanaTransactionsData = {
+	body?: {
+		page?: number;
+		limit?: number;
+		filters?: Array<
+			SolanaTransactionsFilterValue | SolanaTransactionsFilterNested
+		>;
+		filtersOperation?: "AND" | "OR";
+		sortBy?: "createdAt" | "confirmedAt";
+		sortDirection?: "asc" | "desc";
+	};
+	path?: never;
+	query?: never;
+	url: "/v1/solana/transactions/search";
+};
+
+export type SearchSolanaTransactionsResponses = {
+	/**
+	 * Solana Transactions
+	 */
+	200: {
+		result: {
+			transactions: Array<{
+				id: string;
+				clientId: string;
+				chainId: string;
+				signerAddress: string;
+				transactionParams:
+					| (string | number | boolean | null)
+					| {
+							[key: string]: unknown;
+					  }
+					| Array<unknown>;
+				signature: string | null;
+				status: string | null;
+				confirmedAt: string | null;
+				confirmedAtSlot: string | null;
+				blockTime: number | null;
+				enrichedData:
+					| (string | number | boolean | null)
+					| {
+							[key: string]: unknown;
+					  }
+					| Array<unknown>;
+				executionParams:
+					| (string | number | boolean | null)
+					| {
+							[key: string]: unknown;
+					  }
+					| Array<unknown>;
+				executionResult:
+					| (string | number | boolean | null)
+					| {
+							[key: string]: unknown;
+					  }
+					| Array<unknown>
+					| null;
+				createdAt: string;
+				errorMessage: string | null;
+				cancelledAt: string | null;
+			}>;
+			pagination: {
+				totalCount: number;
+				page: number;
+				limit: number;
+			};
+		};
+	};
+};
+
+export type SearchSolanaTransactionsResponse =
+	SearchSolanaTransactionsResponses[keyof SearchSolanaTransactionsResponses];
+
+export type GetSolanaActivityLogsData = {
+	body?: never;
+	path?: never;
+	query: {
+		page?: number;
+		limit?: number;
+		transactionId: string;
+		eventType?: "SUCCESS" | "FAILURE" | "NACK";
+		stageName?: string;
+		executorName?: string;
+		sortBy?: "timestamp" | "createdAt";
+		sortDirection?: "asc" | "desc";
+	};
+	url: "/v1/solana/transactions/activity-logs";
+};
+
+export type GetSolanaActivityLogsErrors = {
+	/**
+	 * Invalid request parameters
+	 */
+	400: unknown;
+	/**
+	 * Transaction not found or not accessible
+	 */
+	404: unknown;
+};
+
+export type GetSolanaActivityLogsResponses = {
+	/**
+	 * Solana Activity Logs
+	 */
+	200: {
+		result: {
+			activityLogs: Array<{
+				id: string;
+				transactionId: string;
+				eventType: string;
+				stageName: string;
+				executorName: string;
+				notificationId: string;
+				payload:
+					| (string | number | boolean | null)
+					| {
+							[key: string]: unknown;
+					  }
+					| Array<unknown>;
+				timestamp: string;
+				createdAt: string;
+			}>;
+			transaction: {
+				id: string;
+				clientId: string;
+			};
+			pagination: {
+				totalCount: number;
+				page: number;
+				limit: number;
+			};
+		};
+	};
+};
+
+export type GetSolanaActivityLogsResponse =
+	GetSolanaActivityLogsResponses[keyof GetSolanaActivityLogsResponses];
+
+export type SearchSolanaActivityLogsData = {
+	body?: {
+		page?: number;
+		limit?: number;
+		transactionIds?: Array<string>;
+		eventType?: "SUCCESS" | "FAILURE" | "NACK";
+		stageName?: string;
+		executorName?: string;
+		startDate?: string;
+		endDate?: string;
+		sortBy?: "timestamp" | "createdAt";
+		sortDirection?: "asc" | "desc";
+	};
+	path?: never;
+	query?: never;
+	url: "/v1/solana/transactions/activity-logs/search";
+};
+
+export type SearchSolanaActivityLogsErrors = {
+	/**
+	 * Invalid request parameters
+	 */
+	400: unknown;
+};
+
+export type SearchSolanaActivityLogsResponses = {
+	/**
+	 * Solana Activity Logs Search Results
+	 */
+	200: {
+		result: {
+			activityLogs: Array<{
+				id: string;
+				transactionId: string;
+				eventType: string;
+				stageName: string;
+				executorName: string;
+				notificationId: string;
+				payload:
+					| (string | number | boolean | null)
+					| {
+							[key: string]: unknown;
+					  }
+					| Array<unknown>;
+				timestamp: string;
+				createdAt: string;
+			}>;
+			pagination: {
+				totalCount: number;
+				page: number;
+				limit: number;
+			};
+		};
+	};
+};
+
+export type SearchSolanaActivityLogsResponse =
+	SearchSolanaActivityLogsResponses[keyof SearchSolanaActivityLogsResponses];
 
 export type ClientOptions = {
 	baseUrl: "https://engine.thirdweb.com" | (string & {});

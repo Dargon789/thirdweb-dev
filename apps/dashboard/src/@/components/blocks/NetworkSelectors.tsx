@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import type { ThirdwebClient } from "thirdweb";
+import type { Bridge, ThirdwebClient } from "thirdweb";
 import { MultiSelect } from "@/components/blocks/multi-select";
 import { SelectWithSearch } from "@/components/blocks/select-with-search";
 import { Badge } from "@/components/ui/badge";
@@ -293,6 +293,92 @@ export function SingleNetworkSelector(props: {
       showCheck={false}
       side={props.side}
       value={String(props.chainId)}
+    />
+  );
+}
+
+type BridgeNetworkSelectorProps = {
+  chainId: number | undefined;
+  onChange: (chainId: number) => void;
+  className?: string;
+  popoverContentClassName?: string;
+  side?: "left" | "right" | "top" | "bottom";
+  align?: "center" | "start" | "end";
+  placeholder?: string;
+  client: ThirdwebClient;
+  chains: Bridge.chains.Result;
+};
+
+export function BridgeNetworkSelector(props: BridgeNetworkSelectorProps) {
+  const options = useMemo(() => {
+    return props.chains.map((chain) => {
+      return {
+        label: cleanChainName(chain.name),
+        value: String(chain.chainId),
+      };
+    });
+  }, [props.chains]);
+
+  const searchFn = useCallback(
+    (option: Option, searchValue: string) => {
+      const chain = props.chains.find(
+        (chain) => chain.chainId === Number(option.value),
+      );
+      if (!chain) {
+        return false;
+      }
+
+      if (Number.isInteger(Number.parseInt(searchValue))) {
+        return String(chain.chainId).startsWith(searchValue);
+      }
+      return chain.name.toLowerCase().includes(searchValue.toLowerCase());
+    },
+    [props.chains],
+  );
+
+  const renderOption = useCallback(
+    (option: Option) => {
+      const chain = props.chains.find(
+        (chain) => chain.chainId === Number(option.value),
+      );
+      if (!chain) {
+        return option.label;
+      }
+
+      return (
+        <div className="flex justify-between gap-4">
+          <span className="flex grow gap-2 truncate text-left">
+            <ChainIconClient
+              className="size-5"
+              client={props.client}
+              src={chain.icon}
+              loading="lazy"
+            />
+            {cleanChainName(chain.name)}
+          </span>
+        </div>
+      );
+    },
+    [props.chains, props.client],
+  );
+
+  return (
+    <SelectWithSearch
+      align={props.align}
+      className={props.className}
+      closeOnSelect={true}
+      onValueChange={(chainId) => {
+        props.onChange(Number(chainId));
+      }}
+      options={options}
+      overrideSearchFn={searchFn}
+      placeholder={props.placeholder || "Select Chain"}
+      popoverContentClassName={props.popoverContentClassName}
+      renderOption={renderOption}
+      searchPlaceholder="Search by Name or Chain ID"
+      showCheck={false}
+      side={props.side}
+      value={props.chainId?.toString()}
     />
   );
 }

@@ -1,5 +1,17 @@
 # @thirdweb-dev/ai-sdk-provider
 
+## 0.1.4
+
+### Patch Changes
+
+- [#8211](https://github.com/thirdweb-dev/js/pull/8211) [`71a1e58`](https://github.com/thirdweb-dev/js/commit/71a1e58eafa6d51f0a3eb9c7a3fcc685465c72b5) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Default in-memory session store across thirdweb AI instances, option to pass your own
+
+## 0.1.3
+
+### Patch Changes
+
+- [#7988](https://github.com/thirdweb-dev/js/pull/7988) [`c92081b`](https://github.com/thirdweb-dev/js/commit/c92081b0565cee4452728e2f1615f226df9c138b) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update sign swap action type
+
 ## 0.1.2
 
 ### Patch Changes

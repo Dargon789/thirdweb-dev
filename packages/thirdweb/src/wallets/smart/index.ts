@@ -379,6 +379,7 @@ async function createSmartAccount(
       const id = await inAppWalletSendCalls({
         account: account,
         calls: options.calls,
+        chain,
       });
       return { chain, client, id };
     },
@@ -387,6 +388,12 @@ async function createSmartAccount(
         "../in-app/core/eip5792/in-app-wallet-calls.js"
       );
       return inAppWalletGetCallsStatus(options);
+    },
+    getCallsStatusRaw: async (options) => {
+      const { inAppWalletGetCallsStatusRaw } = await import(
+        "../in-app/core/eip5792/in-app-wallet-calls.js"
+      );
+      return inAppWalletGetCallsStatusRaw(options);
     },
     getCapabilities: async (options) => {
       return {
@@ -556,6 +563,7 @@ function createZkSyncAccount(args: {
       const id = await inAppWalletSendCalls({
         account: account,
         calls: options.calls,
+        chain,
       });
       return { chain, client, id };
     },
@@ -564,6 +572,12 @@ function createZkSyncAccount(args: {
         "../in-app/core/eip5792/in-app-wallet-calls.js"
       );
       return inAppWalletGetCallsStatus(options);
+    },
+    getCallsStatusRaw: async (options) => {
+      const { inAppWalletGetCallsStatusRaw } = await import(
+        "../in-app/core/eip5792/in-app-wallet-calls.js"
+      );
+      return inAppWalletGetCallsStatusRaw(options);
     },
     getCapabilities: async (options) => {
       return {

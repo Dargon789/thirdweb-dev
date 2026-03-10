@@ -1,21 +1,24 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
+import { getWalletInfo, type WalletId } from "thirdweb/wallets";
 import { ANALYTICS_SERVICE_URL } from "@/constants/server-envs";
 import { normalizeTime } from "@/lib/time";
 import type {
   AIUsageStats,
   AnalyticsQueryParams,
   EcosystemWalletStats,
-  EngineCloudStats,
   InAppWalletStats,
   TransactionStats,
   UniversalBridgeStats,
   UniversalBridgeWalletStats,
   UserOpStats,
   WalletStats,
+  WalletStatsWithName,
   WebhookLatencyStats,
   WebhookSummaryStats,
+  X402QueryParams,
+  X402SettlementStats,
 } from "@/types/analytics";
 import { getChains } from "./chain";
 
@@ -146,13 +149,7 @@ const cached_getWalletConnections = unstable_cache(
     }
 
     const json = await res.json();
-    return (json.data as WalletStats[]).filter(
-      (w) =>
-        w.walletType !== "smart" &&
-        w.walletType !== "smartWallet" &&
-        w.walletType !== "inApp" &&
-        w.walletType !== "inAppWallet",
-    );
+    return json.data as WalletStats[];
   },
   ["getWalletConnections"],
   {
@@ -160,11 +157,116 @@ const cached_getWalletConnections = unstable_cache(
   },
 );
 
-export function getWalletConnections(
+const cache_getEOAWalletConnections = unstable_cache(
+  async (
+    params: AnalyticsQueryParams,
+    authToken: string,
+  ): Promise<WalletStatsWithName[]> => {
+    const result = await cached_getWalletConnections(
+      normalizedParams(params),
+      authToken,
+    );
+    const filteredResult = result.filter(
+      (w) =>
+        w.walletType !== "smart" &&
+        w.walletType !== "smartWallet" &&
+        w.walletType !== "inApp" &&
+        w.walletType !== "inAppWallet",
+    );
+
+    const modifiedResult = await Promise.all(
+      filteredResult.map(async (w) => {
+        const wallet = await getWalletInfo(w.walletType as WalletId).catch(
+          () => undefined,
+        );
+
+        if (!wallet) {
+          return {
+            ...w,
+            walletName: w.walletType,
+          };
+        }
+
+        return {
+          ...w,
+          walletName: wallet.name,
+        };
+      }),
+    );
+
+    return modifiedResult;
+  },
+  ["getEOAWalletConnections"],
+  {
+    revalidate: 60 * 60, // 1 hour
+  },
+);
+
+export async function getEOAWalletConnections(
   params: AnalyticsQueryParams,
   authToken: string,
 ) {
-  return cached_getWalletConnections(normalizedParams(params), authToken);
+  return cache_getEOAWalletConnections(normalizedParams(params), authToken);
+}
+
+const cache_getEOAAndInAppWalletConnections = unstable_cache(
+  async (
+    params: AnalyticsQueryParams,
+    authToken: string,
+  ): Promise<WalletStatsWithName[]> => {
+    const result = await cached_getWalletConnections(
+      normalizedParams(params),
+      authToken,
+    );
+
+    const modifiedResult = await Promise.all(
+      result.map(async (w) => {
+        if (
+          w.walletType === "inApp" ||
+          w.walletType === "inAppWallet" ||
+          w.walletType === "smart" ||
+          w.walletType === "smartWallet"
+        ) {
+          return {
+            ...w,
+            walletName: "User wallet",
+          };
+        }
+
+        const wallet = await getWalletInfo(w.walletType as WalletId).catch(
+          () => undefined,
+        );
+
+        if (!wallet) {
+          return {
+            ...w,
+            walletName: w.walletType,
+          };
+        }
+
+        return {
+          ...w,
+          walletName: wallet.name,
+        };
+      }),
+    );
+
+    return modifiedResult;
+  },
+  ["getEOAAndInAppWalletConnections"],
+  {
+    revalidate: 60 * 60, // 1 hour
+  },
+);
+
+export async function getEOAAndInAppWalletConnections(
+  params: AnalyticsQueryParams,
+  authToken: string,
+): Promise<WalletStatsWithName[]> {
+  return cache_getEOAAndInAppWalletConnections(
+    normalizedParams(params),
+    authToken,
+  );
 }
 
 const cached_getInAppWalletUsage = unstable_cache(
@@ -184,7 +286,7 @@ const cached_getInAppWalletUsage = unstable_cache(
     if (res?.status !== 200) {
       const reason = await res?.text();
       console.error(
-        `Failed to fetch in-app wallet usage, ${res?.status} - ${res.statusText} - ${reason}`,
+        `Failed to fetch user wallets usage, ${res?.status} - ${res.statusText} - ${reason}`,
       );
       return [];
     }
@@ -289,8 +391,11 @@ const cached_getAggregateUserOpUsage = unstable_cache(
     ]);
 
     // Aggregate stats across wallet types
-    return userOpStats.reduce(
-      (acc, curr) => {
+    const aggregated = userOpStats.reduce(
+      (
+        acc: UserOpStats & { gasPriceSum: number; gasPriceCount: number },
+        curr,
+      ) => {
         // Skip testnets from the aggregated stats
         if (curr.chainId) {
           const chain = chains.data.find(
@@ -304,6 +409,10 @@ const cached_getAggregateUserOpUsage = unstable_cache(
         acc.successful += curr.successful;
         acc.failed += curr.failed;
         acc.sponsoredUsd += curr.sponsoredUsd;
+        acc.gasUnits += curr.gasUnits;
+        // For avgGasPrice, we'll track sum and count for proper averaging
+        acc.gasPriceSum += curr.avgGasPrice * curr.successful;
+        acc.gasPriceCount += curr.successful;
         return acc;
       },
       {
@@ -311,8 +420,28 @@ const cached_getAggregateUserOpUsage = unstable_cache(
         failed: 0,
         sponsoredUsd: 0,
         successful: 0,
+        gasUnits: 0,
+        avgGasPrice: 0,
+        gasPriceSum: 0,
+        gasPriceCount: 0,
       },
     );
+
+    // Calculate the proper average gas price
+    aggregated.avgGasPrice =
+      aggregated.gasPriceCount > 0
+        ? aggregated.gasPriceSum / aggregated.gasPriceCount
+        : 0;
+
+    // Return only the UserOpStats fields
+    return {
+      date: aggregated.date,
+      failed: aggregated.failed,
+      sponsoredUsd: aggregated.sponsoredUsd,
+      successful: aggregated.successful,
+      gasUnits: aggregated.gasUnits,
+      avgGasPrice: aggregated.avgGasPrice,
+    };
   },
   ["getAggregateUserOpUsage"],
   {
@@ -448,6 +577,7 @@ type ActiveStatus = {
   pay: boolean;
   inAppWallet: boolean;
   ecosystemWallet: boolean;
+  engineCloud: boolean;
 };
 
 export const isProjectActive = unstable_cache(
@@ -479,6 +609,7 @@ export const isProjectActive = unstable_cache(
         pay: false,
         rpc: false,
         sdk: false,
+        engineCloud: false,
         storage: false,
       } as ActiveStatus;
     }
@@ -488,7 +619,7 @@ export const isProjectActive = unstable_cache(
   },
   ["isProjectActive"],
   {
-    revalidate: 60 * 60, // 1 hour
+    revalidate: 30, // 30 seconds
   },
 );
 
@@ -592,7 +723,7 @@ const cached_getUniversalBridgeUsage = unstable_cache(
     if (res?.status !== 200) {
       const reason = await res?.text();
       console.error(
-        `Failed to fetch universal bridge stats: ${res?.status} - ${res.statusText} - ${reason}`,
+        `Failed to fetch bridge stats: ${res?.status} - ${res.statusText} - ${reason}`,
       );
       return [];
     }
@@ -636,7 +767,7 @@ const cached_getUniversalBridgeWalletUsage = unstable_cache(
     if (res?.status !== 200) {
       const reason = await res?.text();
       console.error(
-        `Failed to fetch universal bridge wallet stats: ${res?.status} - ${res.statusText} - ${reason}`,
+        `Failed to fetch bridge wallet stats: ${res?.status} - ${res.statusText} - ${reason}`,
       );
       return [];
     }
@@ -658,41 +789,6 @@ export function getUniversalBridgeWalletUsage(
     normalizedParams(params),
     authToken,
   );
-}
-
-const cached_getEngineCloudMethodUsage = unstable_cache(
-  async (
-    params: AnalyticsQueryParams,
-    authToken: string,
-  ): Promise<EngineCloudStats[]> => {
-    const searchParams = buildSearchParams(params);
-    const res = await fetchAnalytics({
-      authToken,
-      url: `v2/engine-cloud/requests?${searchParams.toString()}`,
-      init: {
-        method: "GET",
-      },
-    });
-
-    if (res?.status !== 200) {
-      console.error("Failed to fetch Engine Cloud method usage");
-      return [];
-    }
-
-    const json = await res.json();
-    return json.data as EngineCloudStats[];
-  },
-  ["getEngineCloudMethodUsage"],
-  {
-    revalidate: 60 * 60, // 1 hour
-  },
-);
-
-export function getEngineCloudMethodUsage(
-  params: AnalyticsQueryParams,
-  authToken: string,
-) {
-  return cached_getEngineCloudMethodUsage(normalizedParams(params), authToken);
 }
 
 const _cached_getWebhookSummary = unstable_cache(
@@ -903,4 +999,44 @@ export function getInsightUsage(
   authToken: string,
 ) {
   return cached_getInsightUsage(normalizedParams(params), authToken);
+}
+
+const cached_getX402Settlements = unstable_cache(
+  async (
+    params: X402QueryParams,
+    authToken: string,
+  ): Promise<X402SettlementStats[]> => {
+    const searchParams = buildSearchParams(params);
+
+    if (params.groupBy) {
+      searchParams.append("groupBy", params.groupBy);
+    }
+
+    const res = await fetchAnalytics({
+      authToken,
+      url: `v2/x402/settlements?${searchParams.toString()}`,
+      init: {
+        method: "GET",
+      },
+    });
+
+    if (res?.status !== 200) {
+      const reason = await res?.text();
+      console.error(
+        `Failed to fetch x402 settlements: ${res?.status} - ${res.statusText} - ${reason}`,
+      );
+      return [];
+    }
+
+    const json = await res.json();
+    return json.data as X402SettlementStats[];
+  },
+  ["getX402Settlements"],
+  {
+    revalidate: 60 * 60, // 1 hour
+  },
+);
+
+export function getX402Settlements(params: X402QueryParams, authToken: string) {
+  return cached_getX402Settlements(normalizedParams(params), authToken);
 }

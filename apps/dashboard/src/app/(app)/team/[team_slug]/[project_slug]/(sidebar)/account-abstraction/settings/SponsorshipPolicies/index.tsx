@@ -44,6 +44,7 @@ type AccountAbstractionSettingsPageProps = {
   teamId: string;
   teamSlug: string;
   validTeamPlan: Team["billingPlan"];
+  isLegacyPlan: boolean;
   client: ThirdwebClient;
 };
 
@@ -371,7 +372,7 @@ export function AccountAbstractionSettingsPage(
                         of the{" "}
                         <UnderlineLink
                           className="text-primary-500"
-                          href="https://portal.thirdweb.com/wallets/smart-wallet/infrastructure#supported-chains"
+                          href="https://thirdweb.com/chainlist?service=account-abstraction"
                           rel="noopener noreferrer"
                           target="_blank"
                         >
@@ -552,7 +553,7 @@ export function AccountAbstractionSettingsPage(
                         you build your own rules.{" "}
                         <UnderlineLink
                           className="text-primary-500"
-                          href="https://portal.thirdweb.com/wallets/smart-wallet/sponsorship-rules#setting-up-a-server-verifier"
+                          href="https://portal.thirdweb.com/transactions/policies#server-verifier"
                           rel="noopener noreferrer"
                           target="_blank"
                         >
@@ -565,6 +566,7 @@ export function AccountAbstractionSettingsPage(
                     <GatedSwitch
                       currentPlan={props.validTeamPlan}
                       requiredPlan="starter"
+                      isLegacyPlan={props.isLegacyPlan}
                       switchProps={{
                         checked: field.value.enabled,
                         id: "server-verifier-switch",

@@ -17,12 +17,14 @@ import { Skeleton } from "../components/Skeleton.js";
 import { Text } from "../components/text.js";
 import { WalletImage } from "../components/WalletImage.js";
 import { StyledButton } from "../design-system/elements.js";
+import { InAppWalletIcon } from "./in-app-wallet-icon.js";
 import type { ConnectLocale } from "./locale/types.js";
 
 /**
  * @internal
  */
 export function WalletEntryButton(props: {
+  className?: string;
   wallet: Wallet;
   selectWallet: () => void;
   connectLocale: ConnectLocale;
@@ -51,22 +53,39 @@ export function WalletEntryButton(props: {
     wallet && walletId === "inApp"
       ? (wallet.getConfig() as InAppWalletCreationOptions)?.metadata
       : undefined;
-  const nameOverride = customMeta?.name || walletName;
+  let nameOverride = customMeta?.name || walletName;
   const iconOverride = customMeta?.icon;
+
+  // change "Social Login" to name of the login method if only 1 method is enabled
+  if (wallet.id === "inApp") {
+    const config = wallet.getConfig() as InAppWalletCreationOptions;
+    if (config?.auth?.options.length === 1) {
+      const name = config.auth?.options[0];
+      if (name) {
+        nameOverride = uppercaseFirstLetter({ text: name });
+      }
+    }
+  }
 
   return (
     <WalletButtonEl
+      className={props.className}
       data-active={props.isActive}
       onClick={selectWallet}
       type="button"
     >
       {iconOverride ? (
         <Img
-          alt={nameOverride}
+          alt=""
           client={props.client}
           height={`${iconSize.xl}`}
           src={iconOverride}
           width={`${iconSize.xl}`}
+        />
+      ) : wallet.id === "inApp" ? (
+        <InAppWalletIcon
+          client={props.client}
+          wallet={wallet as Wallet<"inApp">}
         />
       ) : (
         <WalletImage client={props.client} id={walletId} size={iconSize.xl} />
@@ -74,7 +93,7 @@ export function WalletEntryButton(props: {
 
       <Container expand flex="column" gap="xxs">
         {nameOverride ? (
-          <Text color="primaryText" weight={600}>
+          <Text color="primaryText" weight={500}>
             {nameOverride}
           </Text>
         ) : (
@@ -103,7 +122,6 @@ export const WalletButtonEl = /* @__PURE__ */ StyledButton((_) => {
     '&[data-active="true"]': {
       backgroundColor: theme.colors.tertiaryBg,
     },
-
     alignItems: "center",
     borderRadius: radius.md,
     boxSizing: "border-box",
@@ -117,3 +135,7 @@ export const WalletButtonEl = /* @__PURE__ */ StyledButton((_) => {
     width: "100%",
   };
 });
+
+function uppercaseFirstLetter(props: { text: string }) {
+  return props.text.charAt(0).toUpperCase() + props.text.slice(1);
+}

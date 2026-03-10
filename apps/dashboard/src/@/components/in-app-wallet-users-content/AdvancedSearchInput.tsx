@@ -14,6 +14,15 @@ import {
 } from "@/components/ui/select";
 import type { SearchType } from "./types";
 
+const searchTypeLabels: Record<SearchType, string> = {
+  email: "Email",
+  phone: "Phone",
+  id: "Auth Identifier",
+  address: "Address",
+  externalWallet: "External Wallet",
+  userId: "User Identifier",
+};
+
 export function AdvancedSearchInput(props: {
   onSearch: (searchType: SearchType, query: string) => void;
   onClear: () => void;
@@ -46,13 +55,14 @@ export function AdvancedSearchInput(props: {
         value={searchType}
         onValueChange={(value) => setSearchType(value as SearchType)}
       >
-        <SelectTrigger className="w-[140px] bg-card">
+        <SelectTrigger className="w-[140px] bg-background rounded-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="email">Email</SelectItem>
           <SelectItem value="phone">Phone</SelectItem>
-          <SelectItem value="id">ID</SelectItem>
+          <SelectItem value="id">Auth Identifier</SelectItem>
+          <SelectItem value="userId">User Identifier</SelectItem>
           <SelectItem value="address">Address</SelectItem>
           <SelectItem value="externalWallet">External Wallet</SelectItem>
         </SelectContent>
@@ -61,8 +71,8 @@ export function AdvancedSearchInput(props: {
       <div className="flex flex-1">
         <div className="relative flex-1">
           <Input
-            className="bg-card pl-9 border-r-0 rounded-r-none"
-            placeholder={`Search by ${searchType}...`}
+            className="bg-background pl-9 border-r-0 rounded-r-none rounded-l-full"
+            placeholder={`Search by ${searchTypeLabels[searchType]}...`}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -86,7 +96,7 @@ export function AdvancedSearchInput(props: {
           onClick={handleSearch}
           variant="outline"
           disabled={!query.trim() || props.isLoading}
-          className="rounded-l-none gap-2 bg-card disabled:opacity-100"
+          className="rounded-l-none rounded-r-full gap-2 bg-background disabled:opacity-100"
         >
           {props.isLoading && <Spinner className="size-4" />}
           Search

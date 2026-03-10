@@ -195,6 +195,11 @@ export type ProjectBundlerService = {
       value: string;
     }>;
   } | null;
+  dedicatedRelayer?: {
+    sku: string;
+    chainIds: number[];
+    executors: string[];
+  } | null;
 };
 
 export type ProjectEmbeddedWalletsService = {
@@ -241,6 +246,9 @@ export type ProjectService =
       rotationCode?: string | null;
       encryptedAdminKey?: string | null;
       encryptedWalletAccessToken?: string | null;
+      projectWalletAddress?: string | null;
+      x402FeeBPS?: number | null;
+      x402FeeRecipient?: string | null;
     }
   | ProjectBundlerService
   | ProjectEmbeddedWalletsService;

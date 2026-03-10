@@ -383,8 +383,11 @@ export function DetailsModal(props: {
   connectOptions: DetailsModalConnectOptions | undefined;
   assetTabs?: AssetTabs[];
   showBalanceInFiat?: SupportedFiatCurrency;
+  initialScreen?: WalletDetailsModalScreen;
 }) {
-  const [screen, setScreen] = useState<WalletDetailsModalScreen>("main");
+  const [screen, setScreen] = useState<WalletDetailsModalScreen>(
+    props.initialScreen || "main",
+  );
   const { disconnect } = useDisconnect();
   const [isOpen, setIsOpen] = useState(true);
 
@@ -572,6 +575,7 @@ export function DetailsModal(props: {
           <Container px="lg">
             {/* Send, Receive, Swap */}
             <Container
+              className="tw-highlight-buttons"
               style={{
                 display: "flex",
                 gap: spacing.xs,
@@ -579,6 +583,7 @@ export function DetailsModal(props: {
             >
               {!hideSendFunds && (
                 <Button
+                  className="tw-highlight-button__send"
                   onClick={() => {
                     setScreen("send");
                   }}
@@ -608,6 +613,7 @@ export function DetailsModal(props: {
 
               {!hideReceiveFunds && (
                 <Button
+                  className="tw-highlight-button__receive"
                   onClick={() => {
                     setScreen("receive");
                   }}
@@ -632,6 +638,7 @@ export function DetailsModal(props: {
                 chainMetadataQuery.data &&
                 !chainMetadataQuery.data.testnet && (
                   <Button
+                    className="tw-highlight-button__buy"
                     onClick={() => {
                       trackPayEvent({
                         client: client,
@@ -682,6 +689,7 @@ export function DetailsModal(props: {
 
           {/* Transactions */}
           <MenuButton
+            className="tw-view-transactions-button"
             onClick={() => {
               setScreen("transactions");
             }}
@@ -699,6 +707,7 @@ export function DetailsModal(props: {
           {/* Hide the View Funds button if the assetTabs props is set to an empty array */}
           {(props.assetTabs === undefined || props.assetTabs.length > 0) && (
             <MenuButton
+              className="tw-view-assets-button"
               onClick={() => {
                 setScreen("view-assets");
               }}
@@ -713,6 +722,7 @@ export function DetailsModal(props: {
 
           {/* Manage Wallet */}
           <MenuButton
+            className="tw-manage-wallet-button"
             onClick={() => {
               setScreen("manage-wallet");
             }}
@@ -729,6 +739,7 @@ export function DetailsModal(props: {
             (chainFaucetsQuery.faucets.length > 0 ||
               walletChain?.id === LocalhostChainId) && (
               <MenuLink
+                className="tw-request-testnet-funds-button"
                 as="a"
                 href={
                   chainFaucetsQuery.faucets ? chainFaucetsQuery.faucets[0] : "#"
@@ -759,6 +770,7 @@ export function DetailsModal(props: {
           <Spacer y="sm" />
           <Container px="md">
             <MenuButton
+              className="tw-disconnect-wallet-button"
               data-variant="danger"
               onClick={() => {
                 if (activeWallet && activeAccount) {
@@ -878,7 +890,7 @@ export function DetailsModal(props: {
         supportedTokens={props.supportedTokens}
       />
     );
-  } else if (screen === "private-key") {
+  } else if (screen === "private-key" || screen === "export") {
     content = (
       <PrivateKey
         client={client} // do not use the useCustomTheme hook to get this, it's not valid here
@@ -976,7 +988,6 @@ export function DetailsModal(props: {
         chain={getCachedChain(requestedChainId)}
         client={client}
         hiddenWallets={props.detailsModal?.hiddenWallets}
-        locale={locale.id}
         connectOptions={props.connectOptions}
         onCancel={() => setScreen("main")}
         onSuccess={() => setScreen("main")}
@@ -1000,7 +1011,12 @@ export function DetailsModal(props: {
       <WalletUIStatesProvider isOpen={false} theme={props.theme}>
         <ScreenSetupContext.Provider value={screenSetup}>
           <Modal
+            className="tw-modal__wallet-details"
+            title="Manage Wallet"
             open={isOpen}
+            crossContainerStyles={{
+              display: screen === "buy" ? "none" : "block",
+            }}
             setOpen={(_open) => {
               if (!_open) {
                 closeModal();
@@ -1042,7 +1058,7 @@ export function NetworkSwitcherButton(props: {
   }
   return (
     <MenuButton
-      className="tw-internal-network-switcher-button"
+      className="tw-internal-network-switcher-button tw-switch-network-button"
       data-variant="primary"
       disabled={disableSwitchChain}
       onClick={() => {
@@ -1711,6 +1727,22 @@ export type UseWalletDetailsModalOptions = {
    * @param screen The name of the screen that was being shown when user closed the modal
    */
   onClose?: (screen: string) => void;
+
+  /**
+   * The initial screen to show when the modal opens.
+   *
+   * @defaultValue "main"
+   *
+   * @example
+   * ```tsx
+   * // Open directly to the Export Private Key screen
+   * detailsModal.open({
+   *   client,
+   *   screen: "export"
+   * });
+   * ```
+   */
+  screen?: WalletDetailsModalScreen;
 };
 
 /**
@@ -1735,6 +1767,14 @@ export type UseWalletDetailsModalOptions = {
  *
  *   return <button onClick={handleClick}> Show Wallet Details </button>
  * }
+ * ```
+ *
+ * ### Open directly to Export Private Key screen
+ * ```tsx
+ * detailsModal.open({
+ *   client,
+ *   screen: "export"
+ * });
  * ```
  *
  * ### Callback for when the modal is closed
@@ -1787,6 +1827,7 @@ export function useWalletDetailsModal() {
               showTestnetFaucet: props.showTestnetFaucet,
             }}
             displayBalanceToken={props.displayBalanceToken}
+            initialScreen={props.screen}
             locale={locale}
             onDisconnect={(info) => {
               props.onDisconnect?.(info);

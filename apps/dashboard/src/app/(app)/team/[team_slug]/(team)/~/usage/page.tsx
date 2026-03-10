@@ -43,7 +43,8 @@ export default async function Page(props: {
       <div className="grow flex flex-col justify-center items-center">
         <UpsellContent
           currentPlan={team.billingPlan}
-          featureDescription="View RPC, Wallet, Storage, Account Abstraction, Engine Cloud, Webhooks usage and more"
+          isLegacyPlan={team.isLegacyPlan}
+          featureDescription="View RPC, Wallet, Storage, Gas Sponsorship, Engine Cloud, Webhooks usage and more"
           featureName="Usage"
           requiredPlan="starter"
           teamSlug={params.team_slug}

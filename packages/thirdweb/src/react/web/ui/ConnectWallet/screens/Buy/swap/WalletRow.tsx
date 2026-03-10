@@ -5,6 +5,7 @@ import { isSmartWallet } from "../../../../../../../wallets/smart/index.js";
 import {
   fontSize,
   iconSize,
+  radius,
 } from "../../../../../../core/design-system/index.js";
 import { useConnectedWallets } from "../../../../../../core/hooks/wallets/useConnectedWallets.js";
 import {
@@ -46,17 +47,39 @@ export function WalletRow(props: {
   const addressOrENS = address
     ? ensNameQuery.data || shortenAddress(address)
     : "";
+
+  const iconSizeValue = iconSize[props.iconSize || "md"];
   return (
     <Container flex="row" style={{ justifyContent: "space-between" }}>
-      <Container center="y" color="secondaryText" flex="row" gap="md">
+      <Container center="y" color="secondaryText" flex="row" gap="sm">
         {wallet ? (
           <WalletImage
             client={props.client}
             id={wallet.id}
-            size={iconSize[props.iconSize || "md"]}
+            size={iconSizeValue}
           />
         ) : (
-          <OutlineWalletIcon size={iconSize[props.iconSize || "md"]} />
+          <Container
+            borderColor="borderColor"
+            bg="modalBg"
+            flex="row"
+            center="both"
+            style={{
+              borderStyle: "solid",
+              borderWidth: "1px",
+              borderRadius: radius.full,
+              width: `${iconSizeValue}px`,
+              height: `${iconSizeValue}px`,
+              position: "relative",
+            }}
+          >
+            <OutlineWalletIcon
+              style={{
+                position: "absolute",
+                inset: "25%",
+              }}
+            />
+          </Container>
         )}
         <Container flex="column" gap="3xs">
           {props.label ? (
@@ -64,11 +87,7 @@ export function WalletRow(props: {
               {props.label}
             </Text>
           ) : null}
-          <Text
-            color="primaryText"
-            size={props.textSize || "xs"}
-            style={{ fontFamily: "monospace", fontWeight: 600 }}
-          >
+          <Text color="primaryText" size={props.textSize || "xs"}>
             {addressOrENS || shortenAddress(props.address)}
           </Text>
           {profile.isLoading ? (

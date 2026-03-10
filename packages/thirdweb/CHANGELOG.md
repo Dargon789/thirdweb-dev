@@ -1,5 +1,818 @@
 # thirdweb
 
+## 5.119.1
+
+### Patch Changes
+
+- [#8700](https://github.com/thirdweb-dev/js/pull/8700) [`e13b9a7`](https://github.com/thirdweb-dev/js/commit/e13b9a784aca3a9b5d797fc6e011c6d1a10542e9) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Deprecate the `thirdweb create` CLI command
+
+- [#8698](https://github.com/thirdweb-dev/js/pull/8698) [`da4a4a5`](https://github.com/thirdweb-dev/js/commit/da4a4a540a6b141050af8fc8332621826d8dd835) Thanks [@Yash094](https://github.com/Yash094)! - Add `screen` prop to `useWalletDetailsModal` to allow opening the modal directly at a specific screen. Use `screen: "export"` to open directly at the Export Private Key screen.
+
+## 5.119.0
+
+### Minor Changes
+
+- [#8686](https://github.com/thirdweb-dev/js/pull/8686) [`5352152`](https://github.com/thirdweb-dev/js/commit/53521528353a00691e82405460d4fb869ac986de) Thanks [@Yash094](https://github.com/Yash094)! - Add `requireApproval` option to `useConnectModal` hook to require terms of service and privacy policy acceptance before connecting an in-app wallet
+
+## 5.118.2
+
+### Patch Changes
+
+- [#8671](https://github.com/thirdweb-dev/js/pull/8671) [`1caf6dd`](https://github.com/thirdweb-dev/js/commit/1caf6dd4609ac72a06999ef0d70f31a371e5108a) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - fix walletconnect not working on berachain and unallowlisted chains
+
+## 5.118.1
+
+### Patch Changes
+
+- [#8664](https://github.com/thirdweb-dev/js/pull/8664) [`b50e304`](https://github.com/thirdweb-dev/js/commit/b50e304e0ccd1ac7eae551c3d49e82312ffc82d1) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix SiteLink not handling hashed URL paths
+
+## 5.118.0
+
+### Minor Changes
+
+- [#8634](https://github.com/thirdweb-dev/js/pull/8634) [`281759f`](https://github.com/thirdweb-dev/js/commit/281759f06a276d08028825ed171f674984d66e85) Thanks [@montycheese](https://github.com/montycheese)! - Add Base Account SDK integration with `@base-org/account`
+  - Add @base-org/account 2.5.0 dependency
+  - Introduce Base Account SDK wallet connector
+  - Add base-account-web.ts with EIP-1193 provider implementation
+  - Add base-account-wallet.ts with core wallet logic
+  - Add types and helper function exports
+
+### Patch Changes
+
+- [#8643](https://github.com/thirdweb-dev/js/pull/8643) [`2d98fe2`](https://github.com/thirdweb-dev/js/commit/2d98fe2799b0a5c17a41f0bb87c8852e21007e4a) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Support linking accounts with redirect mode
+
+## 5.117.2
+
+### Patch Changes
+
+- [#8639](https://github.com/thirdweb-dev/js/pull/8639) [`d38deec`](https://github.com/thirdweb-dev/js/commit/d38deecaa1b1990a9af2fad79e2e620e61d4c0e3) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix getCallStatus via EIP1193 provider
+
+## 5.117.1
+
+### Patch Changes
+
+- [#8637](https://github.com/thirdweb-dev/js/pull/8637) [`6390052`](https://github.com/thirdweb-dev/js/commit/6390052f8bc3b9b7d58d57f8f953c1da9a34066a) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - newer zkos chains no longer support zks\_ rpc endpoints, fallback to evm std
+
+## 5.117.0
+
+### Minor Changes
+
+- [#8579](https://github.com/thirdweb-dev/js/pull/8579) [`304e4e5`](https://github.com/thirdweb-dev/js/commit/304e4e5be860e4989abf0493cb737f46e050a697) Thanks [@MananTank](https://github.com/MananTank)! - Remove in-app wallet from default wallet list for bridge widgets"
+
+### Patch Changes
+
+- [#8621](https://github.com/thirdweb-dev/js/pull/8621) [`8d4b6a1`](https://github.com/thirdweb-dev/js/commit/8d4b6a1fea53013cbdbe9f450d00470b2f8d3761) Thanks [@MananTank](https://github.com/MananTank)! - Add `amountEditable` and `tokenEditable` props on `BuyWidget` component to disable token selection and token amount editing
+
+- [#8573](https://github.com/thirdweb-dev/js/pull/8573) [`9c04b3f`](https://github.com/thirdweb-dev/js/commit/9c04b3f18042b162de24cb7cf5c296a38a9af4f0) Thanks [@MananTank](https://github.com/MananTank)! - More reliable list of chains shown in token selection UI in SwapWidget based on origin and destination chain selections
+
+- [#8552](https://github.com/thirdweb-dev/js/pull/8552) [`5ec84bd`](https://github.com/thirdweb-dev/js/commit/5ec84bd3b631395f80cb1f5ee24bc8b481b9f5cb) Thanks [@MananTank](https://github.com/MananTank)! - Token Selection UX improvements in SwapWidget
+
+- [#8607](https://github.com/thirdweb-dev/js/pull/8607) [`01004e8`](https://github.com/thirdweb-dev/js/commit/01004e840856551ec704de674f92f5d01c548a0e) Thanks [@MananTank](https://github.com/MananTank)! - TransactionWidget UI improvements
+
+- [#8623](https://github.com/thirdweb-dev/js/pull/8623) [`36ff327`](https://github.com/thirdweb-dev/js/commit/36ff3277443dd0d7b47e6a0e51eb533a8db0da34) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Support x402 v2
+
+- [#8611](https://github.com/thirdweb-dev/js/pull/8611) [`26a9153`](https://github.com/thirdweb-dev/js/commit/26a91537d2d05c5a4cf06de620004f5fef86d07b) Thanks [@Yash094](https://github.com/Yash094)! - Add Etherlink Shadownet testnet chain (chain ID 127823)
+
+- [#8580](https://github.com/thirdweb-dev/js/pull/8580) [`0ff8b9f`](https://github.com/thirdweb-dev/js/commit/0ff8b9ff602aa7fc4c94355f60e8c422e68f9e89) Thanks [@MananTank](https://github.com/MananTank)! - Move directly to token selection screen after connecting wallet in "Choose Payment" screen instead of showing the "Choose Payment" screen again after connecting wallet in bridge widgets
+
+- [#8551](https://github.com/thirdweb-dev/js/pull/8551) [`31e24f1`](https://github.com/thirdweb-dev/js/commit/31e24f1c58aa7c53a207d07599fe498bc10e8953) Thanks [@MananTank](https://github.com/MananTank)! - Alphabetically sort the chains in SwapWidget UI
+
+- [#8578](https://github.com/thirdweb-dev/js/pull/8578) [`fdd2557`](https://github.com/thirdweb-dev/js/commit/fdd25576630399b8f9049b7d47d3ef415e50b47f) Thanks [@MananTank](https://github.com/MananTank)! - Remove fiat price shown in the button in `CheckoutWidget` to avoid showing it twice in the UI.
+
+- [#8556](https://github.com/thirdweb-dev/js/pull/8556) [`151127d`](https://github.com/thirdweb-dev/js/commit/151127d66825365cb0ed949ae28b9906ee4dfc8d) Thanks [@MananTank](https://github.com/MananTank)! - Update in-app wallet icon in wide connect ui
+
+- [#8617](https://github.com/thirdweb-dev/js/pull/8617) [`5766c90`](https://github.com/thirdweb-dev/js/commit/5766c90fb4bc48f40e858a03b90fcf60a3b11923) Thanks [@jelilat](https://github.com/jelilat)! - Support for x402 payment-required headers
+
+- [#8631](https://github.com/thirdweb-dev/js/pull/8631) [`f68c2c6`](https://github.com/thirdweb-dev/js/commit/f68c2c62a58d1071fd9892af57536ec9efda691e) Thanks [@MananTank](https://github.com/MananTank)! - Add Last Used badge in Connect UI to highlight the last used sign-in method
+
+- [#8608](https://github.com/thirdweb-dev/js/pull/8608) [`a3ff757`](https://github.com/thirdweb-dev/js/commit/a3ff7572d64d54e0674c32b6a24c6c965de9345c) Thanks [@MananTank](https://github.com/MananTank)! - Add token details screen in token selection UI in SwapWidget, BridgeWidget
+
+- [#8553](https://github.com/thirdweb-dev/js/pull/8553) [`38f4a89`](https://github.com/thirdweb-dev/js/commit/38f4a890764b3aa6406f54f0a8238b5dbb280b2e) Thanks [@MananTank](https://github.com/MananTank)! - Fix Spinner animation not working sometimes in Next.js
+
+- [#8576](https://github.com/thirdweb-dev/js/pull/8576) [`56a1c0a`](https://github.com/thirdweb-dev/js/commit/56a1c0a467e4adcc4d40794d89b0d853f2cd8803) Thanks [@MananTank](https://github.com/MananTank)! - Payment Details UI improvements for bridge widget components
+
+## 5.116.1
+
+### Patch Changes
+
+- [#8538](https://github.com/thirdweb-dev/js/pull/8538) [`f5ab57f`](https://github.com/thirdweb-dev/js/commit/f5ab57f3657bf0569e77ac2dcbf7f158a3211fb1) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Automatically store and re-use permit x402 signatures for upto schemes
+
+## 5.116.0
+
+### Minor Changes
+
+- [#8534](https://github.com/thirdweb-dev/js/pull/8534) [`18425f9`](https://github.com/thirdweb-dev/js/commit/18425f9d744fd9605e901abb6c2ba89e7b518f5f) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - New 'minPrice' property for x402 payments using 'upto' schema
+
+## 5.115.4
+
+### Patch Changes
+
+- [#8526](https://github.com/thirdweb-dev/js/pull/8526) [`70ff608`](https://github.com/thirdweb-dev/js/commit/70ff608c72628a9c1958d3d77cea2bdaca3139b2) Thanks [@jnsdls](https://github.com/jnsdls)! - added utf-8 encoded JSON support for tokenURI and contract metadata
+
+## 5.115.3
+
+### Patch Changes
+
+- [#8509](https://github.com/thirdweb-dev/js/pull/8509) [`7b873d3`](https://github.com/thirdweb-dev/js/commit/7b873d38db373151ef42dfa7bc1e083568cb5432) Thanks [@MananTank](https://github.com/MananTank)! - Update success message shown in SwapWidget component
+
+- [#8501](https://github.com/thirdweb-dev/js/pull/8501) [`b0eccf3`](https://github.com/thirdweb-dev/js/commit/b0eccf365a7521ec882fca9e680837c84147041e) Thanks [@MananTank](https://github.com/MananTank)! - Remove tabs from token selection UI in SwapWidget
+
+- [#8504](https://github.com/thirdweb-dev/js/pull/8504) [`a704c3f`](https://github.com/thirdweb-dev/js/commit/a704c3f2b00434f8f50653aa2825b4adf7cd4696) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Allow passing an activeWallet to SwapWidget
+
+## 5.115.2
+
+### Patch Changes
+
+- [#8496](https://github.com/thirdweb-dev/js/pull/8496) [`859032d`](https://github.com/thirdweb-dev/js/commit/859032dc1761afdb7a4e12b40534e3a98b771498) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Skip swap review step when coming from swap widget
+
+## 5.115.1
+
+### Patch Changes
+
+- [#8490](https://github.com/thirdweb-dev/js/pull/8490) [`551ec68`](https://github.com/thirdweb-dev/js/commit/551ec680df3a84d2cacca4dfb9f0522fd7383f7a) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Payment selection tracking
+
+- [#8495](https://github.com/thirdweb-dev/js/pull/8495) [`b6be8d6`](https://github.com/thirdweb-dev/js/commit/b6be8d67ef74f425e911d900a9adb19f9a70efd9) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Faster token balance load query
+
+## 5.115.0
+
+### Minor Changes
+
+- [#8484](https://github.com/thirdweb-dev/js/pull/8484) [`9e43da4`](https://github.com/thirdweb-dev/js/commit/9e43da4ec0f88f32e988e445257fb518454c4c81) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Support erc5792 batch transactions for swaps, add slippage option to Bridge API
+
+### Patch Changes
+
+- [#8469](https://github.com/thirdweb-dev/js/pull/8469) [`98d8f29`](https://github.com/thirdweb-dev/js/commit/98d8f292db7f9fd1a80cc67401787da836f24b8e) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Allow passing NATIVE_TOKEN_ADDRESS to getWalletBalance()
+
+- [#8486](https://github.com/thirdweb-dev/js/pull/8486) [`3ebca18`](https://github.com/thirdweb-dev/js/commit/3ebca18f9e7f8e0af278d1b13c09832f565104e8) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix getWalletBalance with native token address
+
+- [#8485](https://github.com/thirdweb-dev/js/pull/8485) [`4c5696e`](https://github.com/thirdweb-dev/js/commit/4c5696e414cc18e1650d71b472274652c7d93952) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add caching and timeout for fetching capabilities
+
+## 5.114.1
+
+### Patch Changes
+
+- [#8465](https://github.com/thirdweb-dev/js/pull/8465) [`629efc1`](https://github.com/thirdweb-dev/js/commit/629efc13b62cd56beeefedc964440b3d66fc1dbb) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add customization options for the signIn modal shown from useFetchWithPayment
+
+- [#8465](https://github.com/thirdweb-dev/js/pull/8465) [`629efc1`](https://github.com/thirdweb-dev/js/commit/629efc13b62cd56beeefedc964440b3d66fc1dbb) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add monad chain definition
+
+## 5.114.0
+
+### Minor Changes
+
+- [#8457](https://github.com/thirdweb-dev/js/pull/8457) [`35aaf24`](https://github.com/thirdweb-dev/js/commit/35aaf24e8aecb76f12727af00e1c2da407da2936) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add "upto" payment scheme option for x402 verify and settle
+
+  ```typescript
+  const paymentArgs = {
+    resourceUrl: "https://api.example.com/premium-content",
+    method: "GET",
+    paymentData,
+    payTo: "0x1234567890123456789012345678901234567890",
+    network: arbitrum,
+    scheme: "upto", // enables dynamic pricing
+    price: "$0.10", // max payable amount
+    facilitator: thirdwebFacilitator,
+  };
+
+  // First verify the payment is valid for the max amount
+  const verifyResult = await verifyPayment(paymentArgs);
+
+  if (verifyResult.status !== 200) {
+    return Response.json(verifyResult.responseBody, {
+      status: verifyResult.status,
+      headers: verifyResult.responseHeaders,
+    });
+  }
+
+  // Do the expensive work that requires payment
+  const { tokensUsed } = await doExpensiveWork();
+  const pricePerTokenUsed = 0.00001;
+
+  // Now settle the payment based on actual usage
+  const settleResult = await settlePayment({
+    ...paymentArgs,
+    price: tokensUsed * pricePerTokenUsed, // adjust final price based on usage
+  });
+  ```
+
+## 5.113.0
+
+### Minor Changes
+
+- [#8444](https://github.com/thirdweb-dev/js/pull/8444) [`9809d5c`](https://github.com/thirdweb-dev/js/commit/9809d5cf66baa520a9413986eb5bd2900de6f337) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - # New `useFetchWithPayment()` React Hook
+
+  Added a new React hook that wraps the native fetch API to automatically handle 402 Payment Required responses using the x402 payment protocol.
+
+  ## Features
+  - **Automatic Payment Handling**: Automatically detects 402 responses, creates payment headers, and retries requests
+  - **Built-in UI**: Shows an error modal with retry and fund wallet options when payment fails
+  - **Sign In Flow**: Prompts users to connect their wallet if not connected, then automatically retries the payment
+  - **Insufficient Funds Flow**: Integrates BuyWidget to help users top up their wallet directly in the modal
+  - **Customizable**: Supports theming, custom payment selectors, BuyWidget customization, and ConnectModal customization
+  - **Opt-out Modal**: Can disable the modal to handle errors manually
+
+  ## Basic Usage
+
+  The hook automatically parses JSON responses by default.
+
+  ```tsx
+  import { useFetchWithPayment } from "thirdweb/react";
+  import { createThirdwebClient } from "thirdweb";
+
+  const client = createThirdwebClient({ clientId: "your-client-id" });
+
+  function MyComponent() {
+    const { fetchWithPayment, isPending } = useFetchWithPayment(client);
+
+    const handleApiCall = async () => {
+      // Response is automatically parsed as JSON by default
+      const data = await fetchWithPayment(
+        "https://api.example.com/paid-endpoint",
+      );
+      console.log(data);
+    };
+
+    return (
+      <button onClick={handleApiCall} disabled={isPending}>
+        {isPending ? "Loading..." : "Make Paid API Call"}
+      </button>
+    );
+  }
+  ```
+
+  ## Customize Response Parsing
+
+  By default, responses are parsed as JSON. You can customize this with the `parseAs` option:
+
+  ```tsx
+  // Parse as text instead of JSON
+  const { fetchWithPayment } = useFetchWithPayment(client, {
+    parseAs: "text",
+  });
+
+  // Or get the raw Response object
+  const { fetchWithPayment } = useFetchWithPayment(client, {
+    parseAs: "raw",
+  });
+  ```
+
+  ## Customize Theme & Payment Options
+
+  ```tsx
+  const { fetchWithPayment } = useFetchWithPayment(client, {
+    maxValue: 5000000n, // 5 USDC in base units
+    theme: "light",
+    paymentRequirementsSelector: (requirements) => {
+      // Custom logic to select preferred payment method
+      return requirements[0];
+    },
+  });
+  ```
+
+  ## Customize Fund Wallet Widget
+
+  ```tsx
+  const { fetchWithPayment } = useFetchWithPayment(client, {
+    fundWalletOptions: {
+      title: "Add Funds",
+      description: "You need more tokens to complete this payment",
+      buttonLabel: "Get Tokens",
+    },
+  });
+  ```
+
+  ## Customize Connect Modal
+
+  ```tsx
+  const { fetchWithPayment } = useFetchWithPayment(client, {
+    connectOptions: {
+      wallets: [inAppWallet(), createWallet("io.metamask")],
+      title: "Sign in to continue",
+      showThirdwebBranding: false,
+    },
+  });
+  ```
+
+  ## Disable Modal (Handle Errors Manually)
+
+  ```tsx
+  const { fetchWithPayment, error } = useFetchWithPayment(client, {
+    showErrorModal: false,
+  });
+
+  // Handle the error manually
+  if (error) {
+    console.error("Payment failed:", error);
+  }
+  ```
+
+### Patch Changes
+
+- [#8453](https://github.com/thirdweb-dev/js/pull/8453) [`52aba0f`](https://github.com/thirdweb-dev/js/commit/52aba0ffb814904414cdc8e76407afd71272d88e) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Dont attempt chain switching for cb wallet if already connected to the right chain
+
+## 5.112.4
+
+### Patch Changes
+
+- [#8443](https://github.com/thirdweb-dev/js/pull/8443) [`f5f6848`](https://github.com/thirdweb-dev/js/commit/f5f6848ead0d070114eae587c7620cfce60f5977) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add fundWalletLink prop to x402 responses
+
+## 5.112.3
+
+### Patch Changes
+
+- [#8432](https://github.com/thirdweb-dev/js/pull/8432) [`9983e6c`](https://github.com/thirdweb-dev/js/commit/9983e6ccfdfe09404db64cf182e614f432f9f27b) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Better SIWE chain management for all external wallets
+
+## 5.112.2
+
+### Patch Changes
+
+- [#8425](https://github.com/thirdweb-dev/js/pull/8425) [`419fb31`](https://github.com/thirdweb-dev/js/commit/419fb3160188c435a89d65caf36bdd845dd239fe) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Better handling of erc5792 getCapabilities
+
+## 5.112.1
+
+### Patch Changes
+
+- [#8413](https://github.com/thirdweb-dev/js/pull/8413) [`6cd681c`](https://github.com/thirdweb-dev/js/commit/6cd681c9cee4641c67bc341e03231d886ec7501a) Thanks [@kumaryash90](https://github.com/kumaryash90)! - Resolve implementation from contract call
+
+- [#8408](https://github.com/thirdweb-dev/js/pull/8408) [`f07b4b5`](https://github.com/thirdweb-dev/js/commit/f07b4b56c5ff82ae69b8a0edb578e4d75a582334) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Rename otherWallet to allConnectedWallets in autoConnect onConnect callback
+
+## 5.112.0
+
+### Minor Changes
+
+- [#8403](https://github.com/thirdweb-dev/js/pull/8403) [`d0bbbfd`](https://github.com/thirdweb-dev/js/commit/d0bbbfd39d2c55554e8fe9c7d2d25d0fc645eeaf) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add all connected wallets in all onConnect callbacks
+
+### Patch Changes
+
+- [#8402](https://github.com/thirdweb-dev/js/pull/8402) [`e26d81c`](https://github.com/thirdweb-dev/js/commit/e26d81ce1d92e96de2ae23b5b53f5278c9ec772f) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update useAuthToken() to find the auth token for any connected wallet instead of just the active one
+
+- [#8395](https://github.com/thirdweb-dev/js/pull/8395) [`a54c1ab`](https://github.com/thirdweb-dev/js/commit/a54c1aba350bf1672b2c3fc1ffc702cf2e36bb49) Thanks [@MananTank](https://github.com/MananTank)! - Add `verify` parameter to `Bridge.Webhook.parse` function to validate the payload
+
+  ### Example
+
+  ```ts
+  import { Bridge } from "thirdweb";
+
+  const payload = await Bridge.Webhook.parse(
+    body,
+    headers,
+    process.env.WEBHOOK_SECRET,
+    tolerance,
+    {
+      // throw an error if the `payload` doesn't have this receiver address set
+      receiverAddress: "0x1234567890123456789012345678901234567890",
+    },
+  );
+  ```
+
+## 5.111.10
+
+### Patch Changes
+
+- [#8390](https://github.com/thirdweb-dev/js/pull/8390) [`f964b8a`](https://github.com/thirdweb-dev/js/commit/f964b8aaff22d4078ff4c4c5e09c6ebb5fcb182c) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Loosen peer dependency requirements for RN
+
+- [#8383](https://github.com/thirdweb-dev/js/pull/8383) [`424e6b8`](https://github.com/thirdweb-dev/js/commit/424e6b8f9b071d3629ff0291ae6875fa4e4c882e) Thanks [@kumaryash90](https://github.com/kumaryash90)! - deploy and install stylus modules
+
+- [#8388](https://github.com/thirdweb-dev/js/pull/8388) [`763d3de`](https://github.com/thirdweb-dev/js/commit/763d3de5a8db19a8022b2eda420f13a6787de100) Thanks [@MananTank](https://github.com/MananTank)! - - Various UI/UX Improvements in Bridge components
+
+## 5.111.9
+
+### Patch Changes
+
+- [#8384](https://github.com/thirdweb-dev/js/pull/8384) [`673e51b`](https://github.com/thirdweb-dev/js/commit/673e51b11cf2d06f00ab92bd4cbb45c51d95ec1f) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Replace celo alfajores with celoSepoliaTestnet
+
+## 5.111.8
+
+### Patch Changes
+
+- [#8343](https://github.com/thirdweb-dev/js/pull/8343) [`1f440d0`](https://github.com/thirdweb-dev/js/commit/1f440d0c97adf14d26d55666257b57541b2ef01a) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Added Epic Games Authentication
+
+## 5.111.7
+
+### Patch Changes
+
+- [#8373](https://github.com/thirdweb-dev/js/pull/8373) [`7f08161`](https://github.com/thirdweb-dev/js/commit/7f081618e16e7d5754a09780421e35b244186ce8) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Respect from address when simulating with Engine.serverWallet
+
+- [#8373](https://github.com/thirdweb-dev/js/pull/8373) [`7f08161`](https://github.com/thirdweb-dev/js/commit/7f081618e16e7d5754a09780421e35b244186ce8) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Expose useInvalidateBalances() react hook
+
+## 5.111.6
+
+### Patch Changes
+
+- Updated dependencies [[`ad68969`](https://github.com/thirdweb-dev/js/commit/ad68969559a80a5f188a647ef0e1c04f0003a0ad)]:
+  - @thirdweb-dev/engine@3.4.0
+
+## 5.111.5
+
+### Patch Changes
+
+- [#8369](https://github.com/thirdweb-dev/js/pull/8369) [`7da16cf`](https://github.com/thirdweb-dev/js/commit/7da16cff2ff3aaa80c7fe5614639d950d88b5bf2) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Make maxAmount optional in wrapFetchWithPayment and loosen schema validation for payment payloads
+
+## 5.111.4
+
+### Patch Changes
+
+- [#8363](https://github.com/thirdweb-dev/js/pull/8363) [`d907017`](https://github.com/thirdweb-dev/js/commit/d907017217a0927e7f69eab0470b1fe120b4d1a1) Thanks [@MananTank](https://github.com/MananTank)! - Fix BuyWidget autoconnect not working when receiverAddress prop is set
+
+- [#8365](https://github.com/thirdweb-dev/js/pull/8365) [`40781b8`](https://github.com/thirdweb-dev/js/commit/40781b8170a1014ef76e438ba3c8244137dba7ea) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Respect passed chain when doing SIWE for in-app/ecosystem wallet
+
+## 5.111.3
+
+### Patch Changes
+
+- [#8361](https://github.com/thirdweb-dev/js/pull/8361) [`207cb9d`](https://github.com/thirdweb-dev/js/commit/207cb9dbeb82411809bafa2a8e833b1f10414b92) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add extra mobile detection for isMobile() function
+
+## 5.111.2
+
+### Patch Changes
+
+- [#8358](https://github.com/thirdweb-dev/js/pull/8358) [`1d54cff`](https://github.com/thirdweb-dev/js/commit/1d54cff7b442b8667ddd54bd783502c367ffc83e) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add support for extraMetadata in x402 payment requirements
+
+- [#8356](https://github.com/thirdweb-dev/js/pull/8356) [`fd04eef`](https://github.com/thirdweb-dev/js/commit/fd04eefea9a2a99eee3740d6746040c9f81cd43f) Thanks [@kumaryash90](https://github.com/kumaryash90)! - Update implementations, fix deployment
+
+## 5.111.1
+
+### Patch Changes
+
+- [#8354](https://github.com/thirdweb-dev/js/pull/8354) [`ccdce49`](https://github.com/thirdweb-dev/js/commit/ccdce496e09bc9420b0e15854328651c01f36279) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix hiddenWallets prop not applying to all wallets screen
+
+## 5.111.0
+
+### Minor Changes
+
+- [#8335](https://github.com/thirdweb-dev/js/pull/8335) [`c83f1c6`](https://github.com/thirdweb-dev/js/commit/c83f1c6f7a38c8a9f424798e6e726e1d037ed042) Thanks [@MananTank](https://github.com/MananTank)! - Remove `Bridge.routes` and `useBridgeRoutes`
+
+### Patch Changes
+
+- [#8345](https://github.com/thirdweb-dev/js/pull/8345) [`219fc69`](https://github.com/thirdweb-dev/js/commit/219fc69d72b1ca861bf0228589039788008ea0c0) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update x402 flows to use remote /accepts endpoint
+
+## 5.110.6
+
+### Patch Changes
+
+- [#8334](https://github.com/thirdweb-dev/js/pull/8334) [`6c318f8`](https://github.com/thirdweb-dev/js/commit/6c318f83d63aa8acce46da666e43638e410f799c) Thanks [@kumaryash90](https://github.com/kumaryash90)! - Update implementations
+
+- [#8306](https://github.com/thirdweb-dev/js/pull/8306) [`759b93b`](https://github.com/thirdweb-dev/js/commit/759b93beff7ab10a3a2fa3b9dd25ca628efb9267) Thanks [@alecananian](https://github.com/alecananian)! - Moved `@storybook/react` package to be a dev dependency
+
+- [#8332](https://github.com/thirdweb-dev/js/pull/8332) [`8e357b3`](https://github.com/thirdweb-dev/js/commit/8e357b3cb39dcc7a8595a83224098a9c44585389) Thanks [@jnsdls](https://github.com/jnsdls)! - expose some useful erc20 extensions
+
+## 5.110.5
+
+### Patch Changes
+
+- [#8327](https://github.com/thirdweb-dev/js/pull/8327) [`c08fb13`](https://github.com/thirdweb-dev/js/commit/c08fb1356e77be9eeb0569905fcb2ab76a516dc3) Thanks [@MananTank](https://github.com/MananTank)! - Fix Safe wallet connection issues with WalletConnect
+
+- [#8331](https://github.com/thirdweb-dev/js/pull/8331) [`bcbb3f5`](https://github.com/thirdweb-dev/js/commit/bcbb3f540a8eab2b02f9261b779bd2aad3464598) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Loosen network schema
+
+- [#8325](https://github.com/thirdweb-dev/js/pull/8325) [`e0c8312`](https://github.com/thirdweb-dev/js/commit/e0c83121c201eb2dbdfa6a6b1bbb637f5ad2a21d) Thanks [@Yash094](https://github.com/Yash094)! - Add Arc testnet to chains package
+
+## 5.110.4
+
+### Patch Changes
+
+- [#8310](https://github.com/thirdweb-dev/js/pull/8310) [`23cb3bd`](https://github.com/thirdweb-dev/js/commit/23cb3bd98c5390e64f45da5a222042cdc76bd7f4) Thanks [@MananTank](https://github.com/MananTank)! - Minor UI adjustments in CheckoutWidget
+
+- [#8317](https://github.com/thirdweb-dev/js/pull/8317) [`abf0bba`](https://github.com/thirdweb-dev/js/commit/abf0bbaf359c8de5b0ed0d481e3791c4b7cbf92b) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - updates default x402 transfer with authorization timeout
+
+- [#8319](https://github.com/thirdweb-dev/js/pull/8319) [`e0abf2b`](https://github.com/thirdweb-dev/js/commit/e0abf2b2738661fda3c69551d78231cfac4b0767) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update x402 types
+
+## 5.110.3
+
+### Patch Changes
+
+- [#8314](https://github.com/thirdweb-dev/js/pull/8314) [`bf46520`](https://github.com/thirdweb-dev/js/commit/bf46520a6b183c4beb873de5e63853cd3a23e685) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Enhance compatiblity with third party x402 libs
+
+## 5.110.2
+
+### Patch Changes
+
+- [#8304](https://github.com/thirdweb-dev/js/pull/8304) [`3e9eb49`](https://github.com/thirdweb-dev/js/commit/3e9eb49787e00c09c3286aeb4ad73826a2856e65) Thanks [@MananTank](https://github.com/MananTank)! - Fix Select Token UI stuck in loading state if wallet is connected to a chain that is not supported by thirdweb Bridge in BuyWidget, SwapWidget and BridgeWidget
+
+- [#8311](https://github.com/thirdweb-dev/js/pull/8311) [`bfd3be7`](https://github.com/thirdweb-dev/js/commit/bfd3be764c461c420f1f8520fe4d5d2cc83e42f7) Thanks [@jnsdls](https://github.com/jnsdls)! - filter out null-ish values from `ERC721.getNFTs()` and `ERC1155.getNFTs()` arrays
+
+- [#8313](https://github.com/thirdweb-dev/js/pull/8313) [`ae3a122`](https://github.com/thirdweb-dev/js/commit/ae3a122cf1628f0fc997dd240d4b23842ac30f66) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix network comparison when using diff libraries
+
+- [#8301](https://github.com/thirdweb-dev/js/pull/8301) [`d5d5939`](https://github.com/thirdweb-dev/js/commit/d5d593956e12b2a15393ed32d1d742bc43575bdd) Thanks [@kumaryash90](https://github.com/kumaryash90)! - create2 factory for neura testnet
+
+- [#8305](https://github.com/thirdweb-dev/js/pull/8305) [`f757e60`](https://github.com/thirdweb-dev/js/commit/f757e6084648b6b6e5879abeab30954753a1020d) Thanks [@MananTank](https://github.com/MananTank)! - Update theme colors and minor UI tweaks in React Components
+
+## 5.110.1
+
+### Patch Changes
+
+- [#8299](https://github.com/thirdweb-dev/js/pull/8299) [`85fe949`](https://github.com/thirdweb-dev/js/commit/85fe9491cd6d2270847e9941ddb7df76aefd8b31) Thanks [@alecananian](https://github.com/alecananian)! - [React Native] Fixed Send Funds screen not allowing decimal amounts
+
+- [#8296](https://github.com/thirdweb-dev/js/pull/8296) [`e978809`](https://github.com/thirdweb-dev/js/commit/e9788096d665afef7c2a933cea5d6f522fc67273) Thanks [@MananTank](https://github.com/MananTank)! - Do not require connecting wallet in `BuyWidget` if `receiverAddress` is set
+
+- [#8298](https://github.com/thirdweb-dev/js/pull/8298) [`899051f`](https://github.com/thirdweb-dev/js/commit/899051f788b0c2521a022846782892a8c1405a66) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add EIP-5792 support for EIP1193.toProvider()
+
+## 5.110.0
+
+### Minor Changes
+
+- [#8289](https://github.com/thirdweb-dev/js/pull/8289) [`b30369f`](https://github.com/thirdweb-dev/js/commit/b30369f3cc0bbceed3470b6c905551a5c930f08f) Thanks [@jnsdls](https://github.com/jnsdls)! - ### `getContractMetadata()` now returns a record with `unknown` values instead of `any`.
+
+  before:
+
+  ```ts
+  const metadata = await getContractMetadata({ contract });
+  metadata; // Record<string, any>
+  metadata.name; // string
+  metadata.symbol; // string
+  ```
+
+  after:
+
+  ```ts
+  const metadata = await getContractMetadata({ contract });
+  metadata; // Record<string, unknown>
+  metadata.name; // string | null
+  metadata.symbol; // string | null
+  ```
+
+  Metadata is not (and was never) strictly defined outside of `name` and `symbol` and may contain any type of data in the record.
+  This is not a runtime change but it may break type inference in existing apps that relied on the previous return type.
+
+  **Recommended fix:**
+  You _should_ type-guard any key you access from "metadata".
+
+  ```ts
+  const metadata = await getContractMetadata({ contract });
+  if ("foo" in metadata && typeof metadata.foo === "string") {
+    metadata.foo; // string
+  }
+  ```
+
+  **Quick fix:**
+  If adding type assertions is not something you can do in the short term you can also assert the type directly.
+  _This is as "unsafe" as the type was before._
+
+  ```ts
+  const metadata = await getContractMetadata({ contract });
+  const foo = metadata.foo as string;
+  ```
+
+### Patch Changes
+
+- [#8280](https://github.com/thirdweb-dev/js/pull/8280) [`ceba683`](https://github.com/thirdweb-dev/js/commit/ceba6835dd60896efc34fe1495a1812c0cc39db7) Thanks [@MananTank](https://github.com/MananTank)! - Fix process not defined error when using "thirdweb/contract" import in Vite
+
+## 5.109.1
+
+### Patch Changes
+
+- [#8266](https://github.com/thirdweb-dev/js/pull/8266) [`5ff6063`](https://github.com/thirdweb-dev/js/commit/5ff6063961c5b58e6a49cae77c803155072f30fc) Thanks [@MananTank](https://github.com/MananTank)! - autofocus token search input when token selector modal opens in `BuyWidget`, `SwapWidget` and `BridgeWidget` components
+
+- [#8279](https://github.com/thirdweb-dev/js/pull/8279) [`72fbb15`](https://github.com/thirdweb-dev/js/commit/72fbb1550f957c93cfde4e63d7bb6458fb192c47) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Resolve TokenIcon automatically when available
+
+## 5.109.0
+
+### Minor Changes
+
+- [#8259](https://github.com/thirdweb-dev/js/pull/8259) [`d68da22`](https://github.com/thirdweb-dev/js/commit/d68da2239b628f7835b0545a143b69e09cdf4141) Thanks [@MananTank](https://github.com/MananTank)! - Update `onSuccess` prop on `BuyWidget`, `CheckoutWidget`, `SwapWidget`, and `BridgeWidget` components to include `statuses` and `quote` objects instead of just `quote`.
+
+  ```tsx
+  <BuyWidget
+    onSuccess={(data) => {
+      console.log(data.statuses);
+      console.log(data.quote);
+    }}
+  />
+  ```
+
+### Patch Changes
+
+- [#8267](https://github.com/thirdweb-dev/js/pull/8267) [`51c8318`](https://github.com/thirdweb-dev/js/commit/51c8318df7b51126496ee94b1fd79a338734fced) Thanks [@jnsdls](https://github.com/jnsdls)! - fetch native currency from chain API if required
+
+## 5.108.15
+
+### Patch Changes
+
+- [#8257](https://github.com/thirdweb-dev/js/pull/8257) [`e7f42e6`](https://github.com/thirdweb-dev/js/commit/e7f42e6ac591102145f5e25983aeaa6f3647ad7f) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Improve Transactions list in connect modal
+  Fix query cache for block explorers for raw chains
+
+## 5.108.14
+
+### Patch Changes
+
+- [#8253](https://github.com/thirdweb-dev/js/pull/8253) [`8280efb`](https://github.com/thirdweb-dev/js/commit/8280efb99189c5b849156df383522f9e1b8f2c52) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix cb wallet transaction desktop popup when logged in via mobile QR code
+
+- [#8235](https://github.com/thirdweb-dev/js/pull/8235) [`464af6a`](https://github.com/thirdweb-dev/js/commit/464af6a54cb776158a1656e793ee181c2c221f27) Thanks [@kumaryash90](https://github.com/kumaryash90)! - CLI updates for stylus - new templates
+
+## 5.108.13
+
+### Patch Changes
+
+- Updated dependencies [[`9545b43`](https://github.com/thirdweb-dev/js/commit/9545b4367598408dbb88c63d8a8fe21305f870b5)]:
+  - @thirdweb-dev/engine@3.3.0
+
+## 5.108.12
+
+### Patch Changes
+
+- [#8226](https://github.com/thirdweb-dev/js/pull/8226) [`0082e99`](https://github.com/thirdweb-dev/js/commit/0082e996cae47a326110e74457c72b3f3936743d) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add optional recipientAddress to x402 settlePayment
+
+- [#8226](https://github.com/thirdweb-dev/js/pull/8226) [`0082e99`](https://github.com/thirdweb-dev/js/commit/0082e996cae47a326110e74457c72b3f3936743d) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Expose 7702 utility functions
+
+## 5.108.11
+
+### Patch Changes
+
+- [#8228](https://github.com/thirdweb-dev/js/pull/8228) [`05550d0`](https://github.com/thirdweb-dev/js/commit/05550d045f291b8e53afd0d7e73c438bee202fb7) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Export ERC7702 MinimalAccount helpers and events
+
+## 5.108.10
+
+### Patch Changes
+
+- [#8218](https://github.com/thirdweb-dev/js/pull/8218) [`f630912`](https://github.com/thirdweb-dev/js/commit/f630912b9b0e1d8ebe22b0b52c650f5e40e12baf) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Export missing x402 types
+
+- [#8215](https://github.com/thirdweb-dev/js/pull/8215) [`62cfbb7`](https://github.com/thirdweb-dev/js/commit/62cfbb7441e66156c55c76d73f5b481f5ea576bc) Thanks [@MananTank](https://github.com/MananTank)! - Show error in BuyWidget and SwapWidget UI if fetching token details fails
+
+- Updated dependencies [[`f630912`](https://github.com/thirdweb-dev/js/commit/f630912b9b0e1d8ebe22b0b52c650f5e40e12baf)]:
+  - @thirdweb-dev/engine@3.2.2
+
+## 5.108.9
+
+### Patch Changes
+
+- [#8192](https://github.com/thirdweb-dev/js/pull/8192) [`968913d`](https://github.com/thirdweb-dev/js/commit/968913d55b761c1e23062fdf6008904fa8c17050) Thanks [@MananTank](https://github.com/MananTank)! - Fix TransactionWidget not updating when `currency` prop is changed after initial render
+
+## 5.108.8
+
+### Patch Changes
+
+- [#8184](https://github.com/thirdweb-dev/js/pull/8184) [`af9a73d`](https://github.com/thirdweb-dev/js/commit/af9a73d9302078a506b7d3cb8d55b611f15b6293) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix waitUntil facilitator param not being respected
+
+## 5.108.7
+
+### Patch Changes
+
+- [#8181](https://github.com/thirdweb-dev/js/pull/8181) [`e612f16`](https://github.com/thirdweb-dev/js/commit/e612f16a85ffda024d7f74b41abb48b2999b9107) Thanks [@MananTank](https://github.com/MananTank)! - BuyWidget UI improvements and new features:
+  - `chain`, and `amount` props are now optional
+  - User can always change the token and chain selection in the widget
+  - Both fiat and token amounts are editable
+  - connected wallet can be disconnected from the widget
+  - current balance displayed in the widget
+
+## 5.108.6
+
+### Patch Changes
+
+- [#8167](https://github.com/thirdweb-dev/js/pull/8167) [`eb603f8`](https://github.com/thirdweb-dev/js/commit/eb603f89086f25202b157eb748f70a252dd7c6e7) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update dependencies
+
+## 5.108.5
+
+### Patch Changes
+
+- [#8145](https://github.com/thirdweb-dev/js/pull/8145) [`7495f46`](https://github.com/thirdweb-dev/js/commit/7495f462221e9e4319d2dd08942693d7888cabe6) Thanks [@MananTank](https://github.com/MananTank)! - Token Search improvements in SwapWidget
+
+- [#8142](https://github.com/thirdweb-dev/js/pull/8142) [`496615f`](https://github.com/thirdweb-dev/js/commit/496615feaea0e8dfaaf0612e1cc94b60fcae9f4f) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Improve token info discovery for x402 payments
+
+- [#8144](https://github.com/thirdweb-dev/js/pull/8144) [`b8afa98`](https://github.com/thirdweb-dev/js/commit/b8afa98de6bd38376e190f3c54ee9fdadccfebe7) Thanks [@MananTank](https://github.com/MananTank)! - Remove retries when fetching list of tokens fails in SwapWidget to reduce time loading skeletons are shown in the UI
+
+- [#8153](https://github.com/thirdweb-dev/js/pull/8153) [`94aae90`](https://github.com/thirdweb-dev/js/commit/94aae902a1d036e1f706fc37f1167a47820a6e4e) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Also expose waitUntil param in settlePayment()
+
+## 5.108.4
+
+### Patch Changes
+
+- [#8141](https://github.com/thirdweb-dev/js/pull/8141) [`85bde21`](https://github.com/thirdweb-dev/js/commit/85bde21dc97d2ad06547832e9470532069d0cbf5) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Handle 7702 accounts in verifyTypedData
+
+- [#8136](https://github.com/thirdweb-dev/js/pull/8136) [`aa0d23e`](https://github.com/thirdweb-dev/js/commit/aa0d23e966d4fd34ebadc38793f0f006aa70004f) Thanks [@MananTank](https://github.com/MananTank)! - Fix Embed container size
+
+## 5.108.3
+
+### Patch Changes
+
+- [#8128](https://github.com/thirdweb-dev/js/pull/8128) [`f152139`](https://github.com/thirdweb-dev/js/commit/f152139d739bbdfaefb07ee547c2655259c394b8) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Support ERC-2612 permit for x402 payments
+
+## 5.108.2
+
+### Patch Changes
+
+- [#8106](https://github.com/thirdweb-dev/js/pull/8106) [`1f7cda6`](https://github.com/thirdweb-dev/js/commit/1f7cda66988e88628ca9b8fe608af071aa0026a1) Thanks [@MananTank](https://github.com/MananTank)! - Add `BridgeWidget` component.
+
+  Generate a browser script in `dist/scripts/bridge-widget.js` that can be used to render the `BridgeWidget` component in a browser with a script
+
+- [#8126](https://github.com/thirdweb-dev/js/pull/8126) [`9069351`](https://github.com/thirdweb-dev/js/commit/9069351e1abd231cf9051b05b7d92f95f891060b) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Accept chain objects for x402 APIs
+
+## 5.108.1
+
+### Patch Changes
+
+- [#8108](https://github.com/thirdweb-dev/js/pull/8108) [`e1cccd7`](https://github.com/thirdweb-dev/js/commit/e1cccd7a10447943c4b31f34e09a94d2ff5ee826) Thanks [@gregfromstl](https://github.com/gregfromstl)! - Displays the failure error messages on the BuyWidget
+
+## 5.108.0
+
+### Minor Changes
+
+- [#8091](https://github.com/thirdweb-dev/js/pull/8091) [`5249cb7`](https://github.com/thirdweb-dev/js/commit/5249cb7409a8486346fe428f824c81dd90845555) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Accept arbitrary chain ids for x402 payments with new settlePayment() and verifyPayment() backend utility functions
+
+### Patch Changes
+
+- [#8100](https://github.com/thirdweb-dev/js/pull/8100) [`a94f229`](https://github.com/thirdweb-dev/js/commit/a94f22928a662a5aff7a203fc2d383d9fa0907ec) Thanks [@MananTank](https://github.com/MananTank)! - Update the `onSuccess`, `onError`, and `onCancel` callback props of the `BuyWidget` to be called with the `quote` object
+
+  ```tsx
+  <BuyWidget
+    onSuccess={(quote) => console.log("Swap completed:", quote)}
+    onError={(error, quote) => console.error("Swap failed:", error, quote)}
+    onCancel={(quote) => console.log("Swap cancelled:", quote)}
+  />
+  ```
+
+## 5.107.1
+
+### Patch Changes
+
+- [#8080](https://github.com/thirdweb-dev/js/pull/8080) [`93f913c`](https://github.com/thirdweb-dev/js/commit/93f913c614ebbe3db350872bdcff264c07155ce2) Thanks [@MananTank](https://github.com/MananTank)! - SwapWidget UI improvements
+
+- [#8092](https://github.com/thirdweb-dev/js/pull/8092) [`a85ef0b`](https://github.com/thirdweb-dev/js/commit/a85ef0b222797d38ccd31e72fafda82ceb1faefa) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - add zephyr testnet to pre-1559 chains
+
+## 5.107.0
+
+### Minor Changes
+
+- [#8076](https://github.com/thirdweb-dev/js/pull/8076) [`5967fb8`](https://github.com/thirdweb-dev/js/commit/5967fb8afad3dbc28230c53423d304e8895f95bb) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - x402 utilities
+
+## 5.106.1
+
+### Patch Changes
+
+- [#8069](https://github.com/thirdweb-dev/js/pull/8069) [`32980f8`](https://github.com/thirdweb-dev/js/commit/32980f854b9d53f0039d7bf913a2e5d8ba03704e) Thanks [@MananTank](https://github.com/MananTank)! - Add `persistTokenSelections` prop on `SwapWidget` to allow disabling token selection persistence to local storage
+
+- [#8077](https://github.com/thirdweb-dev/js/pull/8077) [`7b8ceeb`](https://github.com/thirdweb-dev/js/commit/7b8ceebb63ccc7b4b055e3b463bca0e1932d67b8) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Show policy error for 7702 transactions
+
+## 5.106.0
+
+### Minor Changes
+
+- [#8044](https://github.com/thirdweb-dev/js/pull/8044) [`0e3f346`](https://github.com/thirdweb-dev/js/commit/0e3f3460ad30d5a1c52552ce9d786a9cc814dfee) Thanks [@MananTank](https://github.com/MananTank)! - Add `SwapWidget` component for swapping tokens using thirdweb Bridge
+
+  ```tsx
+  <SwapWidget client={thirdwebClient} />
+  ```
+
+### Patch Changes
+
+- [#8066](https://github.com/thirdweb-dev/js/pull/8066) [`e160deb`](https://github.com/thirdweb-dev/js/commit/e160deb8b73d0d7ba5f6bcf47c0675230efc4dfb) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Always reconnect any previously connected wallet properly
+
+- [#8067](https://github.com/thirdweb-dev/js/pull/8067) [`e0738d6`](https://github.com/thirdweb-dev/js/commit/e0738d68d2aa6fcf0cfbdebc4b5603887e3233a1) Thanks [@MananTank](https://github.com/MananTank)! - Fix SwapWidget setting same token for buy and sell in some cases when using last used token from storage
+
+- [#8065](https://github.com/thirdweb-dev/js/pull/8065) [`a6f846f`](https://github.com/thirdweb-dev/js/commit/a6f846fc1ead20734a52ff69263e6407f7ba3f9e) Thanks [@MananTank](https://github.com/MananTank)! - Add `tw-` class names in connect ui
+
+- [#8054](https://github.com/thirdweb-dev/js/pull/8054) [`15f0839`](https://github.com/thirdweb-dev/js/commit/15f083912c053f98eb30a28cddcf0114450129e6) Thanks [@MananTank](https://github.com/MananTank)! - Fix `onSuccess` callback was not called correctly on `CheckoutWidget`, `BuyWidget` components
+
+- [#8062](https://github.com/thirdweb-dev/js/pull/8062) [`f276dcf`](https://github.com/thirdweb-dev/js/commit/f276dcfd766c79149c5302b0207777bcc9f267a0) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Filter out AGW from searchable wallets (needs explicit adding)
+
+## 5.105.48
+
+### Patch Changes
+
+- [#8052](https://github.com/thirdweb-dev/js/pull/8052) [`557f0e2`](https://github.com/thirdweb-dev/js/commit/557f0e29e86d2ef3e3b72988f714203b4ede1009) Thanks [@gregfromstl](https://github.com/gregfromstl)! - Prevents incorrect failures in widget onramps.
+
+## 5.105.47
+
+### Patch Changes
+
+- [#8048](https://github.com/thirdweb-dev/js/pull/8048) [`97e5080`](https://github.com/thirdweb-dev/js/commit/97e5080fdfd5b8b1106141012bdee2db2d27ae4c) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix fiat payments with no wallets connected
+
+## 5.105.46
+
+### Patch Changes
+
+- [#8046](https://github.com/thirdweb-dev/js/pull/8046) [`224c9d0`](https://github.com/thirdweb-dev/js/commit/224c9d034f274c3e6cf510d3508856fc36501c63) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Improve WalletConnect chain switching reliability
+
+## 5.105.45
+
+### Patch Changes
+
+- [#8038](https://github.com/thirdweb-dev/js/pull/8038) [`0b45405`](https://github.com/thirdweb-dev/js/commit/0b454050b14806c103ea446e3667d0c970739912) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Accept pre signed authorizations for 7702 account transactions
+
+- [#8039](https://github.com/thirdweb-dev/js/pull/8039) [`dc1f7ab`](https://github.com/thirdweb-dev/js/commit/dc1f7ab2ee820be512776a413f7de362ff6b98ef) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Support fully disconnecting from metamask on disconnect
+
+- [#8042](https://github.com/thirdweb-dev/js/pull/8042) [`ea80610`](https://github.com/thirdweb-dev/js/commit/ea8061048adddb9fb7648f29ce1f3041f250ddfb) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix signAuthorization implementation for 1193 provider
+
+- [#8041](https://github.com/thirdweb-dev/js/pull/8041) [`3ad9f7d`](https://github.com/thirdweb-dev/js/commit/3ad9f7deba850b0a50e355111af11fd419db2efd) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Allow passing overrides to common extension functions
+
+## 5.105.44
+
+### Patch Changes
+
+- [#8036](https://github.com/thirdweb-dev/js/pull/8036) [`ef15ba7`](https://github.com/thirdweb-dev/js/commit/ef15ba7c434f8c9bde3b6d45d43d90e74f20616b) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - pass through authorizationList for injected providers
+
+## 5.105.43
+
+### Patch Changes
+
+- [#8029](https://github.com/thirdweb-dev/js/pull/8029) [`1759112`](https://github.com/thirdweb-dev/js/commit/1759112d722e11d2d9a902f2221e70636188015e) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add signAuthorization support to 1193 provider
+
+## 5.105.42
+
+### Patch Changes
+
+- [#7973](https://github.com/thirdweb-dev/js/pull/7973) [`b149019`](https://github.com/thirdweb-dev/js/commit/b149019318a3a9f73aab96b68a92daef41a961e2) Thanks [@shubham-yuga](https://github.com/shubham-yuga)! - Added Glyph wallet to supported wallets
+
+- [#8007](https://github.com/thirdweb-dev/js/pull/8007) [`4ff1cf7`](https://github.com/thirdweb-dev/js/commit/4ff1cf79794af0c2e52f4beacbcf0d5d69266365) Thanks [@nischitpra](https://github.com/nischitpra)! - Polygon amoy gasstation url fix
+  https://github.com/thirdweb-dev/js/pull/8004
+
 ## 5.105.41
 
 ### Patch Changes

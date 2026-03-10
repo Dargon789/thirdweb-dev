@@ -32,51 +32,24 @@ const links = [
     name: "Wallets",
   },
   {
-    href: "/payments",
-    name: "Payments",
+    href: "/x402",
+    name: "x402",
   },
   {
-    href: "/transactions",
-    name: "Transactions",
-  },
-  {
-    href: "/contracts",
-    name: "Contracts",
+    href: "/bridge",
+    name: "Bridge",
   },
   {
     href: "/tokens",
     name: "Tokens",
   },
   {
-    href: "/insight",
-    name: "Insight",
+    href: "/ai/chat",
+    name: "AI",
   },
   {
     href: "/reference",
     name: "API Reference",
-  },
-];
-
-const toolLinks = [
-  {
-    href: "https://thirdweb.com/chainlist",
-    name: "Chain List",
-  },
-  {
-    href: "https://thirdweb.com/tools/wei-converter",
-    name: "Wei Converter",
-  },
-  {
-    href: "https://thirdweb.com/tools/hex-converter",
-    name: "Hex Converter",
-  },
-  {
-    href: "/account/api-keys",
-    name: "API Keys",
-  },
-  {
-    href: "/cli",
-    name: "CLI",
   },
 ];
 
@@ -121,44 +94,6 @@ export const connectLinks: Array<{
     name: "Unreal Engine",
   },
 ] as const;
-
-const apisLinks = [
-  {
-    href: "https://api.thirdweb.com/reference",
-    name: "HTTP API",
-  },
-  {
-    href: "https://insight.thirdweb.com/reference",
-    name: "Insight",
-  },
-  {
-    href: "https://engine.thirdweb.com/reference#tag/write",
-    name: "Transactions",
-  },
-  {
-    href: "https://bridge.thirdweb.com/reference",
-    name: "Payments",
-  },
-  {
-    href: "/bundler",
-    name: "Bundler",
-  },
-];
-
-const aiLinks = [
-  {
-    href: "/ai/chat",
-    name: "Blockchain LLM",
-  },
-  {
-    href: "/ai/mcp",
-    name: "MCP",
-  },
-  {
-    href: "/ai/llm-txt",
-    name: "LLMs.txt",
-  },
-];
 
 const sdkLinks = [
   {
@@ -213,133 +148,113 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="flex w-full flex-col gap-2 border-b bg-background p-4 xl:pb-0 lg:px-8 overflow-hidden">
-      {/* Top row */}
-      <div className="container flex items-center justify-between gap-6">
-        <div className="flex items-center gap-2">
-          <Link
-            aria-label="thirdweb Docs"
-            className="flex items-center gap-2"
-            href="/"
-            title="thirdweb Docs"
-          >
-            <ThirdwebIcon className="size-8" />
-            <span className="font-bold text-[23px] text-foreground leading-none tracking-tight">
-              Docs
-            </span>
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="hidden xl:block">
+    <header className="flex w-full border-b overflow-hidden relative">
+      <div className="container flex-col">
+        {/* Top row */}
+        <div className="flex items-center justify-between gap-6 relative z-10 py-4 lg:pt-5">
+          <div className="flex items-center gap-2">
             <Link
-              className="text-foreground"
-              href="https://github.com/thirdweb-dev"
-              target="_blank"
+              aria-label="thirdweb Docs"
+              className="flex items-center gap-2"
+              href="/"
+              title="thirdweb Docs"
             >
-              <GithubIcon className="size-6 lg:size-5" />
+              <ThirdwebIcon className="size-8" />
+              <span className="font-bold text-[23px] text-foreground leading-none tracking-tight">
+                Docs
+              </span>
             </Link>
           </div>
 
-          <div className="hidden xl:block">
-            <ThemeSwitcher className="border-none bg-transparent" />
-          </div>
+          <div className="flex items-center gap-4">
+            <div className="hidden xl:block">
+              <Link
+                className="text-foreground"
+                href="https://github.com/thirdweb-dev"
+                target="_blank"
+              >
+                <GithubIcon className="size-6 lg:size-5" />
+              </Link>
+            </div>
 
-          <div className="hidden xl:block">
-            <DocSearch variant="search" />
-          </div>
+            <div className="hidden xl:block">
+              <ThemeSwitcher className="border-none bg-transparent" />
+            </div>
 
-          <div className="hidden xl:block">
-            <ChatButton />
-          </div>
+            <div className="hidden xl:block">
+              <DocSearch variant="search" />
+            </div>
 
-          <div className="flex items-center gap-1 xl:hidden">
-            <ThemeSwitcher className="border-none bg-transparent" />
-            <DocSearch variant="icon" />
-            <ChatButton />
-            <Button
-              className="p-2"
-              onClick={() => setShowBurgerMenu(!showBurgerMenu)}
-              variant="ghost"
-            >
-              <MenuIcon className="size-7" />
-            </Button>
+            <div className="hidden xl:block">
+              <ChatButton />
+            </div>
+
+            <div className="flex items-center gap-1 xl:hidden">
+              <ThemeSwitcher className="border-none bg-transparent" />
+              <DocSearch variant="icon" />
+              <ChatButton />
+              <Button
+                className="p-2"
+                onClick={() => setShowBurgerMenu(!showBurgerMenu)}
+                variant="ghost"
+              >
+                <MenuIcon className="size-7" />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Bottom row - hidden on mobile */}
-      <div className="container hidden items-center justify-between gap-6 xl:flex mt-1">
-        <nav className="flex grow gap-5">
-          <ul className="flex flex-row items-center gap-0 mb-1">
-            {links.map((link) => {
-              return (
-                <li
-                  className="flex items-center py-2 relative px-2.5 hover:text-foreground"
-                  key={link.href}
-                  onClick={() => {
-                    setShowBurgerMenu(false);
-                  }}
-                  onKeyDown={() => {
-                    setShowBurgerMenu(false);
-                  }}
-                >
-                  <NavLink href={link.href} name={link.name} />
-                  {pathname?.startsWith(link.href) && (
-                    <div className="bg-violet-700 h-[2px] inset-x-0 rounded-full absolute -bottom-1" />
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+        {/* Bottom row - hidden on mobile */}
+        <div className="hidden items-start justify-between gap-6 xl:flex relative z-10">
+          <nav className="flex grow gap-5">
+            <ul className="flex flex-row items-center gap-0 mb-1.5">
+              {links.map((link) => {
+                return (
+                  <li
+                    className="flex items-center relative"
+                    key={link.href}
+                    onClick={() => {
+                      setShowBurgerMenu(false);
+                    }}
+                    onKeyDown={() => {
+                      setShowBurgerMenu(false);
+                    }}
+                  >
+                    <NavLink
+                      href={link.href}
+                      name={link.name}
+                      className="py-2.5 px-3 hover:bg-accent rounded-lg hover:text-foreground font-normal"
+                    />
+                    {pathname?.startsWith(link.href) && (
+                      <div className="bg-foreground h-[2px] inset-x-0 rounded-full absolute -bottom-1.5" />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
 
-        <div className="flex items-center gap-3">
-          <div className="px-1">
-            <DropdownLinks
-              category="AI"
-              links={aiLinks}
-              onLinkClick={() => setShowBurgerMenu(false)}
-            />
-          </div>
-          <div className="px-1">
+          <div className="flex items-center">
             <DropdownLinks
               category="SDKs"
               links={sdkLinks}
               onLinkClick={() => setShowBurgerMenu(false)}
             />
-          </div>
-          <div className="px-1">
-            <DropdownLinks
-              category="APIs"
-              links={apisLinks}
-              onLinkClick={() => setShowBurgerMenu(false)}
-            />
-          </div>
-
-          <div className="px-1">
-            <DropdownLinks
-              category="Tools"
-              links={toolLinks}
-              onLinkClick={() => setShowBurgerMenu(false)}
-            />
-          </div>
-
-          <div className="px-1">
             <DropdownLinks
               category="Support"
               links={supportLinks}
               onLinkClick={() => setShowBurgerMenu(false)}
             />
-          </div>
 
-          <NavLink
-            href="/changelog"
-            name="Changelog"
-            onClick={() => {
-              setShowBurgerMenu(false);
-            }}
-          />
+            <NavLink
+              href="/changelog"
+              className="px-3 py-2.5 hover:bg-accent hover:text-foreground rounded-lg"
+              name="Changelog"
+              onClick={() => {
+                setShowBurgerMenu(false);
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -350,18 +265,6 @@ export function Header() {
             <div className="flex flex-col gap-4">
               <h3 className="font-semibold text-lg">Products</h3>
               {links.map((link) => (
-                <NavLink
-                  href={link.href}
-                  key={link.name}
-                  name={link.name}
-                  onClick={() => setShowBurgerMenu(false)}
-                />
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <h3 className="font-semibold text-lg">AI</h3>
-              {aiLinks.map((link) => (
                 <NavLink
                   href={link.href}
                   key={link.name}
@@ -385,18 +288,6 @@ export function Header() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <h3 className="font-semibold text-lg">APIs</h3>
-              {apisLinks.map((link) => (
-                <NavLink
-                  href={link.href}
-                  key={link.name}
-                  name={link.name}
-                  onClick={() => setShowBurgerMenu(false)}
-                />
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-4">
               <h3 className="font-semibold text-lg">Support</h3>
               {supportLinks.map((link) => (
                 <NavLink
@@ -413,21 +304,11 @@ export function Header() {
               name="Changelog"
               onClick={() => setShowBurgerMenu(false)}
             />
-
-            <div className="flex flex-col gap-4">
-              <h3 className="font-semibold text-lg">Tools</h3>
-              {toolLinks.map((link) => (
-                <NavLink
-                  href={link.href}
-                  key={link.name}
-                  name={link.name}
-                  onClick={() => setShowBurgerMenu(false)}
-                />
-              ))}
-            </div>
           </div>
         </div>
       )}
+
+      <div className="absolute inset-0 bg-card/70 backdrop-blur-xl z-0" />
     </header>
   );
 }
@@ -448,31 +329,29 @@ function DropdownLinks(props: {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              className="inline-flex items-center gap-1 p-0 font-medium text-muted-foreground text-sm hover:bg-transparent hover:text-foreground"
+              className="inline-flex items-center gap-1.5 font-normal text-muted-foreground text-sm hover:bg-accent hover:text-foreground rounded-lg px-3 py-2.5"
               variant="ghost"
             >
               {props.category}
-              <ChevronDownIcon className="size-4 text-muted-foreground opacity-70" />
+              <ChevronDownIcon className="size-3.5 text-muted-foreground opacity-70" />
             </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
-            className="flex flex-col gap-1 bg-card p-3"
-            style={{
-              minWidth: "150px",
-            }}
+            className="flex flex-col gap-1 bg-card p-1 rounded-xl min-w-[200px]"
+            sideOffset={14}
           >
             {props.links.map((info) => {
               return (
                 <DropdownMenuItem asChild key={info.name}>
                   <div
                     className={clsx(
-                      "relative flex cursor-pointer gap-2 font-medium text-foreground",
+                      "relative flex cursor-pointer gap-3 font-medium text-foreground !rounded-lg px-3 py-2",
                       "hover:bg-accent",
                     )}
                   >
                     {info.icon && (
-                      <info.icon className="size-5 text-foreground" />
+                      <info.icon className="size-5 text-muted-foreground" />
                     )}
                     <Link
                       className="before:absolute before:inset-0"
@@ -524,6 +403,7 @@ function NavLink(props: {
   name: string;
   onClick?: () => void;
   icon?: React.FC<{ className?: string }>;
+  className?: string;
 }) {
   const pathname = usePathname();
   return (
@@ -534,6 +414,7 @@ function NavLink(props: {
           ? "text-foreground"
           : "text-muted-foreground",
         props.icon ? "flex flex-row gap-3" : "",
+        props.className,
       )}
       href={props.href}
       onClick={props.onClick}

@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Quote } from "../../../bridge/index.js";
 import { ApiError } from "../../../bridge/types/Errors.js";
-import type { Token, TokenWithPrices } from "../../../bridge/types/Token.js";
+import type { TokenWithPrices } from "../../../bridge/types/Token.js";
 import type { ThirdwebClient } from "../../../client/client.js";
 import { getThirdwebBaseUrl } from "../../../utils/domains.js";
 import { getClientFetch } from "../../../utils/fetch.js";
 import { toTokens, toUnits } from "../../../utils/units.js";
 import type { Wallet } from "../../../wallets/interfaces/wallet.js";
-import type { PaymentMethod } from "../machines/paymentMachine.js";
+import type { PaymentMethod } from "../../web/ui/Bridge/types.js";
 import type { SupportedTokens } from "../utils/defaultTokens.js";
 import { useActiveWallet } from "./wallets/useActiveWallet.js";
 
@@ -29,11 +29,10 @@ import { useActiveWallet } from "./wallets/useActiveWallet.js";
  * ```
  */
 export function usePaymentMethods(options: {
-  destinationToken: Token;
+  destinationToken: TokenWithPrices;
   destinationAmount: string;
   client: ThirdwebClient;
   payerWallet?: Wallet;
-  includeDestinationToken?: boolean;
   supportedTokens?: SupportedTokens;
 }) {
   const {
@@ -41,7 +40,6 @@ export function usePaymentMethods(options: {
     destinationAmount,
     client,
     payerWallet,
-    includeDestinationToken,
     supportedTokens,
   } = options;
   const localWallet = useActiveWallet(); // TODO (bridge): get all connected wallets
@@ -67,6 +65,8 @@ export function usePaymentMethods(options: {
         "amount",
         toUnits(destinationAmount, destinationToken.decimals).toString(),
       );
+      // dont include quotes to speed up the query
+      url.searchParams.set("includeQuotes", "false");
 
       const clientFetch = getClientFetch(client);
       const response = await clientFetch(url.toString());
@@ -82,8 +82,9 @@ export function usePaymentMethods(options: {
 
       const {
         data: allValidOriginTokens,
-      }: { data: { quote: Quote; balance: string; token: TokenWithPrices }[] } =
-        await response.json();
+      }: {
+        data: { quote?: Quote; balance: string; token: TokenWithPrices }[];
+      } = await response.json();
 
       // Sort by enough balance to pay THEN gross balance
       const validTokenQuotes = allValidOriginTokens.map((s) => ({
@@ -94,7 +95,7 @@ export function usePaymentMethods(options: {
         quote: s.quote,
       }));
 
-      const sufficientBalanceQuotes = validTokenQuotes
+      const sortedValidTokenQuotes = validTokenQuotes
         .filter((s) => !!s.originToken.prices.USD)
         .sort((a, b) => {
           return (
@@ -116,15 +117,29 @@ export function usePaymentMethods(options: {
           )
         : [];
       const finalQuotes = supportedTokens
-        ? sufficientBalanceQuotes.filter((q) =>
+        ? sortedValidTokenQuotes.filter((q) =>
             tokensToInclude.find(
               (t) =>
                 t.chainId === q.originToken.chainId &&
                 t.address.toLowerCase() === q.originToken.address.toLowerCase(),
             ),
           )
-        : sufficientBalanceQuotes;
-      return finalQuotes;
+        : sortedValidTokenQuotes;
+
+      const requiredUsdValue =
+        (destinationToken.prices?.["USD"] ?? 0) * Number(destinationAmount);
+
+      return finalQuotes.map((x) => {
+        const tokenUsdValue =
+          (x.originToken.prices?.["USD"] ?? 0) *
+          Number(toTokens(x.balance, x.originToken.decimals));
+        const hasEnoughBalance = tokenUsdValue >= requiredUsdValue;
+        return {
+          ...x,
+          action: "buy",
+          hasEnoughBalance,
+        };
+      });
     },
     queryKey: [
       "payment-methods",
@@ -132,7 +147,6 @@ export function usePaymentMethods(options: {
       destinationToken.address,
       destinationAmount,
       payerWallet?.getAccount()?.address,
-      includeDestinationToken,
       supportedTokens,
     ], // 5 minutes
     refetchOnWindowFocus: false,

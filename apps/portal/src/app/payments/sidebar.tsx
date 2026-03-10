@@ -13,7 +13,7 @@ export const sidebar: SideBar = {
       icon: <ZapIcon />,
     },
     {
-      href: "https://playground.thirdweb.com/",
+      href: "https://playground.thirdweb.com/bridge",
       icon: <ExternalLinkIcon />,
       name: "Playground",
     },
@@ -38,20 +38,16 @@ export const sidebar: SideBar = {
           name: "Send a Payment",
         },
         {
-          href: `${paymentsSlug}/sell`,
+          href: `/bridge/sell`,
           name: "Sell Tokens",
         },
         {
-          href: `${paymentsSlug}/swap`,
+          href: `/bridge/swap`,
           name: "Swap Tokens",
         },
         {
-          href: `${paymentsSlug}/tokens`,
+          href: `/bridge/tokens`,
           name: "Get Token Prices",
-        },
-        {
-          href: `${paymentsSlug}/routes`,
-          name: "Get Routes",
         },
         {
           href: `${paymentsSlug}/webhooks`,
@@ -69,9 +65,9 @@ export const sidebar: SideBar = {
       isCollapsible: false,
       links: [
         {
-          href: `https://payments.thirdweb.com/reference`,
+          href: `/reference`,
           icon: <EngineIcon />,
-          name: "REST API",
+          name: "HTTP API",
         },
         {
           href: "/references/typescript/v5",

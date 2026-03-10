@@ -5,7 +5,7 @@ import { ApiError } from "./types/Errors.js";
 import type { Token, TokenWithPrices } from "./types/Token.js";
 
 /**
- * Retrieves supported Universal Bridge tokens based on the provided filters.
+ * Retrieves supported Bridge tokens based on the provided filters.
  *
  * When multiple filters are specified, a token must satisfy all filters to be included (it acts as an AND operator).
  *
@@ -141,6 +141,8 @@ export async function tokens<
     limit,
     offset,
     includePrices,
+    sortBy,
+    query,
   } = options;
 
   const clientFetch = getClientFetch(client);
@@ -166,6 +168,13 @@ export async function tokens<
   }
   if (includePrices !== undefined) {
     url.searchParams.set("includePrices", includePrices.toString());
+  }
+  if (sortBy !== undefined) {
+    url.searchParams.set("sortBy", sortBy);
+  }
+
+  if (query !== undefined) {
+    url.searchParams.set("query", query);
   }
 
   const response = await clientFetch(url.toString());
@@ -204,6 +213,10 @@ export declare namespace tokens {
     offset?: number | null;
     /** Whether or not to include prices for the tokens. Setting this to false will speed up the request. */
     includePrices?: IncludePrices;
+    /** Sort by a specific field. */
+    sortBy?: "newest" | "oldest" | "volume" | "market_cap";
+    /** search for tokens by token name or symbol */
+    query?: string;
   };
 
   /**
@@ -213,9 +226,9 @@ export declare namespace tokens {
 }
 
 /**
- * Adds a token to the Universal Bridge for indexing.
+ * Adds a token to the Bridge for indexing.
  *
- * This function requests the Universal Bridge to index a specific token on a given chain.
+ * This function requests the Bridge to index a specific token on a given chain.
  * Once indexed, the token will be available for cross-chain operations.
  *
  * @example
