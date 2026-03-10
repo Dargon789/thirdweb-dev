@@ -1,11 +1,11 @@
-import { getProject } from "@/api/projects";
-import { getTeams } from "@/api/team";
-import { getMemberById } from "@/api/team-members";
-import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
 import { notFound, redirect } from "next/navigation";
-import { getValidAccount } from "../../../../../account/settings/getAccount";
-import { getAuthToken } from "../../../../../api/lib/getAuthToken";
-import { loginRedirect } from "../../../../../login/loginRedirect";
+import { getValidAccount } from "@/api/account/get-account";
+import { getAuthToken } from "@/api/auth-token";
+import { getProject } from "@/api/project/projects";
+import { getTeams } from "@/api/team/get-team";
+import { getMemberByAccountId } from "@/api/team/team-members";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
+import { loginRedirect } from "@/utils/redirects";
 import { ProjectGeneralSettingsPage } from "./ProjectGeneralSettingsPage";
 
 export default async function Page(props: {
@@ -37,15 +37,15 @@ export default async function Page(props: {
 
   const teamsWithRole = await Promise.all(
     teams.map(async (team) => {
-      const member = await getMemberById(team.slug, account.id);
+      const member = await getMemberByAccountId(team.slug, account.id);
 
       if (!member) {
         notFound();
       }
 
       return {
-        team,
         role: member.role,
+        team,
       };
     }),
   );
@@ -63,13 +63,13 @@ export default async function Page(props: {
 
   return (
     <ProjectGeneralSettingsPage
-      project={project}
-      teamSlug={team_slug}
-      showNebulaSettings={currentTeam.enabledScopes.includes("nebula")}
       client={client}
-      teamId={currentTeam.id}
-      teamsWithRole={teamsWithRole}
       isOwnerAccount={isOwnerAccount}
+      project={project}
+      showNebulaSettings={currentTeam.enabledScopes.includes("nebula")}
+      teamId={currentTeam.id}
+      teamSlug={team_slug}
+      teamsWithRole={teamsWithRole}
     />
   );
 }

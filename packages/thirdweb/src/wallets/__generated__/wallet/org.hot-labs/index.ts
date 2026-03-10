@@ -7,7 +7,7 @@ export const wallet = {
   homepage: "https://hot-labs.org/wallet",
   image_id: "809867ce-345f-4180-033a-165019d4c700",
   app: {
-    browser: "https://t.me/hot_wallet/app",
+    browser: "https://app.hot-labs.org/link",
     ios: "https://apps.apple.com/us/app/hot-wallet/id6740916148",
     android:
       "https://play.google.com/store/apps/details?id=app.herewallet.hot&hl=en_US",
@@ -15,19 +15,19 @@ export const wallet = {
     windows: null,
     linux: null,
     chrome:
-      "https://chromewebstore.google.com/detail/hot-wallet/mpeengabcnhhjjgleiodimegnkpcenbk?pli=1",
-    firefox: null,
+      "https://chromewebstore.google.com/detail/hot-wallet/mpeengabcnhhjjgleiodimegnkpcenbk",
+    firefox: "https://addons.mozilla.org/en-US/firefox/addon/hot-wallet",
     safari: null,
     edge: null,
     opera: null,
   },
-  rdns: null,
+  rdns: "org.hot-labs",
   mobile: {
     native: "hotwallet://",
-    universal: null,
+    universal: "https://app.hot-labs.org",
   },
   desktop: {
-    native: null,
-    universal: "https://t.me/hot_wallet/app",
+    native: "",
+    universal: "https://app.hot-labs.org/link",
   },
 } as const;

@@ -1,6 +1,7 @@
 import type { Address as ox__Address } from "ox";
 import { defineChain } from "../chains/utils.js";
 import type { ThirdwebClient } from "../client/client.js";
+import type { PurchaseData } from "../pay/types.js";
 import { getThirdwebBaseUrl } from "../utils/domains.js";
 import { getClientFetch } from "../utils/fetch.js";
 import { stringify } from "../utils/json.js";
@@ -8,7 +9,7 @@ import { ApiError } from "./types/Errors.js";
 import type { PreparedQuote } from "./types/Quote.js";
 
 /**
- * Prepares a **finalized** Universal Bridge quote for the provided transfer request with transaction data.
+ * Prepares a **finalized** Bridge quote for the provided transfer request with transaction data.
  *
  * @example
  * ```typescript
@@ -197,68 +198,86 @@ export async function prepare(
   const url = new URL(`${getThirdwebBaseUrl("bridge")}/v1/transfer/prepare`);
 
   const response = await clientFetch(url.toString(), {
-    method: "POST",
+    body: stringify({
+      amount: amount.toString(), // legacy
+      chainId: chainId.toString(),
+      feePayer,
+      paymentLinkId,
+      purchaseData,
+      receiver,
+      sender,
+      tokenAddress,
+      transferAmountWei: amount.toString(),
+    }),
     headers: {
       "Content-Type": "application/json",
     },
-    body: stringify({
-      transferAmountWei: amount.toString(), // legacy
-      amount: amount.toString(),
-      chainId: chainId.toString(),
-      tokenAddress,
-      sender,
-      receiver,
-      purchaseData,
-      feePayer,
-      paymentLinkId,
-    }),
+    method: "POST",
   });
   if (!response.ok) {
     const errorJson = await response.json();
     throw new ApiError({
       code: errorJson.code || "UNKNOWN_ERROR",
-      message: errorJson.message || response.statusText,
       correlationId: errorJson.correlationId || undefined,
+      message: errorJson.message || response.statusText,
       statusCode: response.status,
     });
   }
 
   const { data }: { data: PreparedQuote } = await response.json();
   return {
-    originAmount: BigInt(data.originAmount),
-    destinationAmount: BigInt(data.destinationAmount),
     blockNumber: data.blockNumber ? BigInt(data.blockNumber) : undefined,
-    timestamp: data.timestamp,
+    destinationAmount: BigInt(data.destinationAmount),
     estimatedExecutionTimeMs: data.estimatedExecutionTimeMs,
+    intent: {
+      amount,
+      chainId,
+      feePayer,
+      receiver,
+      sender,
+      tokenAddress,
+    },
+    originAmount: BigInt(data.originAmount),
     steps: data.steps.map((step) => ({
       ...step,
       transactions: step.transactions.map((transaction) => ({
         ...transaction,
-        value: transaction.value ? BigInt(transaction.value) : undefined,
-        client,
         chain: defineChain(transaction.chainId),
+        client,
+        value: transaction.value ? BigInt(transaction.value) : undefined,
       })),
     })),
-    intent: {
-      chainId,
-      tokenAddress,
-      amount,
-      sender,
-      receiver,
-      feePayer,
-    },
+    timestamp: data.timestamp,
   };
 }
 
+/**
+ * Namespace containing types for the transfer prepare function.
+ * @namespace prepare
+ * @bridge Transfer
+ */
 export declare namespace prepare {
+  /**
+   * Options for preparing a transfer transaction.
+   * @interface Options
+   * @bridge Transfer
+   */
   type Options = {
+    /** The chain ID */
     chainId: number;
+    /** The token address */
     tokenAddress: ox__Address.Address;
+    /** The sender address */
     sender: ox__Address.Address;
+    /** The receiver address */
     receiver: ox__Address.Address;
+    /** The amount to transfer in wei */
     amount: bigint;
+    /** Your thirdweb client */
     client: ThirdwebClient;
-    purchaseData?: unknown;
+    /** Arbitrary purchase data */
+    purchaseData?: PurchaseData;
+    /** Who pays the fees - sender or receiver */
     feePayer?: "sender" | "receiver";
     /**
      * @hidden
@@ -266,6 +285,12 @@ export declare namespace prepare {
     paymentLinkId?: string;
   };
 
+  /**
+   * Result returned from preparing a transfer transaction.
+   * Contains prepared quote with transaction data and intent information.
+   * @interface Result
+   * @bridge Transfer
+   */
   type Result = PreparedQuote & {
     intent: {
       chainId: number;
@@ -273,7 +298,7 @@ export declare namespace prepare {
       amount: bigint;
       sender: ox__Address.Address;
       receiver: ox__Address.Address;
-      purchaseData?: unknown;
+      purchaseData?: PurchaseData;
       feePayer?: "sender" | "receiver";
     };
   };

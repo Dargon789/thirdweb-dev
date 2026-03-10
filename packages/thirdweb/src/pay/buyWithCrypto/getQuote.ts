@@ -7,6 +7,7 @@ import { NATIVE_TOKEN_ADDRESS } from "../../constants/addresses.js";
 import { getContract } from "../../contract/contract.js";
 import { decimals } from "../../extensions/erc20/read/decimals.js";
 import type { PrepareTransactionOptions } from "../../transaction/prepare-transaction.js";
+import type { PurchaseData } from "../types.js";
 import type {
   QuoteApprovalInfo,
   QuotePaymentToken,
@@ -76,7 +77,7 @@ export type GetBuyWithCryptoQuoteParams = {
    *
    * This details will be stored with the purchase and can be retrieved later via the status API or Webhook
    */
-  purchaseData?: object;
+  purchaseData?: PurchaseData;
 
   /**
    * The maximum slippage in basis points (bps) allowed for the swap.
@@ -199,16 +200,16 @@ export async function getBuyWithCryptoQuote(
               });
         const amount = Value.from(params.toAmount, tokenDecimals);
         return Bridge.Buy.prepare({
-          sender: params.fromAddress,
-          receiver: params.toAddress,
-          originChainId: params.fromChainId,
-          originTokenAddress: params.fromTokenAddress,
+          amount: amount,
+          client: params.client,
           destinationChainId: params.toChainId,
           destinationTokenAddress: params.toTokenAddress,
-          amount: amount,
-          purchaseData: params.purchaseData,
-          client: params.client,
+          originChainId: params.fromChainId,
+          originTokenAddress: params.fromTokenAddress,
           paymentLinkId: params.paymentLinkId,
+          purchaseData: params.purchaseData,
+          receiver: params.toAddress,
+          sender: params.fromAddress,
         });
       } else if (params.fromAmount) {
         const originTokenContract = getContract({
@@ -221,16 +222,16 @@ export async function getBuyWithCryptoQuote(
         });
         const amount = Value.from(params.fromAmount, tokenDecimals);
         return Bridge.Sell.prepare({
-          sender: params.fromAddress,
-          receiver: params.toAddress,
-          originChainId: params.fromChainId,
-          originTokenAddress: params.fromTokenAddress,
+          amount: amount,
+          client: params.client,
           destinationChainId: params.toChainId,
           destinationTokenAddress: params.toTokenAddress,
-          amount: amount,
-          purchaseData: params.purchaseData,
-          client: params.client,
+          originChainId: params.fromChainId,
+          originTokenAddress: params.fromTokenAddress,
           paymentLinkId: params.paymentLinkId,
+          purchaseData: params.purchaseData,
+          receiver: params.toAddress,
+          sender: params.fromAddress,
         });
       }
       throw new Error(
@@ -278,102 +279,19 @@ export async function getBuyWithCryptoQuote(
         approvalTx.data,
       );
       approvalData = {
-        chainId: firstStep.originToken.chainId,
-        tokenAddress: firstStep.originToken.address,
-        spenderAddress: spender,
         amountWei: amount.toString(),
+        chainId: firstStep.originToken.chainId,
+        spenderAddress: spender,
+        tokenAddress: firstStep.originToken.address,
       };
     }
 
     const swapRoute: BuyWithCryptoQuote = {
-      transactionRequest: {
-        ...tx,
-        extraGas: 50000n, // extra gas buffer
-      },
       approvalData,
-      swapDetails: {
-        fromAddress: quote.intent.sender,
-        toAddress: quote.intent.receiver,
-
-        fromToken: {
-          tokenAddress: firstStep.originToken.address,
-          chainId: firstStep.originToken.chainId,
-          decimals: firstStep.originToken.decimals,
-          symbol: firstStep.originToken.symbol,
-          name: firstStep.originToken.name,
-          priceUSDCents: firstStep.originToken.priceUsd * 100,
-        },
-        toToken: {
-          tokenAddress: firstStep.destinationToken.address,
-          chainId: firstStep.destinationToken.chainId,
-          decimals: firstStep.destinationToken.decimals,
-          symbol: firstStep.destinationToken.symbol,
-          name: firstStep.destinationToken.name,
-          priceUSDCents: firstStep.destinationToken.priceUsd * 100,
-        },
-
-        fromAmount: Value.format(
-          quote.originAmount,
-          firstStep.originToken.decimals,
-        ).toString(),
-        fromAmountWei: quote.originAmount.toString(),
-
-        toAmountMinWei: quote.destinationAmount.toString(),
-        toAmountMin: Value.format(
-          quote.destinationAmount,
-          firstStep.destinationToken.decimals,
-        ).toString(),
-
-        toAmountWei: quote.destinationAmount.toString(),
-        toAmount: Value.format(
-          quote.destinationAmount,
-          firstStep.destinationToken.decimals,
-        ).toString(),
-        estimated: {
-          fromAmountUSDCents:
-            Number(
-              Value.format(quote.originAmount, firstStep.originToken.decimals),
-            ) *
-            firstStep.originToken.priceUsd *
-            100,
-          toAmountMinUSDCents:
-            Number(
-              Value.format(
-                quote.destinationAmount,
-                firstStep.destinationToken.decimals,
-              ),
-            ) *
-            firstStep.destinationToken.priceUsd *
-            100,
-          toAmountUSDCents:
-            Number(
-              Value.format(
-                quote.destinationAmount,
-                firstStep.destinationToken.decimals,
-              ),
-            ) *
-            firstStep.destinationToken.priceUsd *
-            100,
-          slippageBPS: 0,
-          feesUSDCents: 0,
-          gasCostUSDCents: 0,
-          durationSeconds: firstStep.estimatedExecutionTimeMs / 1000,
-        },
-
-        maxSlippageBPS: 0,
-      },
+      client: params.client,
 
       paymentTokens: [
         {
-          token: {
-            tokenAddress: firstStep.originToken.address,
-            chainId: firstStep.originToken.chainId,
-            decimals: firstStep.originToken.decimals,
-            symbol: firstStep.originToken.symbol,
-            name: firstStep.originToken.name,
-            priceUSDCents: firstStep.originToken.priceUsd * 100,
-          },
-          amountWei: quote.originAmount.toString(),
           amount: Value.format(
             quote.originAmount,
             firstStep.originToken.decimals,
@@ -382,27 +300,110 @@ export async function getBuyWithCryptoQuote(
             Number(
               Value.format(quote.originAmount, firstStep.originToken.decimals),
             ) *
-            firstStep.originToken.priceUsd *
+            (firstStep.originToken.prices.USD || 0) *
             100,
+          amountWei: quote.originAmount.toString(),
+          token: {
+            chainId: firstStep.originToken.chainId,
+            decimals: firstStep.originToken.decimals,
+            name: firstStep.originToken.name,
+            priceUSDCents: (firstStep.originToken.prices.USD || 0) * 100,
+            symbol: firstStep.originToken.symbol,
+            tokenAddress: firstStep.originToken.address,
+          },
         },
       ],
       // TODO (UB): add develope and platform fees in API
       processingFees: [
         {
-          token: {
-            tokenAddress: firstStep.originToken.address,
-            chainId: firstStep.originToken.chainId,
-            decimals: firstStep.originToken.decimals,
-            symbol: firstStep.originToken.symbol,
-            name: firstStep.originToken.name,
-            priceUSDCents: firstStep.originToken.priceUsd * 100,
-          },
+          amount: "0",
           amountUSDCents: 0,
           amountWei: "0",
-          amount: "0",
+          token: {
+            chainId: firstStep.originToken.chainId,
+            decimals: firstStep.originToken.decimals,
+            name: firstStep.originToken.name,
+            priceUSDCents: (firstStep.originToken.prices.USD || 0) * 100,
+            symbol: firstStep.originToken.symbol,
+            tokenAddress: firstStep.originToken.address,
+          },
         },
       ],
-      client: params.client,
+      swapDetails: {
+        estimated: {
+          durationSeconds: firstStep.estimatedExecutionTimeMs / 1000,
+          feesUSDCents: 0,
+          fromAmountUSDCents:
+            Number(
+              Value.format(quote.originAmount, firstStep.originToken.decimals),
+            ) *
+            (firstStep.originToken.prices.USD || 0) *
+            100,
+          gasCostUSDCents: 0,
+          slippageBPS: 0,
+          toAmountMinUSDCents:
+            Number(
+              Value.format(
+                quote.destinationAmount,
+                firstStep.destinationToken.decimals,
+              ),
+            ) *
+            (firstStep.destinationToken.prices.USD || 0) *
+            100,
+          toAmountUSDCents:
+            Number(
+              Value.format(
+                quote.destinationAmount,
+                firstStep.destinationToken.decimals,
+              ),
+            ) *
+            (firstStep.destinationToken.prices.USD || 0) *
+            100,
+        },
+        fromAddress: quote.intent.sender,
+
+        fromAmount: Value.format(
+          quote.originAmount,
+          firstStep.originToken.decimals,
+        ).toString(),
+        fromAmountWei: quote.originAmount.toString(),
+
+        fromToken: {
+          chainId: firstStep.originToken.chainId,
+          decimals: firstStep.originToken.decimals,
+          name: firstStep.originToken.name,
+          priceUSDCents: (firstStep.originToken.prices.USD || 0) * 100,
+          symbol: firstStep.originToken.symbol,
+          tokenAddress: firstStep.originToken.address,
+        },
+
+        maxSlippageBPS: 0,
+        toAddress: quote.intent.receiver,
+        toAmount: Value.format(
+          quote.destinationAmount,
+          firstStep.destinationToken.decimals,
+        ).toString(),
+        toAmountMin: Value.format(
+          quote.destinationAmount,
+          firstStep.destinationToken.decimals,
+        ).toString(),
+
+        toAmountMinWei: quote.destinationAmount.toString(),
+
+        toAmountWei: quote.destinationAmount.toString(),
+        toToken: {
+          chainId: firstStep.destinationToken.chainId,
+          decimals: firstStep.destinationToken.decimals,
+          name: firstStep.destinationToken.name,
+          priceUSDCents: (firstStep.destinationToken.prices.USD || 0) * 100,
+          symbol: firstStep.destinationToken.symbol,
+          tokenAddress: firstStep.destinationToken.address,
+        },
+      },
+      transactionRequest: {
+        ...tx,
+        extraGas: 50000n, // extra gas buffer
+      },
     };
 
     return swapRoute;

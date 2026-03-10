@@ -1,7 +1,7 @@
 import type { Chain } from "../chains/types.js";
 import type { ThirdwebClient } from "../client/client.js";
 import { getTransactions } from "../insight/get-transactions.js";
-import { type Store, createStore } from "../reactive/store.js";
+import { createStore, type Store } from "../reactive/store.js";
 import type { Hex } from "../utils/encoding/hex.js";
 
 export type StoredTransaction = {
@@ -10,6 +10,13 @@ export type StoredTransaction = {
   receipt?: {
     status: "success" | "failed";
     to: string;
+  };
+  decoded?: {
+    name: string;
+    signature: string;
+    inputs?: {
+      [key: string]: unknown;
+    };
   };
 };
 
@@ -57,7 +64,7 @@ export function addTransactionToStore(options: {
 
   tranasctionStore.setValue([
     ...tranasctionStore.getValue(),
-    { transactionHash, chainId },
+    { chainId, transactionHash },
   ]);
 
   transactionsByAddress.set(address, tranasctionStore);
@@ -76,20 +83,25 @@ export async function getPastTransactions(options: {
     (Date.now() - 1 * 30 * 24 * 60 * 60 * 1000) / 1000,
   );
   const result = await getTransactions({
-    client,
-    walletAddress,
     chains: [chain],
+    client,
     queryOptions: {
       filter_block_timestamp_gte: oneMonthsAgoInSeconds,
       limit: 20,
+      decode: true,
     },
+    walletAddress,
   });
   return result.map((tx) => ({
-    transactionHash: tx.hash as Hex,
-    chainId: tx.chain_id,
+    chainId:
+      typeof tx.chain_id === "string"
+        ? Number(tx.chain_id)
+        : (tx.chain_id as number),
     receipt: {
-      status: tx.status === 1 ? "success" : "failed",
+      status: tx.status === 0 ? "failed" : "success",
       to: tx.to_address,
     },
+    transactionHash: tx.hash as Hex,
+    decoded: tx.decoded,
   }));
 }

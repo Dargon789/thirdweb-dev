@@ -1,4 +1,7 @@
-import type { BaseTransactionOptions } from "../../../transaction/types.js";
+import type {
+  BaseTransactionOptions,
+  WithOverrides,
+} from "../../../transaction/types.js";
 import {
   getBaseUriFromBatch,
   uploadOrExtractURIs,
@@ -13,9 +16,9 @@ import * as LazyMint from "../__generated__/ILazyMint/write/lazyMint.js";
 /**
  * @extension ERC721
  */
-export type LazyMintParams = {
+export type LazyMintParams = WithOverrides<{
   nfts: (NFTInput | string)[];
-};
+}>;
 
 /**
  * Lazily mints ERC721 tokens.
@@ -45,7 +48,6 @@ export type LazyMintParams = {
  */
 export function lazyMint(options: BaseTransactionOptions<LazyMintParams>) {
   return LazyMint.lazyMint({
-    contract: options.contract,
     asyncParams: async () => {
       const startFileNumber = await nextTokenIdToMint({
         contract: options.contract,
@@ -66,6 +68,8 @@ export function lazyMint(options: BaseTransactionOptions<LazyMintParams>) {
         extraData: "0x",
       } as const;
     },
+    contract: options.contract,
+    overrides: options.overrides,
   });
 }
 

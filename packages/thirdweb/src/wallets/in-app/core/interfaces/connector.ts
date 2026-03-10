@@ -23,6 +23,12 @@ export interface InAppConnector {
     mode?: "redirect" | "popup" | "window",
     redirectUrl?: string,
   ): Promise<void>;
+  // Link a profile with redirect mode
+  linkProfileWithRedirect?(
+    strategy: SocialAuthOption,
+    mode?: "redirect" | "window",
+    redirectUrl?: string,
+  ): Promise<void>;
   // Login takes an auth token and connects a user with it
   loginWithAuthToken?(
     authResult: AuthStoredTokenWithCookieReturnType,
@@ -37,7 +43,10 @@ export interface InAppConnector {
   ): Promise<AuthLoginReturnType>;
   logout(): Promise<LogoutReturnType>;
   linkProfile(args: AuthArgsType): Promise<Profile[]>;
-  unlinkProfile(args: Profile): Promise<Profile[]>;
+  unlinkProfile(
+    args: Profile,
+    allowAccountDeletion?: boolean,
+  ): Promise<Profile[]>;
   getProfiles(): Promise<Profile[]>;
   storage: ClientScopedStorage;
 }

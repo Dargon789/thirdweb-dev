@@ -1,4 +1,3 @@
-import { defineDashboardChain } from "lib/defineDashboardChain";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getContract, toTokens } from "thirdweb";
@@ -12,13 +11,17 @@ import {
   getActiveClaimCondition as getActiveClaimCondition1155,
   getNFT as getNFT1155,
 } from "thirdweb/extensions/erc1155";
-import { serverThirdwebClient } from "../../../../@/constants/thirdweb-client.server";
+import { DASHBOARD_THIRDWEB_SECRET_KEY } from "@/constants/server-envs";
+import { getConfiguredThirdwebClient } from "@/constants/thirdweb.server";
+import { defineDashboardChain } from "@/lib/defineDashboardChain";
 import { DROP_PAGES } from "./data";
 import { NftMint } from "./mint-ui";
 
 export async function generateMetadata({
   params,
-}: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const project = DROP_PAGES.find((p) => p.slug === slug);
   if (!project) {
@@ -29,7 +32,9 @@ export async function generateMetadata({
 
 export default async function DropPage({
   params,
-}: { params: Promise<{ slug: string }> }) {
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
 
   const project = DROP_PAGES.find((p) => p.slug === slug);
@@ -37,13 +42,24 @@ export default async function DropPage({
   if (!project) {
     return notFound();
   }
+
+  // Create client only if secret key is available
+  if (!DASHBOARD_THIRDWEB_SECRET_KEY) {
+    return notFound();
+  }
+
+  const client = getConfiguredThirdwebClient({
+    secretKey: DASHBOARD_THIRDWEB_SECRET_KEY,
+    teamId: undefined,
+  });
+
   // eslint-disable-next-line no-restricted-syntax
   const chain = defineDashboardChain(project.chainId, undefined);
 
   const contract = getContract({
     address: project.contractAddress,
     chain,
-    client: serverThirdwebClient,
+    client,
   });
 
   const [nft, claimCondition, contractMetadata] = await Promise.all([
@@ -60,7 +76,9 @@ export default async function DropPage({
   ]);
 
   const thumbnail =
-    project.thumbnail || nft.metadata.image || contractMetadata.image || "";
+    project.thumbnail ||
+    nft.metadata.image ||
+    (typeof contractMetadata.image === "string" ? contractMetadata.image : "");
 
   const displayName = contractMetadata.name || nft.metadata.name || "";
 
@@ -74,9 +92,9 @@ export default async function DropPage({
     return (
       <NftMint
         contract={contract}
+        description={description}
         displayName={displayName}
         thumbnail={thumbnail}
-        description={description}
         {...project}
         noActiveClaimCondition
       />
@@ -88,7 +106,7 @@ export default async function DropPage({
         contract: getContract({
           address: claimCondition.currency,
           chain,
-          client: serverThirdwebClient,
+          client,
         }),
       })
     : undefined;
@@ -104,13 +122,13 @@ export default async function DropPage({
   return (
     <NftMint
       contract={contract}
-      displayName={displayName || ""}
-      thumbnail={thumbnail}
-      description={description || ""}
       currencySymbol={currencyMetadata.symbol}
-      pricePerToken={pricePerToken}
+      description={description || ""}
+      displayName={displayName || ""}
       noActiveClaimCondition={false}
+      pricePerToken={pricePerToken}
       quantityLimitPerWallet={claimCondition.quantityLimitPerWallet}
+      thumbnail={thumbnail}
       {...project}
     />
   );

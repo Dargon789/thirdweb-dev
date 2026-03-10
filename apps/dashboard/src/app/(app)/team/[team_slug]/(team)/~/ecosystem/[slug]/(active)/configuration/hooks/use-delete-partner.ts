@@ -3,7 +3,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { Ecosystem } from "../../../../types";
+import type { Ecosystem } from "@/api/team/ecosystems";
 
 type DeletePartnerParams = {
   ecosystem: Ecosystem;
@@ -32,11 +32,11 @@ export function useDeletePartner(
       const res = await fetch(
         `${params.ecosystem.url}/${params.ecosystem.id}/partner/${params.partnerId}`,
         {
-          method: "DELETE",
           headers: {
-            "x-thirdweb-team-id": teamId,
             Authorization: `Bearer ${authToken}`,
+            "x-thirdweb-team-id": teamId,
           },
+          method: "DELETE",
         },
       );
 

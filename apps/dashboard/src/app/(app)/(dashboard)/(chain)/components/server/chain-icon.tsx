@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import "server-only";
+import { fallbackChainIcon } from "@/constants/chain";
 import { DASHBOARD_THIRDWEB_SECRET_KEY } from "@/constants/server-envs";
-import { serverThirdwebClient } from "@/constants/thirdweb-client.server";
-import { resolveSchemeWithErrorHandler } from "@/lib/resolveSchemeWithErrorHandler";
+import { getConfiguredThirdwebClient } from "@/constants/thirdweb.server";
 import { cn } from "@/lib/utils";
-import { fallbackChainIcon } from "../../../../../../utils/chain-icons";
+import { resolveSchemeWithErrorHandler } from "@/utils/resolveSchemeWithErrorHandler";
 
 export async function ChainIcon(props: {
   iconUrl?: string;
@@ -13,22 +13,28 @@ export async function ChainIcon(props: {
   if (props.iconUrl) {
     let imageLink = fallbackChainIcon;
 
-    const resolved = resolveSchemeWithErrorHandler({
-      client: serverThirdwebClient,
-      uri: props.iconUrl,
-    });
+    // Only resolve if we have a secret key available
+    const resolved = DASHBOARD_THIRDWEB_SECRET_KEY
+      ? resolveSchemeWithErrorHandler({
+          client: getConfiguredThirdwebClient({
+            secretKey: DASHBOARD_THIRDWEB_SECRET_KEY,
+            teamId: undefined,
+          }),
+          uri: props.iconUrl,
+        })
+      : null;
 
     if (resolved) {
       // check if it loads or not
       const res = await fetch(resolved, {
-        // revalidate every hour
-        next: { revalidate: 60 * 60 },
-        method: "HEAD",
         headers: DASHBOARD_THIRDWEB_SECRET_KEY
           ? {
               "x-secret-key": DASHBOARD_THIRDWEB_SECRET_KEY,
             }
           : {},
+        method: "HEAD",
+        // revalidate every hour
+        next: { revalidate: 60 * 60 },
       }).catch(() => null);
 
       if (res?.status === 200) {
@@ -44,16 +50,16 @@ export async function ChainIcon(props: {
     return (
       <img
         alt=""
-        src={imageLink}
         className={cn("object-contain", props.className)}
+        src={imageLink}
       />
     );
   }
   return (
     <img
       alt=""
-      src={fallbackChainIcon}
       className={cn("object-contain", props.className)}
+      src={fallbackChainIcon}
     />
   );
 }

@@ -3,9 +3,9 @@ import { version } from "../version.js";
 import type { Ecosystem } from "../wallets/in-app/core/wallet/types.js";
 import { LruMap } from "./caching/lru.js";
 import {
-  type OperatingSystem,
   detectOS,
   detectPlatform,
+  type OperatingSystem,
 } from "./detect-platform.js";
 import { getServiceKey } from "./domains.js";
 import { isJWT } from "./jwt/is-jwt.js";
@@ -57,13 +57,22 @@ export function getClientFetch(client: ThirdwebClient, ecosystem?: Ecosystem) {
           : undefined;
       const clientId = client.clientId;
 
+      if (authToken && isBundlerUrl(urlString)) {
+        headers.set("authorization", `Bearer ${authToken}`);
+        if (client.teamId) {
+          headers.set("x-team-id", client.teamId);
+        }
+
+        if (clientId) {
+          headers.set("x-client-id", clientId);
+        }
+      }
       // if we have an auth token set, use that (thirdweb dashboard sets this for the user)
       // pay urls should never send the auth token, because we always want the "developer" to be the one making the request, not the "end user"
-      if (
+      else if (
         authToken &&
         !isPayUrl(urlString) &&
-        !isInAppWalletUrl(urlString) &&
-        !isBundlerUrl(urlString)
+        !isInAppWalletUrl(urlString)
       ) {
         headers.set("authorization", `Bearer ${authToken}`);
         // if we have a specific teamId set, add it to the request headers
@@ -127,6 +136,7 @@ const THIRDWEB_DOMAINS = [
   // dev domains
   ".thirdweb.dev",
   ".thirdweb-dev.com",
+  ".thirdwebstorage-dev.com",
 ] as const;
 
 export const IS_THIRDWEB_URL_CACHE = new LruMap<boolean>(4096);
@@ -212,7 +222,7 @@ export function getPlatformHeaders() {
     os = detectOS(navigator.userAgent);
   }
 
-  let bundleId: string | undefined = undefined;
+  let bundleId: string | undefined;
   if (typeof globalThis !== "undefined" && "Application" in globalThis) {
     // shims use wallet connect RN module which injects Application info in globalThis
     // biome-ignore lint/suspicious/noExplicitAny: get around globalThis typing
@@ -220,10 +230,10 @@ export function getPlatformHeaders() {
   }
 
   previousPlatform = Object.entries({
+    "x-sdk-name": SDK_NAME,
+    "x-sdk-os": os ? parseOs(os) : "unknown",
     "x-sdk-platform": detectPlatform(),
     "x-sdk-version": version,
-    "x-sdk-os": os ? parseOs(os) : "unknown",
-    "x-sdk-name": SDK_NAME,
     ...(bundleId ? { "x-bundle-id": bundleId } : {}),
   });
 

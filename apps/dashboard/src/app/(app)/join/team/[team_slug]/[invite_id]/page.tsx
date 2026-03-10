@@ -1,6 +1,6 @@
-import { getTeamBySlug, service_getTeamBySlug } from "@/api/team";
 import { notFound, redirect } from "next/navigation";
-import { getValidAccount } from "../../../../account/settings/getAccount";
+import { getValidAccount } from "@/api/account/get-account";
+import { getTeamBySlug, service_getTeamBySlug } from "@/api/team/get-team";
 import { JoinTeamPage } from "./JoinTeamPage";
 
 export default async function Page(props: {
@@ -25,5 +25,5 @@ export default async function Page(props: {
     notFound();
   }
 
-  return <JoinTeamPage team={inviteTeam} inviteId={invite_id} />;
+  return <JoinTeamPage inviteId={invite_id} team={inviteTeam} />;
 }

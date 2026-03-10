@@ -1,7 +1,7 @@
-import { getTeamBySlug } from "@/api/team";
 import { notFound } from "next/navigation";
-import { getAuthToken } from "../../../../../../../api/lib/getAuthToken";
-import { loginRedirect } from "../../../../../../../login/loginRedirect";
+import { getAuthToken } from "@/api/auth-token";
+import { getTeamBySlug } from "@/api/team/get-team";
+import { loginRedirect } from "@/utils/redirects";
 import { EcosystemPermissionsPage } from "./configuration/components/client/EcosystemPermissionsPage";
 
 export default async function Page(props: {
@@ -23,8 +23,8 @@ export default async function Page(props: {
 
   return (
     <EcosystemPermissionsPage
-      params={params}
       authToken={authToken}
+      params={params}
       teamId={team.id}
     />
   );

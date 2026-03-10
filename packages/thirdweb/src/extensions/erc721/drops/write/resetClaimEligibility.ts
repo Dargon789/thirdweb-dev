@@ -1,5 +1,8 @@
 import type { Hex } from "viem";
-import type { BaseTransactionOptions } from "../../../../transaction/types.js";
+import type {
+  BaseTransactionOptions,
+  WithOverrides,
+} from "../../../../transaction/types.js";
 import type { ClaimCondition } from "../../../../utils/extensions/drops/types.js";
 import {
   isSetClaimConditionsSupported,
@@ -28,10 +31,11 @@ import {
  * await sendTransaction({ transaction, account });
  * ```
  */
-export function resetClaimEligibility(options: BaseTransactionOptions) {
+export function resetClaimEligibility(
+  options: BaseTransactionOptions<WithOverrides<{}>>,
+) {
   // download existing conditions
   return setClaimConditions({
-    contract: options.contract,
     asyncParams: async () => {
       // get existing conditions
       const existingConditions = await getClaimConditions(options);
@@ -48,6 +52,8 @@ export function resetClaimEligibility(options: BaseTransactionOptions) {
         resetClaimEligibility: true,
       };
     },
+    contract: options.contract,
+    overrides: options.overrides,
   });
 }
 

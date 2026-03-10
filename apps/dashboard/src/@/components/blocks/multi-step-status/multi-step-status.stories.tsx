@@ -1,8 +1,7 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs";
 import { MultiStepStatus } from "./multi-step-status";
 
 const meta = {
-  title: "Blocks/MultiStepStatus",
   component: MultiStepStatus,
   decorators: [
     (Story) => (
@@ -11,55 +10,40 @@ const meta = {
       </div>
     ),
   ],
+  title: "Blocks/MultiStepStatus",
 } satisfies Meta<typeof MultiStepStatus>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 export const AllStates: Story = {
   args: {
+    onRetry: () => {},
     steps: [
       {
-        status: "completed",
+        id: "connect-wallet",
         label: "Connect Wallet",
-        retryLabel: "Failed to connect wallet",
-        execute: async () => {
-          await sleep(1000);
-        },
+        status: { type: "completed" },
       },
       {
-        status: "pending",
+        id: "sign-message",
         label: "Sign Message",
-        retryLabel: "Failed to sign message",
-        execute: async () => {
-          await sleep(1000);
-        },
+        status: { type: "pending" },
       },
       {
-        status: "error",
+        id: "approve-transaction",
         label: "Approve Transaction",
-        retryLabel: "Transaction approval failed",
-        execute: async () => {
-          await sleep(1000);
-        },
+        status: { message: "This is an error message", type: "error" },
       },
       {
-        status: "idle",
+        id: "confirm-transaction",
         label: "Confirm Transaction",
-        retryLabel: "Transaction confirmation failed",
-        execute: async () => {
-          await sleep(1000);
-        },
+        status: { type: "idle" },
       },
       {
-        status: "idle",
+        id: "finalize",
         label: "Finalize",
-        retryLabel: "Finalization failed",
-        execute: async () => {
-          await sleep(1000);
-        },
+        status: { type: "idle" },
       },
     ],
   },

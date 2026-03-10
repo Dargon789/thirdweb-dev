@@ -51,26 +51,54 @@ export function createInAppWallet(args: {
   const walletId = ecosystem ? ecosystem.id : "inApp";
   const emitter = createWalletEmitter<"inApp">();
   let createOptions = _createOptions;
-  let account: Account | undefined = undefined;
-  let adminAccount: Account | undefined = undefined; // Admin account if smartAccountOptions were provided with connection
-  let chain: Chain | undefined = undefined;
+  let account: Account | undefined;
+  let adminAccount: Account | undefined; // Admin account if smartAccountOptions were provided with connection
+  let chain: Chain | undefined;
   let client: ThirdwebClient | undefined;
   let authToken: string | null = null;
 
-  return {
-    id: walletId,
-    getAuthToken: () => authToken,
-    subscribe: emitter.subscribe,
-    getChain() {
-      if (!chain) {
-        return undefined;
+  const resolveSmartAccountOptionsFromEcosystem = async (options?: {
+    chain?: Chain;
+  }) => {
+    if (ecosystem) {
+      const ecosystemOptions = await getEcosystemInfo(ecosystem.id);
+      const smartAccountOptions = ecosystemOptions?.smartAccountOptions;
+      if (smartAccountOptions) {
+        const executionMode =
+          ecosystemOptions.smartAccountOptions.executionMode;
+        if (executionMode === "EIP7702") {
+          createOptions = {
+            ...createOptions,
+            executionMode: {
+              mode: "EIP7702",
+              sponsorGas: smartAccountOptions.sponsorGas,
+            },
+          };
+        } else {
+          // default to 4337
+          const { defaultChainId } = ecosystemOptions.smartAccountOptions;
+          const preferredChain =
+            options?.chain ??
+            (defaultChainId ? getCachedChain(defaultChainId) : undefined);
+          if (!preferredChain) {
+            throw new Error(
+              `A chain must be provided either via 'chain' in connect options or 'defaultChainId' in ecosystem configuration. Please pass it via connect() or update the ecosystem configuration.`,
+            );
+          }
+          createOptions = {
+            ...createOptions,
+            smartAccount: {
+              chain: preferredChain,
+              factoryAddress: smartAccountOptions.accountFactoryAddress,
+              sponsorGas: smartAccountOptions.sponsorGas,
+            },
+          };
+        }
       }
+    }
+  };
 
-      chain = getCachedChainIfExists(chain.id) || chain;
-      return chain;
-    },
-    getConfig: () => createOptions,
-    getAccount: () => account,
+  return {
     autoConnect: async (options) => {
       const { autoConnectInAppWallet } = await import("./index.js");
 
@@ -80,30 +108,7 @@ export function createInAppWallet(args: {
         ecosystem,
       );
 
-      if (ecosystem) {
-        const ecosystemOptions = await getEcosystemInfo(ecosystem.id);
-        const smartAccountOptions = ecosystemOptions?.smartAccountOptions;
-        if (smartAccountOptions) {
-          const { defaultChainId } = ecosystemOptions.smartAccountOptions;
-          const preferredChain =
-            options.chain ??
-            (defaultChainId ? getCachedChain(defaultChainId) : undefined);
-          if (!preferredChain) {
-            throw new Error(
-              `A chain must be provided either via 'chain' in connect options or 'defaultChainId' in ecosystem configuration. Please pass it via connect() or update the ecosystem configuration.`,
-            );
-          }
-
-          createOptions = {
-            ...createOptions,
-            smartAccount: {
-              chain: preferredChain,
-              sponsorGas: smartAccountOptions.sponsorGas,
-              factoryAddress: smartAccountOptions.accountFactoryAddress,
-            },
-          };
-        }
-      }
+      await resolveSmartAccountOptionsFromEcosystem();
 
       const {
         account: connectedAccount,
@@ -123,11 +128,11 @@ export function createInAppWallet(args: {
         authToken = null;
       }
       trackConnect({
+        chainId: chain.id,
         client: options.client,
         ecosystem,
-        walletType: walletId,
         walletAddress: account.address,
-        chainId: chain.id,
+        walletType: walletId,
       });
       // return only the account
       return account;
@@ -140,30 +145,7 @@ export function createInAppWallet(args: {
         ecosystem,
       );
 
-      if (ecosystem) {
-        const ecosystemOptions = await getEcosystemInfo(ecosystem.id);
-        const smartAccountOptions = ecosystemOptions?.smartAccountOptions;
-        if (smartAccountOptions) {
-          const { defaultChainId } = ecosystemOptions.smartAccountOptions;
-          const preferredChain =
-            options.chain ??
-            (defaultChainId ? getCachedChain(defaultChainId) : undefined);
-          if (!preferredChain) {
-            throw new Error(
-              `A chain must be provided either via 'chain' in connect options or 'defaultChainId' in ecosystem configuration. Please pass it via connect() or update the ecosystem configuration.`,
-            );
-          }
-
-          createOptions = {
-            ...createOptions,
-            smartAccount: {
-              chain: preferredChain,
-              sponsorGas: smartAccountOptions.sponsorGas,
-              factoryAddress: smartAccountOptions.accountFactoryAddress,
-            },
-          };
-        }
-      }
+      await resolveSmartAccountOptionsFromEcosystem();
 
       const {
         account: connectedAccount,
@@ -183,11 +165,11 @@ export function createInAppWallet(args: {
         authToken = null;
       }
       trackConnect({
+        chainId: chain.id,
         client: options.client,
         ecosystem,
-        walletType: walletId,
         walletAddress: account.address,
-        chainId: chain.id,
+        walletType: walletId,
       });
       // return only the account
       return account;
@@ -211,8 +193,27 @@ export function createInAppWallet(args: {
       authToken = null;
       emitter.emit("disconnect", undefined);
     },
+    getAccount: () => account,
+    getAdminAccount: () => adminAccount,
+    getAuthToken: () => authToken,
+    getChain() {
+      if (!chain) {
+        return undefined;
+      }
+
+      chain = getCachedChainIfExists(chain.id) || chain;
+      return chain;
+    },
+    getConfig: () => createOptions,
+    id: walletId,
+    subscribe: emitter.subscribe,
     switchChain: async (newChain) => {
-      if (createOptions?.smartAccount && client && account) {
+      if (
+        (createOptions?.smartAccount ||
+          createOptions?.executionMode?.mode === "EIP4337") &&
+        client &&
+        account
+      ) {
         // if account abstraction is enabled, reconnect to smart account on the new chain
         const { autoConnectInAppWallet } = await import("./index.js");
         const connector = await getOrCreateInAppWalletConnector(
@@ -221,20 +222,7 @@ export function createInAppWallet(args: {
           ecosystem,
         );
 
-        if (ecosystem) {
-          const ecosystemOptions = await getEcosystemInfo(ecosystem.id);
-          const smartAccountOptions = ecosystemOptions?.smartAccountOptions;
-          if (smartAccountOptions) {
-            createOptions = {
-              ...createOptions,
-              smartAccount: {
-                chain: newChain,
-                sponsorGas: smartAccountOptions.sponsorGas,
-                factoryAddress: smartAccountOptions.accountFactoryAddress,
-              },
-            };
-          }
-        }
+        await resolveSmartAccountOptionsFromEcosystem({ chain: newChain });
 
         const {
           account: connectedAccount,
@@ -257,6 +245,5 @@ export function createInAppWallet(args: {
       }
       emitter.emit("chainChanged", newChain);
     },
-    getAdminAccount: () => adminAccount,
   };
 }

@@ -1,5 +1,7 @@
 import type { Abi } from "abitype";
-import { type Hex, decodeErrorResult, stringify } from "viem";
+import { decodeErrorResult, type Hex, stringify } from "viem";
+import { isInsufficientFundsError } from "../analytics/track/helpers.js";
+import { trackInsufficientFundsError } from "../analytics/track/transaction.js";
 import { resolveContractAbi } from "../contract/actions/resolve-abi.js";
 import type { ThirdwebContract } from "../contract/contract.js";
 import { isHex } from "../utils/encoding/hex.js";
@@ -11,9 +13,22 @@ import { IS_DEV } from "../utils/process.js";
 export async function extractError<abi extends Abi>(args: {
   error: unknown;
   contract?: ThirdwebContract<abi>;
+  fromAddress?: string;
 }) {
-  const { error, contract } = args;
-  const result = await extractErrorResult({ error, contract });
+  const { error, contract, fromAddress } = args;
+
+  // Track insufficient funds errors during transaction preparation
+  if (isInsufficientFundsError(error) && contract) {
+    trackInsufficientFundsError({
+      chainId: contract.chain?.id,
+      client: contract.client,
+      contractAddress: contract.address,
+      error,
+      walletAddress: fromAddress,
+    });
+  }
+
+  const result = await extractErrorResult({ contract, error });
   if (result) {
     return new TransactionError(result, contract);
   }
@@ -39,8 +54,8 @@ export async function extractErrorResult<abi extends Abi>(args: {
           abi = await resolveContractAbi(contract).catch(() => undefined);
         }
         const parsedError = decodeErrorResult({
-          data: errorObj.data,
           abi,
+          data: errorObj.data,
         });
         return `${parsedError.errorName}${parsedError.args ? ` - ${parsedError.args}` : ""}`;
       }

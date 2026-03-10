@@ -14,10 +14,21 @@ import {
   stringToHex,
   uint8ArrayToHex,
 } from "../../utils/encoding/hex.js";
+import { stringify } from "../../utils/json.js";
 import { parseTypedData } from "../../utils/signatures/helpers/parse-typed-data.js";
 import { COINBASE } from "../constants.js";
-import type { Account, Wallet } from "../interfaces/wallet.js";
-import type { SendTransactionOption } from "../interfaces/wallet.js";
+import { toGetCallsStatusResponse } from "../eip5792/get-calls-status.js";
+import { toGetCapabilitiesResult } from "../eip5792/get-capabilities.js";
+import { toProviderCallParams } from "../eip5792/send-calls.js";
+import type {
+  GetCallsStatusRawResponse,
+  WalletCapabilities,
+} from "../eip5792/types.js";
+import type {
+  Account,
+  SendTransactionOption,
+  Wallet,
+} from "../interfaces/wallet.js";
 import type { AppMetadata, DisconnectFn, SwitchChainFn } from "../types.js";
 import { getValidPublicRPCUrl } from "../utils/chains.js";
 import { getDefaultAppMetadata } from "../utils/defaultDappMetadata.js";
@@ -136,12 +147,12 @@ export async function getCoinbaseWebProvider(
 
     // @ts-expect-error This import error is not visible to TypeScript
     const client = new CoinbaseWalletSDK({
-      appName: options?.appMetadata?.name || getDefaultAppMetadata().name,
       appChainIds: options?.chains
         ? options.chains.map((c) => c.id)
         : undefined,
       appLogoUrl:
         options?.appMetadata?.logoUrl || getDefaultAppMetadata().logoUrl,
+      appName: options?.appMetadata?.name || getDefaultAppMetadata().name,
     });
 
     const provider = client.makeWeb3Provider(options?.walletConfig);
@@ -174,29 +185,44 @@ function createAccount({
 }) {
   const account: Account = {
     address: getAddress(address),
+    onTransactionRequested: async () => {
+      // make sure to show the coinbase popup BEFORE doing any transaction preprocessing
+      // otherwise the popup might get blocked in safari
+      // but only if using cb smart wallet (web based)
+      if (window.localStorage) {
+        // this is the local storage key for the signer type in the cb web sdk
+        // value can be "scw" (web) or "walletlink" (mobile wallet)
+        const signerType = window.localStorage.getItem(
+          "-CBWSDK:SignerConfigurator:SignerType",
+        );
+        if (signerType === "scw") {
+          await showCoinbasePopup(provider);
+        }
+      }
+    },
     async sendTransaction(tx: SendTransactionOption) {
       const transactionHash = (await provider.request({
         method: "eth_sendTransaction",
         params: [
           {
             accessList: tx.accessList,
-            value: tx.value ? numberToHex(tx.value) : undefined,
-            gas: tx.gas ? numberToHex(tx.gas) : undefined,
-            from: getAddress(address),
-            to: tx.to as Address,
             data: tx.data,
+            from: getAddress(address),
+            gas: tx.gas ? numberToHex(tx.gas) : undefined,
+            to: tx.to as Address,
+            value: tx.value ? numberToHex(tx.value) : undefined,
           },
         ],
       })) as Hex;
 
       trackTransaction({
-        client: client,
         chainId: tx.chainId,
-        walletAddress: getAddress(address),
-        walletType: COINBASE,
-        transactionHash,
+        client: client,
         contractAddress: tx.to ?? undefined,
         gasPrice: tx.gasPrice,
+        transactionHash,
+        walletAddress: getAddress(address),
+        walletType: COINBASE,
       });
 
       return {
@@ -261,10 +287,79 @@ function createAccount({
       }
       return res;
     },
-    onTransactionRequested: async () => {
-      // make sure to show the coinbase popup BEFORE doing any transaction preprocessing
-      // otherwise the popup might get blocked in safari
-      await showCoinbasePopup(provider);
+    sendCalls: async (options) => {
+      try {
+        const { callParams, chain } = await toProviderCallParams(
+          options,
+          account,
+        );
+        const callId = await provider.request({
+          method: "wallet_sendCalls",
+          params: callParams,
+        });
+        if (callId && typeof callId === "object" && "id" in callId) {
+          return { chain, client, id: callId.id as string };
+        }
+        return { chain, client, id: callId as string };
+      } catch (error) {
+        if (/unsupport|not support/i.test((error as Error).message)) {
+          throw new Error(
+            `${COINBASE} errored calling wallet_sendCalls, with error: ${error instanceof Error ? error.message : stringify(error)}`,
+          );
+        }
+        throw error;
+      }
+    },
+    async getCallsStatus(options) {
+      try {
+        const rawResponse = (await provider.request({
+          method: "wallet_getCallsStatus",
+          params: [options.id],
+        })) as GetCallsStatusRawResponse;
+        return toGetCallsStatusResponse(rawResponse);
+      } catch (error) {
+        if (/unsupport|not support/i.test((error as Error).message)) {
+          throw new Error(
+            `${COINBASE} does not support wallet_getCallsStatus, reach out to them directly to request EIP-5792 support.`,
+          );
+        }
+        throw error;
+      }
+    },
+    async getCallsStatusRaw(options) {
+      try {
+        const rawResponse = (await provider.request({
+          method: "wallet_getCallsStatus",
+          params: [options.id],
+        })) as GetCallsStatusRawResponse;
+        return rawResponse;
+      } catch (error) {
+        if (/unsupport|not support/i.test((error as Error).message)) {
+          throw new Error(
+            `${COINBASE} does not support wallet_getCallsStatus, reach out to them directly to request EIP-5792 support.`,
+          );
+        }
+        throw error;
+      }
+    },
+    async getCapabilities(options) {
+      const chainId = options.chainId;
+      try {
+        const result = (await provider.request({
+          method: "wallet_getCapabilities",
+          params: [getAddress(account.address)],
+        })) as Record<string, WalletCapabilities>;
+        return toGetCapabilitiesResult(result, chainId);
+      } catch (error: unknown) {
+        if (
+          /unsupport|not support|not available/i.test((error as Error).message)
+        ) {
+          return {
+            message: `${COINBASE} does not support wallet_getCapabilities, reach out to them directly to request EIP-5792 support.`,
+          };
+        }
+        throw error;
+      }
     },
   };
 
@@ -278,7 +373,7 @@ function onConnect(
   emitter: WalletEmitter<typeof COINBASE>,
   client: ThirdwebClient,
 ): [Account, Chain, DisconnectFn, SwitchChainFn] {
-  const account = createAccount({ provider, address, client });
+  const account = createAccount({ address, client, provider });
 
   async function disconnect() {
     provider.removeListener("accountsChanged", onAccountsChanged);
@@ -295,9 +390,9 @@ function onConnect(
   function onAccountsChanged(accounts: string[]) {
     if (accounts[0]) {
       const newAccount = createAccount({
-        provider,
         address: getAddress(accounts[0]),
         client,
+        provider,
       });
       emitter.emit("accountChanged", newAccount);
       emitter.emit("accountsChanged", accounts);
@@ -395,6 +490,16 @@ async function switchChainCoinbaseWalletSDK(
   provider: ProviderInterface,
   chain: Chain,
 ) {
+  // check if chain is already connected
+  const connectedChainId = (await provider.request({
+    method: "eth_chainId",
+  })) as string | number;
+  const connectedChain = getCachedChain(normalizeChainId(connectedChainId));
+  if (connectedChain?.id === chain.id) {
+    // chain is already connected, no need to switch
+    return;
+  }
+
   const chainIdHex = numberToHex(chain.id);
 
   try {
@@ -413,11 +518,11 @@ async function switchChainCoinbaseWalletSDK(
         method: "wallet_addEthereumChain",
         params: [
           {
+            blockExplorerUrls: apiChain.explorers?.map((x) => x.url) || [],
             chainId: chainIdHex,
             chainName: apiChain.name,
-            nativeCurrency: apiChain.nativeCurrency,
-            rpcUrls: getValidPublicRPCUrl(apiChain), // no client id on purpose here
-            blockExplorerUrls: apiChain.explorers?.map((x) => x.url) || [],
+            nativeCurrency: apiChain.nativeCurrency, // no client id on purpose here
+            rpcUrls: getValidPublicRPCUrl(apiChain),
           },
         ],
       });

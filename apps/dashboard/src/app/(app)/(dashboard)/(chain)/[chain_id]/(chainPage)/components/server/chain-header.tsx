@@ -1,8 +1,9 @@
+import Link from "next/link";
+import type { ThirdwebClient } from "thirdweb";
+import type { ChainMetadata } from "thirdweb/chains";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
-import type { ChainMetadata } from "thirdweb/chains";
-import { mapV4ChainToV5Chain } from "../../../../../../../../contexts/map-chains";
+import { mapV4ChainToV5Chain } from "@/utils/map-chains";
 import { ChainIcon } from "../../../../components/server/chain-icon";
 import { AddChainToWallet } from "../client/add-chain-to-wallet";
 
@@ -10,6 +11,7 @@ type ChainHeaderProps = {
   headerImageUrl?: string;
   logoUrl?: string;
   chain: ChainMetadata;
+  client: ThirdwebClient;
 };
 
 // TODO: improve the behavior when clicking "Get started with thirdweb", currently just redirects to the dashboard
@@ -28,9 +30,9 @@ export function ChainHeader(props: ChainHeaderProps) {
         {props.headerImageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={props.headerImageUrl}
             alt=""
             className="h-full w-full object-cover object-center"
+            src={props.headerImageUrl}
           />
         )}
       </div>
@@ -39,11 +41,11 @@ export function ChainHeader(props: ChainHeaderProps) {
         {/* chain logo */}
 
         <ChainIcon
-          iconUrl={props.logoUrl}
           className={cn(
             "-translate-y-[50%] absolute top-0 left-0 size-20 overflow-hidden rounded-full border border-border bg-muted p-2 lg:size-36 lg:p-4",
             props.headerImageUrl && "lg:left-4",
           )}
+          iconUrl={props.logoUrl}
         />
 
         {/* action group */}
@@ -56,9 +58,10 @@ export function ChainHeader(props: ChainHeaderProps) {
                 // eslint-disable-next-line no-restricted-syntax
                 mapV4ChainToV5Chain(props.chain)
               }
+              client={props.client}
             />
-            <Button variant="default" asChild>
-              <Link href="/team" target="_blank">
+            <Button asChild variant="default">
+              <Link href="/team" rel="noopener noreferrer" target="_blank">
                 Get started with thirdweb
               </Link>
             </Button>

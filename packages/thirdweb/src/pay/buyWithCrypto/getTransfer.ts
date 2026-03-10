@@ -7,6 +7,7 @@ import { NATIVE_TOKEN_ADDRESS } from "../../constants/addresses.js";
 import { getContract } from "../../contract/contract.js";
 import { decimals } from "../../extensions/erc20/read/decimals.js";
 import type { PrepareTransactionOptions } from "../../transaction/prepare-transaction.js";
+import type { PurchaseData } from "../types.js";
 import type { QuoteApprovalInfo, QuotePaymentToken } from "./commonTypes.js";
 
 /**
@@ -54,7 +55,7 @@ export type GetBuyWithCryptoTransferParams = {
    *
    * This details will be stored with the purchase and can be retrieved later via the status API or Webhook
    */
-  purchaseData?: object;
+  purchaseData?: PurchaseData;
 
   /**
    * For direct transfers, specify who will pay for the transfer fee. Can be "sender" or "receiver".
@@ -125,14 +126,15 @@ export async function getBuyWithCryptoTransfer(
           });
     const amount = Value.from(params.amount, tokenDecimals);
     const quote = await Transfer.prepare({
-      chainId: params.chainId,
-      tokenAddress: params.tokenAddress,
       amount,
-      sender: params.fromAddress,
-      receiver: params.toAddress,
+      chainId: params.chainId,
       client: params.client,
       feePayer: params.feePayer,
       paymentLinkId: params.paymentLinkId,
+      purchaseData: params.purchaseData,
+      receiver: params.toAddress,
+      sender: params.fromAddress,
+      tokenAddress: params.tokenAddress,
     });
 
     const firstStep = quote.steps[0];
@@ -162,10 +164,10 @@ export async function getBuyWithCryptoTransfer(
         approvalTx.data,
       );
       approvalData = {
-        chainId: firstStep.originToken.chainId,
-        tokenAddress: firstStep.originToken.address,
-        spenderAddress: spender,
         amountWei: amount.toString(),
+        chainId: firstStep.originToken.chainId,
+        spenderAddress: spender,
+        tokenAddress: firstStep.originToken.address,
       };
     }
 
@@ -183,23 +185,11 @@ export async function getBuyWithCryptoTransfer(
     }
 
     const transfer: BuyWithCryptoTransfer = {
-      transactionRequest: {
-        ...tx,
-        extraGas: 50000n, // extra gas buffer
-      },
       approvalData,
+      client: params.client,
+      estimatedGasCostUSDCents: 0,
       fromAddress: params.fromAddress,
-      toAddress: params.toAddress,
       paymentToken: {
-        token: {
-          tokenAddress: firstStep.originToken.address,
-          chainId: firstStep.originToken.chainId,
-          decimals: firstStep.originToken.decimals,
-          symbol: firstStep.originToken.symbol,
-          name: firstStep.originToken.name,
-          priceUSDCents: firstStep.originToken.priceUsd * 100,
-        },
-        amountWei: quote.originAmount.toString(),
         amount: Value.format(
           quote.originAmount,
           firstStep.originToken.decimals,
@@ -208,22 +198,19 @@ export async function getBuyWithCryptoTransfer(
           Number(
             Value.format(quote.originAmount, firstStep.originToken.decimals),
           ) *
-          firstStep.originToken.priceUsd *
+          (firstStep.originToken.prices.USD || 0) *
           100,
-      },
-      processingFee: {
+        amountWei: quote.originAmount.toString(),
         token: {
-          tokenAddress: firstStep.originToken.address,
           chainId: firstStep.originToken.chainId,
           decimals: firstStep.originToken.decimals,
-          symbol: firstStep.originToken.symbol,
           name: firstStep.originToken.name,
-          priceUSDCents: firstStep.originToken.priceUsd * 100,
+          priceUSDCents: (firstStep.originToken.prices.USD || 0) * 100,
+          symbol: firstStep.originToken.symbol,
+          tokenAddress: firstStep.originToken.address,
         },
-        amountWei:
-          params.feePayer === "sender"
-            ? (quote.originAmount - quote.destinationAmount).toString()
-            : "0",
+      },
+      processingFee: {
         amount:
           params.feePayer === "sender"
             ? Value.format(
@@ -239,12 +226,27 @@ export async function getBuyWithCryptoTransfer(
                   firstStep.originToken.decimals,
                 ),
               ) *
-              firstStep.originToken.priceUsd *
+              (firstStep.originToken.prices.USD || 0) *
               100
             : 0,
+        amountWei:
+          params.feePayer === "sender"
+            ? (quote.originAmount - quote.destinationAmount).toString()
+            : "0",
+        token: {
+          chainId: firstStep.originToken.chainId,
+          decimals: firstStep.originToken.decimals,
+          name: firstStep.originToken.name,
+          priceUSDCents: (firstStep.originToken.prices.USD || 0) * 100,
+          symbol: firstStep.originToken.symbol,
+          tokenAddress: firstStep.originToken.address,
+        },
       },
-      estimatedGasCostUSDCents: 0,
-      client: params.client,
+      toAddress: params.toAddress,
+      transactionRequest: {
+        ...tx,
+        extraGas: 50000n, // extra gas buffer
+      },
     };
 
     return transfer;

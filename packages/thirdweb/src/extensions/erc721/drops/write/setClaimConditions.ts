@@ -1,4 +1,7 @@
-import type { BaseTransactionOptions } from "../../../../transaction/types.js";
+import type {
+  BaseTransactionOptions,
+  WithOverrides,
+} from "../../../../transaction/types.js";
 import { getMulticallSetClaimConditionTransactions } from "../../../../utils/extensions/drops/get-multicall-set-claim-claim-conditon-transactions.js";
 import type { ClaimConditionsInput } from "../../../../utils/extensions/drops/types.js";
 import { isSetContractURISupported } from "../../../common/__generated__/IContractMetadata/write/setContractURI.js";
@@ -47,21 +50,22 @@ export type SetClaimConditionsParams = {
  * ```
  */
 export function setClaimConditions(
-  options: BaseTransactionOptions<SetClaimConditionsParams>,
+  options: BaseTransactionOptions<WithOverrides<SetClaimConditionsParams>>,
 ) {
   return multicall({
-    contract: options.contract,
     asyncParams: async () => {
       return {
         data: await getMulticallSetClaimConditionTransactions({
           contract: options.contract,
           phases: options.phases,
           resetClaimEligibility: options.resetClaimEligibility,
-          tokenDecimals: 0,
           singlePhase: options.singlePhaseDrop,
+          tokenDecimals: 0,
         }),
       };
     },
+    contract: options.contract,
+    overrides: options.overrides,
   });
 }
 

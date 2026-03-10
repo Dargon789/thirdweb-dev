@@ -1,14 +1,14 @@
 "use client";
 
-import { apiServerProxy } from "@/actions/proxies";
-import { sendTeamInvites } from "@/actions/sendTeamInvite";
-import type { Team } from "@/api/team";
-import type { TeamInvite } from "@/api/team-invites";
-import type { TeamMember } from "@/api/team-members";
-import { TabButtons } from "@/components/ui/tabs";
-import { useDashboardRouter } from "@/lib/DashboardRouter";
 import { useState } from "react";
 import type { ThirdwebClient } from "thirdweb";
+import { apiServerProxy } from "@/actions/proxies";
+import { sendTeamInvites } from "@/actions/team/sendTeamInvite";
+import type { Team } from "@/api/team/get-team";
+import type { TeamInvite } from "@/api/team/team-invites";
+import type { TeamMember } from "@/api/team/team-members";
+import { TabButtons } from "@/components/ui/tabs";
+import { useDashboardRouter } from "@/lib/DashboardRouter";
 import { InviteSection, type RecommendedMember } from "./InviteSection";
 import { ManageInvitesSection } from "./ManageInvitesSection";
 import { ManageMembersSection } from "./ManageMembersSection";
@@ -27,20 +27,18 @@ export function TeamMembersSettingsPage(props: {
   return (
     <div>
       <h2 className="font-semibold text-2xl tracking-tight">Members</h2>
-      <p className="text-muted-foreground text-sm">
+      <p className="text-muted-foreground">
         Manage team members and invitations
       </p>
 
       <div className="h-5" />
 
       <InviteSection
-        team={props.team}
         client={props.client}
-        userHasEditPermission={props.userHasEditPermission}
         inviteTeamMembers={async (params) => {
           const res = await sendTeamInvites({
-            teamId: props.team.id,
             invites: params,
+            teamId: props.team.id,
           });
 
           if (!res.ok) {
@@ -53,14 +51,15 @@ export function TeamMembersSettingsPage(props: {
             results: res.results,
           };
         }}
-        // TODO
         recommendedMembers={props.recommendedMembers}
+        team={props.team}
+        // TODO
+        userHasEditPermission={props.userHasEditPermission}
       />
 
       <div className="h-10" />
 
       <TabButtons
-        tabClassName="!text-sm"
         tabs={[
           {
             isActive: manageTab === "members",
@@ -79,14 +78,11 @@ export function TeamMembersSettingsPage(props: {
 
       {manageTab === "members" && (
         <ManageMembersSection
-          team={props.team}
-          userHasEditPermission={props.userHasEditPermission}
-          members={props.members}
           client={props.client}
           deleteMember={async (memberAccountId) => {
             const res = await apiServerProxy({
-              pathname: `/v1/teams/${props.team.id}/members/${memberAccountId}`,
               method: "DELETE",
+              pathname: `/v1/teams/${props.team.id}/members/${memberAccountId}`,
             });
 
             router.refresh();
@@ -95,18 +91,19 @@ export function TeamMembersSettingsPage(props: {
               throw new Error(res.error);
             }
           }}
+          members={props.members}
+          team={props.team}
+          userHasEditPermission={props.userHasEditPermission}
         />
       )}
 
       {manageTab === "invites" && (
         <ManageInvitesSection
-          team={props.team}
-          userHasEditPermission={props.userHasEditPermission}
           client={props.client}
           deleteInvite={async (inviteId) => {
             const res = await apiServerProxy({
-              pathname: `/v1/teams/${props.team.id}/invites/${inviteId}`,
               method: "DELETE",
+              pathname: `/v1/teams/${props.team.id}/invites/${inviteId}`,
             });
 
             router.refresh();
@@ -115,7 +112,9 @@ export function TeamMembersSettingsPage(props: {
               throw new Error(res.error);
             }
           }}
+          team={props.team}
           teamInvites={props.teamInvites}
+          userHasEditPermission={props.userHasEditPermission}
         />
       )}
     </div>

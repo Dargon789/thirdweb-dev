@@ -1,16 +1,17 @@
-import { serverThirdwebClient } from "@/constants/thirdweb-client.server";
-import { format } from "date-fns/format";
-import { resolveEns } from "lib/ens";
-import { correctAndUniqueLicenses } from "lib/licenses";
+import { format } from "date-fns";
 import { getSocialProfiles } from "thirdweb/social";
+import { DASHBOARD_THIRDWEB_SECRET_KEY } from "@/constants/server-envs";
+import { getConfiguredThirdwebClient } from "@/constants/thirdweb.server";
+import { resolveEns } from "@/lib/ens";
+import { correctAndUniqueLicenses } from "@/lib/licenses";
 import { getLatestPublishedContractsWithPublisherMapping } from "./utils/getPublishedContractsWithPublisherMapping";
 import { publishedContractOGImageTemplate } from "./utils/publishedContractOGImageTemplate";
 
 export const runtime = "edge";
 
 export const size = {
-  width: 1200,
   height: 630,
+  width: 1200,
 };
 
 export default async function Image(props: {
@@ -21,17 +22,25 @@ export default async function Image(props: {
 }) {
   const { publisher, contract_id } = props.params;
 
+  // Create client only if secret key is available
+  if (!DASHBOARD_THIRDWEB_SECRET_KEY) {
+    return null;
+  }
+
+  const client = getConfiguredThirdwebClient({
+    secretKey: DASHBOARD_THIRDWEB_SECRET_KEY,
+    teamId: undefined,
+  });
+
   const [publishedContract, socialProfiles] = await Promise.all([
     getLatestPublishedContractsWithPublisherMapping({
-      publisher: publisher,
+      client,
       contract_id: contract_id,
-      client: serverThirdwebClient,
+      publisher: publisher,
     }),
     getSocialProfiles({
-      address:
-        (await resolveEns(publisher, serverThirdwebClient)).address ||
-        publisher,
-      client: serverThirdwebClient,
+      address: (await resolveEns(publisher, client)).address || publisher,
+      client,
     }),
   ]);
 
@@ -39,8 +48,8 @@ export default async function Image(props: {
     const name = socialProfiles.find((p) => p.name)?.name || publisher;
     const avatar = socialProfiles.find((p) => p.avatar)?.avatar;
     return {
-      name,
       avatar,
+      name,
     };
   })();
 
@@ -52,11 +61,9 @@ export default async function Image(props: {
     publishedContract?.displayName || publishedContract?.name;
 
   return publishedContractOGImageTemplate({
-    title: publishedContractName,
     description: publishedContract.description,
-    version: publishedContract.version || "latest",
-    publisher: publisherProfile?.name || publisher,
     license: correctAndUniqueLicenses(publishedContract.licenses),
+    logo: publishedContract.logo,
     publishDate: format(
       new Date(
         Number.parseInt(publishedContract.publishTimestamp.toString() || "0") *
@@ -64,7 +71,9 @@ export default async function Image(props: {
       ),
       "MMM dd, yyyy",
     ),
-    logo: publishedContract.logo,
+    publisher: publisherProfile?.name || publisher,
     publisherAvatar: publisherProfile?.avatar,
+    title: publishedContractName,
+    version: publishedContract.version || "latest",
   });
 }

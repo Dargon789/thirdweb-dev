@@ -7,7 +7,7 @@ import { ApiError } from "./types/Errors.js";
 import type { Status } from "./types/Status.js";
 
 /**
- * Retrieves a Universal Bridge quote for the provided sell intent. The quote will specify the expected `destinationAmount` that will be received in exchange for the specified `originAmount`, which is specified with the `sellAmountWei` option.
+ * Retrieves a Bridge quote for the provided sell intent. The quote will specify the expected `destinationAmount` that will be received in exchange for the specified `originAmount`, which is specified with the `sellAmountWei` option.
  *
  * The returned status will include both the origin and destination transactions and any finalized amounts for the route.
  *
@@ -96,6 +96,7 @@ import type { Status } from "./types/Status.js";
  * @param options - The options for the quote.
  * @param options.transactionHash - The hash of the origin transaction to get the bridge status for.
  * @param options.chainId - The chain ID of the origin token.
+ * @param options.transactionId - The transaction ID received from the `prepare` request.
  * @param options.client - Your thirdweb client.
  *
  * @returns A promise that resolves to a status object for the transaction.
@@ -105,21 +106,24 @@ import type { Status } from "./types/Status.js";
  * @beta
  */
 export async function status(options: status.Options): Promise<status.Result> {
-  const { transactionHash, client } = options;
+  const { transactionHash, client, transactionId } = options;
   const chainId = "chainId" in options ? options.chainId : options.chain.id;
 
   const clientFetch = getClientFetch(client);
   const url = new URL(`${getThirdwebBaseUrl("bridge")}/v1/status`);
   url.searchParams.set("transactionHash", transactionHash);
   url.searchParams.set("chainId", chainId.toString());
+  if (transactionId) {
+    url.searchParams.set("transactionId", transactionId);
+  }
 
   const response = await clientFetch(url.toString());
   if (!response.ok) {
     const errorJson = await response.json();
     throw new ApiError({
       code: errorJson.code || "UNKNOWN_ERROR",
-      message: errorJson.message || response.statusText,
       correlationId: errorJson.correlationId || undefined,
+      message: errorJson.message || response.statusText,
       statusCode: response.status,
     });
   }
@@ -127,68 +131,95 @@ export async function status(options: status.Options): Promise<status.Result> {
   const { data }: { data: Status } = await response.json();
   if (data.status === "FAILED") {
     return {
-      status: "FAILED",
       paymentId: data.paymentId,
+      status: "FAILED",
       transactions: data.transactions,
     };
   }
 
   if (data.status === "PENDING") {
     return {
-      status: "PENDING",
+      destinationChainId: data.destinationChainId,
+      destinationToken: data.destinationToken,
+      destinationTokenAddress: data.destinationTokenAddress,
       originAmount: BigInt(data.originAmount),
       originChainId: data.originChainId,
-      destinationChainId: data.destinationChainId,
-      originTokenAddress: data.originTokenAddress,
-      destinationTokenAddress: data.destinationTokenAddress,
-      transactions: data.transactions,
       originToken: data.originToken,
-      destinationToken: data.destinationToken,
-      sender: data.sender,
-      receiver: data.receiver,
+      originTokenAddress: data.originTokenAddress,
       paymentId: data.paymentId,
       purchaseData: data.purchaseData,
+      receiver: data.receiver,
+      sender: data.sender,
+      status: "PENDING",
+      transactions: data.transactions,
     };
   }
 
   if (data.status === "NOT_FOUND") {
     return {
-      status: "NOT_FOUND",
       paymentId: data.paymentId,
+      status: "NOT_FOUND",
       transactions: [],
     };
   }
 
   return {
-    status: "COMPLETED",
-    originAmount: BigInt(data.originAmount),
     destinationAmount: BigInt(data.destinationAmount),
-    originChainId: data.originChainId,
     destinationChainId: data.destinationChainId,
-    originTokenAddress: data.originTokenAddress,
-    destinationTokenAddress: data.destinationTokenAddress,
-    transactions: data.transactions,
-    originToken: data.originToken,
     destinationToken: data.destinationToken,
-    sender: data.sender,
-    receiver: data.receiver,
+    destinationTokenAddress: data.destinationTokenAddress,
+    originAmount: BigInt(data.originAmount),
+    originChainId: data.originChainId,
+    originToken: data.originToken,
+    originTokenAddress: data.originTokenAddress,
     paymentId: data.paymentId,
     purchaseData: data.purchaseData,
+    receiver: data.receiver,
+    sender: data.sender,
+    status: "COMPLETED",
+    transactions: data.transactions,
   };
 }
 
+/**
+ * Namespace containing types for the status function.
+ * @namespace status
+ * @bridge
+ */
 export declare namespace status {
+  /**
+   * Options for checking transaction status.
+   * Can specify either chainId or chain object.
+   * @interface Options
+   * @bridge
+   */
   type Options =
     | {
+        /** The transaction hash to check status for */
         transactionHash: ox__Hex.Hex;
+        /** The chain ID where the transaction occurred */
         chainId: number;
+        /** The transaction ID received from the `prepare` request */
+        transactionId?: string;
+        /** Your thirdweb client */
         client: ThirdwebClient;
       }
     | {
+        /** The transaction hash to check status for */
         transactionHash: ox__Hex.Hex;
+        /** The chain object where the transaction occurred */
         chain: Chain;
+        /** The transaction ID received from the `prepare` request */
+        transactionId?: string;
+        /** Your thirdweb client */
         client: ThirdwebClient;
       };
 
+  /**
+   * Result returned from checking transaction status.
+   * Contains the current status and transaction details.
+   * @interface Result
+   * @bridge
+   */
   type Result = Status;
 }

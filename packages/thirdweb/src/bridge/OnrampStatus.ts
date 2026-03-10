@@ -1,5 +1,6 @@
 import type { Hex as ox__Hex } from "ox";
 import type { ThirdwebClient } from "../client/client.js";
+import type { PurchaseData } from "../pay/types.js";
 import { getThirdwebBaseUrl } from "../utils/domains.js";
 import { getClientFetch } from "../utils/fetch.js";
 import { ApiError } from "./types/Errors.js";
@@ -75,8 +76,8 @@ export async function status(options: status.Options): Promise<status.Result> {
     const errorJson = await response.json();
     throw new ApiError({
       code: errorJson.code || "UNKNOWN_ERROR",
-      message: errorJson.message || response.statusText,
       correlationId: errorJson.correlationId || undefined,
+      message: errorJson.message || response.statusText,
       statusCode: response.status,
     });
   }
@@ -108,7 +109,7 @@ export declare namespace status {
           chainId: number;
           transactionHash: ox__Hex.Hex;
         }>;
-        purchaseData?: unknown;
+        purchaseData?: PurchaseData;
       }
     | {
         status: "PENDING";
@@ -116,7 +117,7 @@ export declare namespace status {
           chainId: number;
           transactionHash: ox__Hex.Hex;
         }>;
-        purchaseData?: unknown;
+        purchaseData?: PurchaseData;
       }
     | {
         status: "CREATED";
@@ -124,7 +125,7 @@ export declare namespace status {
           chainId: number;
           transactionHash: ox__Hex.Hex;
         }>;
-        purchaseData?: unknown;
+        purchaseData?: PurchaseData;
       }
     | {
         status: "FAILED";
@@ -132,6 +133,6 @@ export declare namespace status {
           chainId: number;
           transactionHash: ox__Hex.Hex;
         }>;
-        purchaseData?: unknown;
+        purchaseData?: PurchaseData;
       };
 }

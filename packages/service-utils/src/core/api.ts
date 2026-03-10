@@ -27,12 +27,21 @@ export type CoreServiceConfig = {
    * The number of times to retry the auth request. Default = 3.
    */
   retryCount?: number;
+  /**
+   * Allow staff members to read data from this service for troubleshooting purposes. Default = false.
+   */
+  allowImpersonation?: boolean;
 };
 
 export type TeamAndProjectResponse = {
   authMethod: "secretKey" | "publishableKey" | "jwt" | "teamId";
   team: TeamResponse;
-  project?: ProjectResponse | null;
+  project?: ProjectResponse;
+  impersonatedBy?: {
+    id: string;
+    email: string;
+    // Omitting the full account details
+  };
 };
 
 export type ApiResponse = {
@@ -46,20 +55,34 @@ export type ApiResponse = {
 
 /**
  * Stores service-specific capabilities.
- * This type should match the schema from API server.
+ * These types should match the schema from API server.
  */
+export type ReasonCode =
+  | "free_limit_exceeded"
+  | "subscription_required"
+  | "invoice_past_due"
+  | "enterprise_plan_required"
+  | "other";
+type EnabledWithReason<T> = T &
+  ({ enabled: true } | { enabled: false; reasonCode: ReasonCode });
 type TeamCapabilities = {
-  rpc: {
-    enabled: boolean;
-    rateLimit: number;
+  platform: {
+    auditLogs: boolean;
+    ecosystemWallets: boolean;
+    seats: boolean;
   };
-  insight: {
-    enabled: boolean;
+  rpc: EnabledWithReason<{
+    rateLimit: number;
+    websockets: EnabledWithReason<{
+      maxConnections: number;
+      maxSubscriptions: number;
+    }>;
+  }>;
+  insight: EnabledWithReason<{
     rateLimit: number;
     webhooks: boolean;
-  };
-  storage: {
-    enabled: boolean;
+  }>;
+  storage: EnabledWithReason<{
     download: {
       rateLimit: number;
     };
@@ -67,32 +90,43 @@ type TeamCapabilities = {
       totalFileSizeBytesLimit: number;
       rateLimit: number;
     };
-  };
-  nebula: {
-    enabled: boolean;
-    rateLimit: number;
-  };
-  bundler: {
-    enabled: boolean;
+  }>;
+  nebula: EnabledWithReason<{
+    rateLimit: {
+      perSecond: number;
+      perMinute: number;
+    };
+  }>;
+  bundler: EnabledWithReason<{
     mainnetEnabled: boolean;
     rateLimit: number;
-  };
-  embeddedWallets: {
-    enabled: boolean;
+  }>;
+  embeddedWallets: EnabledWithReason<{
     customAuth: boolean;
     customBranding: boolean;
-  };
-  engineCloud: {
-    enabled: boolean;
+    sms: {
+      domestic: boolean;
+      international: boolean;
+    };
+  }>;
+  engineCloud: EnabledWithReason<{
     mainnetEnabled: boolean;
     rateLimit: number;
-  };
+  }>;
+  pay: EnabledWithReason<{
+    rateLimit: number;
+  }>;
+  mcp: EnabledWithReason<{
+    rateLimit: number;
+  }>;
+  gateway: EnabledWithReason<{
+    rateLimit: number;
+  }>;
 };
 
 type TeamPlan =
   | "free"
   | "starter"
-  | "starter_legacy"
   | "growth_legacy"
   | "growth"
   | "accelerate"
@@ -106,7 +140,6 @@ export type TeamResponse = {
   image: string | null;
   billingPlan: TeamPlan;
   supportPlan: TeamPlan;
-  billingPlanVersion: number;
   createdAt: string;
   updatedAt: string | null;
   billingEmail: string | null;
@@ -120,7 +153,6 @@ export type TeamResponse = {
     | "invalidPayment"
     | "pastDue"
     | null;
-  growthTrialEligible: false;
   canCreatePublicChains: boolean | null;
   enabledScopes: ServiceName[];
   isOnboarded: boolean;
@@ -128,6 +160,11 @@ export type TeamResponse = {
   unthreadCustomerId: string | null;
   planCancellationDate: string | null;
   verifiedDomain: string | null;
+  dedicatedSupportChannel: {
+    type: "slack" | "telegram";
+    name: string;
+    link: string | null;
+  } | null;
 };
 
 export type ProjectSecretKey = {
@@ -157,6 +194,11 @@ export type ProjectBundlerService = {
       key: string;
       value: string;
     }>;
+  } | null;
+  dedicatedRelayer?: {
+    sku: string;
+    chainIds: number[];
+    executors: string[];
   } | null;
 };
 
@@ -202,6 +244,11 @@ export type ProjectService =
       maskedAdminKey?: string | null;
       managementAccessToken?: string | null;
       rotationCode?: string | null;
+      encryptedAdminKey?: string | null;
+      encryptedWalletAccessToken?: string | null;
+      projectWalletAddress?: string | null;
+      x402FeeBPS?: number | null;
+      x402FeeRecipient?: string | null;
     }
   | ProjectBundlerService
   | ProjectEmbeddedWalletsService;
@@ -240,7 +287,7 @@ export async function fetchTeamAndProject(
   authData: AuthorizationInput,
   config: CoreServiceConfig,
 ): Promise<ApiResponse> {
-  const { apiUrl, serviceApiKey } = config;
+  const { apiUrl, serviceApiKey, allowImpersonation } = config;
   const { teamId, clientId } = authData;
 
   const url = new URL("/v2/keys/use", apiUrl);
@@ -249,6 +296,9 @@ export async function fetchTeamAndProject(
   }
   if (teamId) {
     url.searchParams.set("teamId", teamId);
+  }
+  if (allowImpersonation) {
+    url.searchParams.set("allowImpersonation", "true");
   }
 
   // compute the appropriate auth headers based on the auth data
@@ -259,11 +309,11 @@ export async function fetchTeamAndProject(
   for (let i = 0; i < retryCount; i++) {
     try {
       const response = await fetch(url, {
-        method: "GET",
         headers: {
           ...authHeaders,
           "content-type": "application/json",
         },
+        method: "GET",
       });
 
       // TODO: if the response is a well understood status code (401, 402, etc), we should skip retry logic

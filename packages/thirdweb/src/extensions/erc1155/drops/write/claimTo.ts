@@ -1,4 +1,7 @@
-import type { BaseTransactionOptions } from "../../../../transaction/types.js";
+import type {
+  BaseTransactionOptions,
+  WithOverrides,
+} from "../../../../transaction/types.js";
 import { getClaimParams } from "../../../../utils/extensions/drops/get-claim-params.js";
 import { isGetContractMetadataSupported } from "../../../common/read/getContractMetadata.js";
 import * as GeneratedClaim from "../../__generated__/IDrop1155/write/claim.js";
@@ -51,18 +54,19 @@ export type ClaimToParams = {
  * @throws If no claim condition is set
  * @returns The prepared transaction
  */
-export function claimTo(options: BaseTransactionOptions<ClaimToParams>) {
+export function claimTo(
+  options: BaseTransactionOptions<WithOverrides<ClaimToParams>>,
+) {
   return GeneratedClaim.claim({
-    contract: options.contract,
     async asyncParams() {
       const params = await getClaimParams({
-        type: "erc1155",
         contract: options.contract,
-        to: options.to,
-        quantity: options.quantity,
         from: options.from,
-        tokenId: options.tokenId,
+        quantity: options.quantity,
         singlePhaseDrop: options.singlePhaseDrop,
+        to: options.to,
+        tokenId: options.tokenId,
+        type: "erc1155",
       });
 
       return {
@@ -70,6 +74,8 @@ export function claimTo(options: BaseTransactionOptions<ClaimToParams>) {
         tokenId: options.tokenId,
       };
     },
+    contract: options.contract,
+    overrides: options.overrides,
   });
 }
 

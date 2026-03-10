@@ -1,9 +1,9 @@
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { DownloadIcon } from "lucide-react";
 import Papa from "papaparse";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "../../lib/utils";
 
 export function ExportToCSVButton(props: {
@@ -34,32 +34,28 @@ export function ExportToCSVButton(props: {
 
   return (
     <Button
-      variant="outline"
+      className={cn("gap-2 rounded-full", props.className)}
+      size="sm"
       disabled={props.disabled || exportMutation.isPending}
-      className={cn("flex items-center gap-2 border text-xs", props.className)}
       onClick={async () => {
         exportMutation.mutate();
       }}
+      variant="outline"
     >
       {exportMutation.isPending ? (
-        <>
-          Downloading
-          <Spinner className="size-3" />
-        </>
+        <Spinner className="size-3.5 text-muted-foreground" />
       ) : (
-        <>
-          <DownloadIcon className="size-3" />
-          Export as CSV
-        </>
+        <DownloadIcon className="size-3.5 text-muted-foreground" />
       )}
+      Export
     </Button>
   );
 }
 
 function convertToCSVFormat(data: { header: string[]; rows: string[][] }) {
   return Papa.unparse({
-    fields: data.header,
     data: data.rows,
+    fields: data.header,
   });
 }
 

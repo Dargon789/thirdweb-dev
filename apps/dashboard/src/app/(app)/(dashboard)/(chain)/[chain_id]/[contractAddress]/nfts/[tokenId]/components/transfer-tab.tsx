@@ -1,38 +1,36 @@
 "use client";
 
-import { GenericLoadingPage } from "@/components/blocks/skeletons/GenericLoadingPage";
-import { FormControl, Input } from "@chakra-ui/react";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { SolidityInput } from "contract-ui/components/solidity-inputs";
-import { useTrack } from "hooks/analytics/useTrack";
-import { useTxNotifications } from "hooks/useTxNotifications";
 import { useForm } from "react-hook-form";
-import { type ThirdwebContract, ZERO_ADDRESS } from "thirdweb";
+import type { ThirdwebContract } from "thirdweb";
 import { transferFrom } from "thirdweb/extensions/erc721";
 import { isERC1155, safeTransferFrom } from "thirdweb/extensions/erc1155";
+import { useActiveAccount, useReadContract } from "thirdweb/react";
+import { GenericLoadingPage } from "@/components/blocks/skeletons/GenericLoadingPage";
+import { SolidityInput } from "@/components/solidity-inputs";
+import { TransactionButton } from "@/components/tx-button";
 import {
-  useActiveAccount,
-  useReadContract,
-  useSendAndConfirmTransaction,
-} from "thirdweb/react";
-import { FormErrorMessage, FormHelperText, FormLabel } from "tw-components";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
+import { useTxNotifications } from "@/hooks/useTxNotifications";
 
-interface TransferTabProps {
+type TransferTabProps = {
   contract: ThirdwebContract;
   tokenId: string;
   isLoggedIn: boolean;
-}
+};
 
-const TransferTab: React.FC<TransferTabProps> = ({
-  contract,
-  tokenId,
-  isLoggedIn,
-}) => {
+function TransferTab({ contract, tokenId, isLoggedIn }: TransferTabProps) {
   const account = useActiveAccount();
 
-  const trackEvent = useTrack();
   const form = useForm<{ to: string; amount: string }>({
-    defaultValues: { to: "", amount: "1" },
+    defaultValues: { amount: "1", to: "" },
   });
 
   const { onSuccess, onError } = useTxNotifications(
@@ -46,109 +44,96 @@ const TransferTab: React.FC<TransferTabProps> = ({
     { contract },
   );
 
-  const sendTxAndConfirm = useSendAndConfirmTransaction();
+  const sendTxAndConfirm = useSendAndConfirmTx();
 
   if (checking1155) {
     return <GenericLoadingPage />;
   }
 
+  function onSubmit(data: { to: string; amount: string }) {
+    const transaction = isErc1155
+      ? safeTransferFrom({
+          contract,
+          data: "0x",
+          from: account?.address ?? "",
+          to: data.to,
+          tokenId: BigInt(tokenId),
+          value: BigInt(data.amount),
+        })
+      : transferFrom({
+          contract,
+          from: account?.address ?? "",
+          to: data.to,
+          tokenId: BigInt(tokenId),
+        });
+    sendTxAndConfirm.mutate(transaction, {
+      onError: (error) => {
+        onError(error);
+      },
+      onSuccess: () => {
+        onSuccess();
+        form.reset();
+      },
+    });
+  }
+
   return (
-    <div className="flex w-full flex-col gap-2">
-      <form
-        onSubmit={form.handleSubmit((data) => {
-          trackEvent({
-            category: "nft",
-            action: "transfer",
-            label: "attempt",
-          });
-          const transaction = isErc1155
-            ? safeTransferFrom({
-                contract,
-                to: data.to,
-                tokenId: BigInt(tokenId),
-                value: BigInt(data.amount),
-                data: "0x",
-                from: account?.address ?? "",
-              })
-            : transferFrom({
-                contract,
-                to: data.to,
-                tokenId: BigInt(tokenId),
-                from: account?.address ?? "",
-              });
-          sendTxAndConfirm.mutate(transaction, {
-            onSuccess: () => {
-              trackEvent({
-                category: "nft",
-                action: "transfer",
-                label: "success",
-              });
-              onSuccess();
-              form.reset();
-            },
-            onError: (error) => {
-              trackEvent({
-                category: "nft",
-                action: "transfer",
-                label: "error",
-                error,
-              });
-              onError(error);
-            },
-          });
-        })}
-      >
-        <div className="flex flex-col gap-3">
-          <div className="flex w-full flex-col gap-6 md:flex-row">
-            <FormControl isRequired isInvalid={!!form.formState.errors.to}>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="to"
+          rules={{
+            required: "To address is required",
+          }}
+          render={({ field }) => (
+            <FormItem className="flex-1">
               <FormLabel>To Address</FormLabel>
-              <SolidityInput
-                solidityType="address"
-                formContext={form}
-                placeholder={ZERO_ADDRESS}
-                {...form.register("to")}
-              />
-              <FormHelperText>Enter the address to transfer to.</FormHelperText>
-              <FormErrorMessage>
-                {form.formState.errors.to?.message}
-              </FormErrorMessage>
-            </FormControl>
-            {isErc1155 && (
-              <FormControl
-                isRequired={isErc1155}
-                isInvalid={!!form.formState.errors.to}
-              >
-                <FormLabel>Amount</FormLabel>
-                <Input placeholder="1" {...form.register("amount")} />
-                <FormHelperText>
-                  How many would you like to transfer?
-                </FormHelperText>
-                <FormErrorMessage>
-                  {form.formState.errors.to?.message}
-                </FormErrorMessage>
+              <FormControl>
+                <SolidityInput
+                  client={contract.client}
+                  formContext={form}
+                  className="bg-card"
+                  placeholder="0x..."
+                  solidityType="address"
+                  {...field}
+                />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {isErc1155 && (
+          <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Amount</FormLabel>
+                <FormControl>
+                  <Input placeholder="1" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </div>
-          <TransactionButton
-            isLoggedIn={isLoggedIn}
-            txChainID={contract.chain.id}
-            transactionCount={1}
-            isPending={sendTxAndConfirm.isPending}
-            type="submit"
-            className="self-end"
-            disabled={
-              !form.formState.isDirty ||
-              checking1155 ||
-              sendTxAndConfirm.isPending ||
-              !account
-            }
-          >
-            Transfer
-          </TransactionButton>
-        </div>
+          />
+        )}
+
+        <TransactionButton
+          className="self-end"
+          client={contract.client}
+          disabled={checking1155 || sendTxAndConfirm.isPending}
+          isLoggedIn={isLoggedIn}
+          isPending={sendTxAndConfirm.isPending}
+          transactionCount={1}
+          txChainID={contract.chain.id}
+          type="submit"
+        >
+          Transfer
+        </TransactionButton>
       </form>
-    </div>
+    </Form>
   );
-};
+}
 
 export default TransferTab;

@@ -1,12 +1,11 @@
-import { getWalletConnections } from "@/api/analytics";
-import { type Project, getProjects } from "@/api/projects";
-import { getTeamBySlug } from "@/api/team";
-import { DismissibleAlert } from "@/components/blocks/dismissible-alert";
-import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
 import { subDays } from "date-fns";
 import { redirect } from "next/navigation";
-import { getAuthToken } from "../../../api/lib/getAuthToken";
-import { loginRedirect } from "../../../login/loginRedirect";
+import { getInAppWalletUsage } from "@/api/analytics";
+import { getAuthToken } from "@/api/auth-token";
+import { getProjects, type Project } from "@/api/project/projects";
+import { getTeamBySlug } from "@/api/team/get-team";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
+import { loginRedirect } from "@/utils/redirects";
 import { Changelog } from "./_components/Changelog";
 import { FreePlanUpsellBannerUI } from "./_components/FreePlanUpsellBannerUI";
 import { InviteTeamMembersButton } from "./_components/invite-team-members-button";
@@ -38,12 +37,15 @@ export default async function Page(props: {
   });
 
   const projects = await getProjects(params.team_slug);
-  const projectsWithTotalWallets = await getProjectsWithAnalytics(projects);
+  const projectsWithTotalWallets = await getProjectsWithAnalytics(
+    projects,
+    authToken,
+  );
 
   return (
     <div className="flex grow flex-col">
       <div className="border-border border-b">
-        <div className="container flex flex-col items-start gap-3 py-10 md:flex-row md:items-center">
+        <div className="container flex max-w-6xl flex-col items-start gap-3 py-10 md:flex-row md:items-center">
           <div className="flex-1">
             <h1 className="font-semibold text-3xl tracking-tight">
               Team Overview
@@ -53,37 +55,18 @@ export default async function Page(props: {
         </div>
       </div>
 
-      <div className="container flex grow flex-col gap-4 lg:flex-row">
-        {/* left */}
-        <div className="flex grow flex-col gap-6 pt-8 lg:pb-20">
-          {team.billingPlan === "free" ? (
-            <FreePlanUpsellBannerUI
-              teamSlug={team.slug}
-              highlightPlan="growth"
-            />
-          ) : (
-            <DismissibleAlert
-              title="Looking for Engines?"
-              description="Engines, contracts, project settings, and more are now managed within projects. Open or create a project to access them."
-              localStorageId={`${team.id}-engines-alert`}
-            />
-          )}
+      <div className="container flex max-w-6xl flex-col gap-10 py-6 pb-20">
+        <TeamProjectsPage
+          client={client}
+          projects={projectsWithTotalWallets}
+          team={team}
+        />
 
-          <TeamProjectsPage
-            projects={projectsWithTotalWallets}
-            team={team}
-            client={client}
-          />
-        </div>
+        {team.billingPlan === "free" && (
+          <FreePlanUpsellBannerUI highlightPlan="growth" teamSlug={team.slug} />
+        )}
 
-        {/* right */}
-        <div className="w-full px-4 py-8 lg:w-[300px]">
-          <h2 className="mb-3 font-semibold text-2xl tracking-tight">
-            Changelog
-          </h2>
-
-          <Changelog />
-        </div>
+        <Changelog />
       </div>
     </div>
   );
@@ -91,6 +74,7 @@ export default async function Page(props: {
 
 async function getProjectsWithAnalytics(
   projects: Project[],
+  authToken: string,
 ): Promise<Array<ProjectWithAnalytics>> {
   return Promise.all(
     projects.map(async (project) => {
@@ -98,13 +82,17 @@ async function getProjectsWithAnalytics(
         const today = new Date();
         const thirtyDaysAgo = subDays(today, 30);
 
-        const data = await getWalletConnections({
-          teamId: project.teamId,
-          projectId: project.id,
-          period: "all",
-          from: thirtyDaysAgo,
-          to: today,
-        });
+        // TODO (stats): also add the external wallet usage?
+        const data = await getInAppWalletUsage(
+          {
+            from: thirtyDaysAgo,
+            period: "all",
+            projectId: project.id,
+            teamId: project.teamId,
+            to: today,
+          },
+          authToken,
+        );
 
         let uniqueWalletsConnected = 0;
         for (const d of data) {

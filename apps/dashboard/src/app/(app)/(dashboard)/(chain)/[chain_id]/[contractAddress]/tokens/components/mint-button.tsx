@@ -1,142 +1,136 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { MinterOnly } from "@3rdweb-sdk/react/components/roles/minter-only";
-import { FormControl, Input } from "@chakra-ui/react";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { useTrack } from "hooks/analytics/useTrack";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { ThirdwebContract } from "thirdweb";
 import * as ERC20Ext from "thirdweb/extensions/erc20";
+import { useActiveAccount } from "thirdweb/react";
+import { z } from "zod";
+import { MinterOnly } from "@/components/contracts/roles/minter-only";
+import { TransactionButton } from "@/components/tx-button";
+import { Button } from "@/components/ui/button";
 import {
-  useActiveAccount,
-  useReadContract,
-  useSendAndConfirmTransaction,
-} from "thirdweb/react";
-import { FormErrorMessage, FormLabel } from "tw-components";
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
+import { parseError } from "@/utils/errorParser";
 
-interface TokenMintButtonProps {
+const mintFormSchema = z.object({
+  amount: z
+    .string()
+    .min(1, "Amount is required")
+    .refine((val) => {
+      const num = Number(val);
+      return !Number.isNaN(num) && num > 0;
+    }, "Amount must be a positive number"),
+});
+
+type MintFormValues = z.infer<typeof mintFormSchema>;
+
+export function TokenMintButton(props: {
   contract: ThirdwebContract;
   isLoggedIn: boolean;
-}
-
-const MINT_FORM_ID = "token-mint-form";
-
-/**
- * This component is for minting tokens to a TokenERC20 contract (NOT DropERC20)
- */
-export const TokenMintButton: React.FC<TokenMintButtonProps> = ({
-  contract,
-  isLoggedIn,
-  ...restButtonProps
-}) => {
-  const [open, setOpen] = useState(false);
+}) {
   const address = useActiveAccount()?.address;
-  const { data: tokenDecimals } = useReadContract(ERC20Ext.decimals, {
-    contract,
+  const sendAndConfirmTx = useSendAndConfirmTx();
+  const form = useForm<MintFormValues>({
+    resolver: zodResolver(mintFormSchema),
+    defaultValues: { amount: "" },
+    mode: "onChange",
   });
-  const sendAndConfirmTransaction = useSendAndConfirmTransaction();
-  const trackEvent = useTrack();
-  const form = useForm({ defaultValues: { amount: "0" } });
+
+  async function handleSubmit(values: MintFormValues) {
+    if (!address) {
+      toast.error("No wallet connected");
+      return;
+    }
+
+    const mintTx = ERC20Ext.mintTo({
+      amount: values.amount,
+      contract: props.contract,
+      to: address,
+    });
+
+    const mintTxPromise = sendAndConfirmTx.mutateAsync(mintTx);
+    toast.promise(mintTxPromise, {
+      error: (err) => ({
+        message: "Failed to mint tokens",
+        description: parseError(err),
+      }),
+      success: "Tokens minted successfully",
+    });
+
+    await mintTxPromise;
+  }
+
   return (
-    <MinterOnly contract={contract}>
-      <Sheet open={open} onOpenChange={setOpen}>
+    <MinterOnly contract={props.contract}>
+      <Sheet>
         <SheetTrigger asChild>
-          <Button variant="primary" {...restButtonProps} className="gap-2">
-            <PlusIcon size={16} /> Mint
+          <Button className="gap-2">
+            <PlusIcon className="size-4" /> Mint
           </Button>
         </SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
+
+        <SheetContent className="!w-full lg:!max-w-lg">
+          <SheetHeader className="mb-4">
             <SheetTitle className="text-left">
               Mint additional tokens
             </SheetTitle>
           </SheetHeader>
-          <form
-            className="mt-10 flex flex-col gap-6"
-            id={MINT_FORM_ID}
-            onSubmit={form.handleSubmit((d) => {
-              if (!address) {
-                return toast.error("No wallet connected");
-              }
-              trackEvent({
-                category: "token",
-                action: "mint",
-                label: "attempt",
-              });
-              const transaction = ERC20Ext.mintTo({
-                contract,
-                amount: d.amount,
-                to: address,
-              });
-              const promise = sendAndConfirmTransaction.mutateAsync(
-                transaction,
-                {
-                  onSuccess: () => {
-                    trackEvent({
-                      category: "token",
-                      action: "mint",
-                      label: "success",
-                    });
-                    form.reset({ amount: "0" });
-                    setOpen(false);
-                  },
-                  onError: (error) => {
-                    trackEvent({
-                      category: "token",
-                      action: "mint",
-                      label: "error",
-                      error,
-                    });
-                    console.error(error);
-                  },
-                },
-              );
-              toast.promise(promise, {
-                loading: "Minting tokens",
-                success: "Tokens minted successfully",
-                error: "Failed to mint tokens",
-              });
-            })}
-          >
-            <FormControl isRequired isInvalid={!!form.formState.errors.amount}>
-              <FormLabel>Additional Supply</FormLabel>
-              <Input
-                type="text"
-                pattern={`^\\d+(\\.\\d{1,${tokenDecimals || 18}})?$`}
-                {...form.register("amount")}
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)}>
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Additional Supply</FormLabel>
+                    <FormControl>
+                      <Input type="text" {...field} className="bg-card" />
+                    </FormControl>
+                    <FormDescription>
+                      The amount of tokens to mint
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <FormErrorMessage>
-                {form.formState.errors?.amount?.message}
-              </FormErrorMessage>
-            </FormControl>
-          </form>
-          <SheetFooter className="mt-10">
-            <TransactionButton
-              isLoggedIn={isLoggedIn}
-              txChainID={contract.chain.id}
-              transactionCount={1}
-              isPending={sendAndConfirmTransaction.isPending}
-              form={MINT_FORM_ID}
-              type="submit"
-              disabled={!form.formState.isDirty}
-            >
-              Mint Tokens
-            </TransactionButton>
-          </SheetFooter>
+
+              <div className="mt-6 flex">
+                <TransactionButton
+                  client={props.contract.client}
+                  disabled={!form.formState.isDirty || !form.formState.isValid}
+                  isLoggedIn={props.isLoggedIn}
+                  isPending={sendAndConfirmTx.isPending}
+                  transactionCount={1}
+                  txChainID={props.contract.chain.id}
+                  type="submit"
+                >
+                  Mint Tokens
+                </TransactionButton>
+              </div>
+            </form>
+          </Form>
         </SheetContent>
       </Sheet>
     </MinterOnly>
   );
-};
+}

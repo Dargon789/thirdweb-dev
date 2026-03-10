@@ -1,32 +1,28 @@
 "use server";
-import { DASHBOARD_THIRDWEB_SECRET_KEY } from "@/constants/server-envs";
+import type { ProjectResponse } from "@thirdweb-dev/service-utils";
+import { getAuthToken } from "@/api/auth-token";
 import { UB_BASE_URL } from "./constants";
+import type { TokenMetadata } from "./types";
 
-export type TokenMetadata = {
-  name: string;
-  symbol: string;
-  address: string;
-  decimals: number;
+export async function addUniversalBridgeTokenRoute(props: {
   chainId: number;
-  iconUri?: string;
-};
-
-export async function getUniversalBridgeTokens(props: {
-  chainId?: number;
+  tokenAddress: string;
+  project: ProjectResponse;
 }) {
+  const authToken = await getAuthToken();
   const url = new URL(`${UB_BASE_URL}/v1/tokens`);
 
-  if (props.chainId) {
-    url.searchParams.append("chainId", String(props.chainId));
-  }
-  url.searchParams.append("limit", "1000");
-
   const res = await fetch(url.toString(), {
-    method: "GET",
+    body: JSON.stringify({
+      chainId: props.chainId,
+      tokenAddress: props.tokenAddress,
+    }),
     headers: {
+      Authorization: `Bearer ${authToken}`,
       "Content-Type": "application/json",
-      "x-secret-key": DASHBOARD_THIRDWEB_SECRET_KEY,
-    } as Record<string, string>,
+      "x-client-id": props.project.publishableKey,
+    },
+    method: "POST",
   });
 
   if (!res.ok) {

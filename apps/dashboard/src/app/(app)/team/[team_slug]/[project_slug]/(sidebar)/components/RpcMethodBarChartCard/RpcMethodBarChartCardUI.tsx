@@ -1,12 +1,5 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { formatDate } from "date-fns";
+import { format } from "date-fns";
 import { useMemo } from "react";
 import {
   Bar,
@@ -14,12 +7,21 @@ import {
   BarChart as RechartsBarChart,
   XAxis,
 } from "recharts";
-import type { RpcMethodStats } from "types/analytics";
+import type { RpcMethodStats } from "@/api/analytics";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { EmptyStateCard } from "../../../../../components/Analytics/EmptyStateCard";
 
 export function RpcMethodBarChartCardUI({
   rawData,
-}: { rawData: RpcMethodStats[] }) {
+}: {
+  rawData: RpcMethodStats[];
+}) {
   const maxMethodsToDisplay = 10;
 
   const { data, methodsToDisplay, chartConfig, isAllEmpty } = useMemo(() => {
@@ -94,28 +96,28 @@ export function RpcMethodBarChartCardUI({
     }
 
     return {
-      data: returnValue,
-      methodsToDisplay: methodsToDisplayArray,
       chartConfig,
+      data: returnValue,
       isAllEmpty: returnValue.every((d) => d.total === 0),
+      methodsToDisplay: methodsToDisplayArray,
     };
   }, [rawData]);
 
   if (data.length === 0 || isAllEmpty) {
-    return <EmptyStateCard metric="RPC" link="https://portal.thirdweb.com/" />;
+    return <EmptyStateCard />;
   }
 
   return (
     <Card>
-      <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0">
-        <div className="flex flex-1 flex-col justify-center gap-1 p-6">
+      <CardHeader className="flex flex-col items-stretch space-y-0 p-0">
+        <div className="flex flex-1 flex-col justify-center gap-1 p-6 pb-0">
           <CardTitle className="font-semibold text-lg">RPC Methods</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="px-2 sm:p-6 sm:pl-0">
         <ChartContainer
+          className="aspect-auto h-[275px] w-full pt-6"
           config={chartConfig}
-          className="aspect-auto h-[250px] w-full pt-6"
         >
           <RechartsBarChart
             accessibilityLayer
@@ -128,24 +130,24 @@ export function RpcMethodBarChartCardUI({
             <CartesianGrid vertical={false} />
 
             <XAxis
-              dataKey="date"
-              tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              dataKey="date"
               minTickGap={32}
               tickFormatter={(value: string) => {
                 const date = new Date(value);
                 return date.toLocaleDateString("en-US", {
-                  month: "short",
                   day: "numeric",
+                  month: "short",
                 });
               }}
+              tickLine={false}
+              tickMargin={8}
             />
 
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  labelFormatter={(d) => formatDate(new Date(d), "MMM d")}
+                  labelFormatter={(d) => format(new Date(d), "MMM d")}
                   valueFormatter={(_value, _item) => {
                     const value = typeof _value === "number" ? _value : 0;
                     const payload = _item as {
@@ -167,18 +169,18 @@ export function RpcMethodBarChartCardUI({
             />
             {methodsToDisplay.map((method, idx) => (
               <Bar
-                key={method}
-                stackId="a"
+                className="stroke-background"
                 dataKey={method}
+                fill={`hsl(var(--chart-${idx + 1}))`}
+                key={method}
                 radius={[
                   idx === methodsToDisplay.length - 1 ? 4 : 0,
                   idx === methodsToDisplay.length - 1 ? 4 : 0,
                   idx === 0 ? 4 : 0,
                   idx === 0 ? 4 : 0,
                 ]}
-                fill={`hsl(var(--chart-${idx + 1}))`}
+                stackId="a"
                 strokeWidth={1}
-                className="stroke-background"
               />
             ))}
           </RechartsBarChart>

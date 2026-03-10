@@ -1,5 +1,13 @@
 "use client";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { PencilIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
+import { useId, useRef } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import type { ThirdwebClient } from "thirdweb";
+import type { z } from "zod";
+import type { Partner } from "@/api/team/ecosystems";
+import { Img } from "@/components/blocks/Img";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -10,15 +18,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/Spinner";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, Trash2Icon } from "lucide-react";
-import { useFieldArray, useForm } from "react-hook-form";
-import type { z } from "zod";
-import type { Partner } from "../../../../../types";
+import { resolveSchemeWithErrorHandler } from "@/utils/resolveSchemeWithErrorHandler";
 import { partnerFormSchema } from "../../constants";
 import { AllowedOperationsSection } from "./allowed-operations-section";
 
@@ -32,6 +38,7 @@ type PartnerFormProps = {
   ) => void;
   isSubmitting: boolean;
   submitLabel: string;
+  client: ThirdwebClient;
 };
 
 export function PartnerForm({
@@ -39,6 +46,7 @@ export function PartnerForm({
   onSubmit,
   isSubmitting,
   submitLabel,
+  client,
 }: PartnerFormProps) {
   // Check if partner has accessControl and serverVerifier
   const hasAccessControl = partner ? !!partner.accessControl : false;
@@ -48,19 +56,19 @@ export function PartnerForm({
     hasAccessControl && !!partner?.accessControl?.allowedOperations?.length;
 
   const form = useForm<PartnerFormValues>({
-    resolver: zodResolver(partnerFormSchema),
     defaultValues: {
-      name: partner?.name || "",
-      domains: partner?.allowlistedDomains.join(",") || "",
-      bundleIds: partner?.allowlistedBundleIds.join(",") || "",
       // Set the actual accessControl data if it exists
       accessControl: partner?.accessControl,
       // Set the UI control properties based on existing data
       accessControlEnabled: hasAccessControl,
-      serverVerifierEnabled: hasServerVerifier,
       allowedOperationsEnabled: hasAllowedOperations,
+      bundleIds: partner?.allowlistedBundleIds.join(",") || "",
+      domains: partner?.allowlistedDomains.join(",") || "",
+      name: partner?.name || "",
+      serverVerifierEnabled: hasServerVerifier,
     },
-    mode: "onChange", // Validate on change for better user experience
+    mode: "onChange",
+    resolver: zodResolver(partnerFormSchema), // Validate on change for better user experience
   });
 
   // Watch the boolean flags for UI state
@@ -84,8 +92,8 @@ export function PartnerForm({
 
         if (finalAccessControl && values.serverVerifierEnabled) {
           finalAccessControl.serverVerifier = {
-            url: values.accessControl?.serverVerifier?.url || "",
             headers: values.accessControl?.serverVerifier?.headers || [],
+            url: values.accessControl?.serverVerifier?.url || "",
           };
         }
 
@@ -111,14 +119,18 @@ export function PartnerForm({
     },
   );
 
+  const accessControlId = useId();
+  const serverVerifierId = useId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <div className="flex grow flex-col gap-5">
           <FormField
             control={form.control}
-            name="name"
             defaultValue=""
+            name="name"
             render={({ field }) => (
               <FormItem className="col-span-4">
                 <FormLabel> Name </FormLabel>
@@ -144,13 +156,108 @@ export function PartnerForm({
           />
           <FormField
             control={form.control}
-            name="domains"
+            name="logo"
+            render={() => {
+              const removeLogo = form.watch("removeLogo");
+              const logoFile = form.watch("logo");
+              const newFilePreview = logoFile
+                ? URL.createObjectURL(logoFile)
+                : undefined;
+              const existingImageUrl =
+                partner?.imageUrl && !removeLogo
+                  ? resolveSchemeWithErrorHandler({
+                      client,
+                      uri: partner.imageUrl,
+                    })
+                  : undefined;
+              const displayUrl = newFilePreview || existingImageUrl;
+
+              return (
+                <FormItem>
+                  <FormLabel>Partner Logo</FormLabel>
+                  <FormControl>
+                    <div>
+                      <input
+                        ref={fileInputRef}
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            form.setValue("logo", file, {
+                              shouldValidate: true,
+                            });
+                            form.setValue("removeLogo", false);
+                          }
+                          e.target.value = "";
+                        }}
+                        type="file"
+                      />
+                      {displayUrl ? (
+                        <div className="relative inline-block">
+                          <Img
+                            alt={partner?.name ?? "Partner logo"}
+                            className="size-20 rounded-md border object-contain object-center"
+                            src={displayUrl}
+                          />
+                          <Button
+                            aria-label="Remove logo"
+                            className="absolute -top-2 -right-2 size-6 rounded-full bg-background p-0 hover:bg-accent"
+                            onClick={() => {
+                              form.setValue("logo", undefined);
+                              form.setValue("removeLogo", true);
+                            }}
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <XIcon className="size-3" />
+                          </Button>
+                          <Button
+                            aria-label="Change logo"
+                            className="absolute -bottom-2 -right-2 size-6 rounded-full bg-background p-0 hover:bg-accent"
+                            onClick={() => fileInputRef.current?.click()}
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <PencilIcon className="size-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <ImageUpload
+                          accept="image/png, image/jpeg, image/webp"
+                          className="bg-background"
+                          onUpload={(files) => {
+                            if (files[0]) {
+                              form.setValue("logo", files[0], {
+                                shouldValidate: true,
+                              });
+                              form.setValue("removeLogo", false);
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    Optional logo for this partner. Used in OTP emails sent to
+                    users authenticating through this partner.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+          <FormField
+            control={form.control}
             defaultValue=""
+            name="domains"
             render={({ field }) => (
               <FormItem className="col-span-4 lg:col-span-4">
                 <FormLabel> Domains </FormLabel>
                 <FormControl>
-                  <Input placeholder="Domains" className="peer" {...field} />
+                  <Input className="peer" placeholder="Domains" {...field} />
                 </FormControl>
                 <FormDescription
                   className={cn(
@@ -167,13 +274,13 @@ export function PartnerForm({
           />
           <FormField
             control={form.control}
-            name="bundleIds"
             defaultValue=""
+            name="bundleIds"
             render={({ field }) => (
               <FormItem className="col-span-4">
                 <FormLabel> Bundle ID </FormLabel>
                 <FormControl>
-                  <Input placeholder="Bundle ID" className="peer" {...field} />
+                  <Input className="peer" placeholder="Bundle ID" {...field} />
                 </FormControl>
                 <FormDescription
                   className={cn(
@@ -193,7 +300,7 @@ export function PartnerForm({
           {/* Access Control Section */}
           <div className="mb-4 flex items-center justify-between gap-6">
             <div>
-              <Label htmlFor="access-control-switch" className="text-base">
+              <Label className="text-base" htmlFor={accessControlId}>
                 Access Control
               </Label>
               <p className="mt-0.5 text-muted-foreground text-xs">
@@ -201,8 +308,8 @@ export function PartnerForm({
               </p>
             </div>
             <Switch
-              id="access-control-switch"
               checked={accessControlEnabled}
+              id={accessControlId}
               onCheckedChange={(checked) => {
                 form.setValue("accessControlEnabled", checked);
                 // If disabling access control, also disable server verifier and allowed operations
@@ -219,10 +326,7 @@ export function PartnerForm({
               <div className="rounded-lg border border-border p-4">
                 <div className="mb-4 flex items-center justify-between gap-6">
                   <div>
-                    <Label
-                      htmlFor="server-verifier-switch"
-                      className="text-base"
-                    >
+                    <Label className="text-base" htmlFor={serverVerifierId}>
                       Server Verifier
                     </Label>
                     <p className="mt-0.5 text-muted-foreground text-xs">
@@ -230,8 +334,8 @@ export function PartnerForm({
                     </p>
                   </div>
                   <Switch
-                    id="server-verifier-switch"
                     checked={serverVerifierEnabled}
+                    id={serverVerifierId}
                     onCheckedChange={(checked) => {
                       form.setValue("serverVerifierEnabled", checked);
 
@@ -241,8 +345,8 @@ export function PartnerForm({
                         !form.getValues("accessControl.serverVerifier")
                       ) {
                         form.setValue("accessControl.serverVerifier", {
-                          url: "",
                           headers: [],
+                          url: "",
                         });
                       }
                     }}
@@ -301,13 +405,13 @@ export function PartnerForm({
                                 )}
                               />
                               <Button
-                                variant="outline"
                                 aria-label="Remove header"
+                                className="!w-auto px-3"
                                 onClick={() => {
                                   customHeaderFields.remove(headerIdx);
                                 }}
-                                className="!w-auto px-3"
                                 type="button"
+                                variant="outline"
                               >
                                 <Trash2Icon className="size-4 shrink-0 text-destructive-text" />
                               </Button>
@@ -316,7 +420,6 @@ export function PartnerForm({
                         })}
 
                         <Button
-                          variant="outline"
                           className="w-full gap-2 bg-background"
                           onClick={() => {
                             customHeaderFields.append({
@@ -325,6 +428,7 @@ export function PartnerForm({
                             });
                           }}
                           type="button"
+                          variant="outline"
                         >
                           <PlusIcon className="size-4" />
                           Add header
@@ -342,6 +446,7 @@ export function PartnerForm({
 
               {/* Allowed Operations Section */}
               <AllowedOperationsSection
+                client={client}
                 control={form.control}
                 enabled={allowedOperationsEnabled}
                 onToggle={(checked) => {
@@ -361,9 +466,9 @@ export function PartnerForm({
         </div>
 
         <Button
+          className="mt-4 w-full gap-2"
           disabled={isSubmitting}
           type="submit"
-          className="mt-4 w-full gap-2"
         >
           {isSubmitting && <Spinner className="size-4" />}
           {submitLabel}

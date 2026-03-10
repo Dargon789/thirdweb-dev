@@ -1,12 +1,25 @@
-import { getLinkedWallets } from "@/api/linked-wallets";
-import { getValidAccount } from "../settings/getAccount";
+import { getValidAccount } from "@/api/account/get-account";
+import { getLinkedWallets } from "@/api/account/linked-wallets";
+import { getAuthToken } from "@/api/auth-token";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
+import { loginRedirect } from "@/utils/redirects";
 import { LinkWallet } from "./LinkWalletUI";
 
 export default async function Page() {
-  const [wallets, account] = await Promise.all([
+  const [wallets, account, authToken] = await Promise.all([
     getLinkedWallets(),
-    getValidAccount(),
+    getValidAccount("/account/wallets"),
+    getAuthToken(),
   ]);
+
+  if (!authToken) {
+    loginRedirect("/account/wallets");
+  }
+
+  const client = getClientThirdwebClient({
+    jwt: authToken,
+    teamId: undefined,
+  });
 
   return (
     <div className="flex grow flex-col">
@@ -20,8 +33,9 @@ export default async function Page() {
 
       <div className="container max-w-[950px] py-8">
         <LinkWallet
-          wallets={wallets || []}
           accountEmail={account.email || ""}
+          client={client}
+          wallets={wallets || []}
         />
       </div>
     </div>

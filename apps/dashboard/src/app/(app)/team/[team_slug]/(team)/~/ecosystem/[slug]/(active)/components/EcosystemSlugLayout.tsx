@@ -1,8 +1,9 @@
-import { getTeamBySlug } from "@/api/team";
-import { SidebarLayout } from "@/components/blocks/SidebarLayout";
 import { redirect } from "next/navigation";
-import { getAuthToken } from "../../../../../../../../api/lib/getAuthToken";
-import { fetchEcosystem } from "../../../utils/fetchEcosystem";
+import { getAuthToken } from "@/api/auth-token";
+import { fetchEcosystem } from "@/api/team/ecosystems";
+import { getTeamBySlug } from "@/api/team/get-team";
+import { TabPathLinks } from "@/components/ui/tabs";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
 import { EcosystemHeader } from "./ecosystem-header.client";
 
 export async function EcosystemLayoutSlug({
@@ -20,11 +21,7 @@ export async function EcosystemLayoutSlug({
     redirect(ecosystemLayoutPath);
   }
 
-  const ecosystem = await fetchEcosystem(
-    params.slug,
-    authToken,
-    params.team_slug,
-  );
+  const ecosystem = await fetchEcosystem(params.slug, params.team_slug);
 
   // Fetch team details to obtain team ID for further authenticated updates
   const team = await getTeamBySlug(params.team_slug);
@@ -37,35 +34,48 @@ export async function EcosystemLayoutSlug({
     redirect(ecosystemLayoutPath);
   }
 
+  const client = getClientThirdwebClient({
+    jwt: authToken,
+    teamId: team.id,
+  });
+
   return (
     <div className="flex grow flex-col">
       <EcosystemHeader
+        authToken={authToken}
+        client={client}
         ecosystem={ecosystem}
         ecosystemLayoutPath={ecosystemLayoutPath}
-        teamIdOrSlug={params.team_slug}
-        authToken={authToken}
         teamId={team.id}
+        teamIdOrSlug={params.team_slug}
       />
 
-      <SidebarLayout
-        sidebarLinks={[
+      <TabPathLinks
+        className="pt-2"
+        links={[
           {
-            label: "Overview",
-            href: `${ecosystemLayoutPath}/${ecosystem.slug}`,
             exactMatch: true,
+            name: "Overview",
+            path: `${ecosystemLayoutPath}/${ecosystem.slug}`,
           },
           {
-            label: "Analytics",
-            href: `${ecosystemLayoutPath}/${ecosystem.slug}/analytics`,
+            name: "Analytics",
+            path: `${ecosystemLayoutPath}/${ecosystem.slug}/analytics`,
           },
           {
-            label: "Design (coming soon)",
-            href: `${ecosystemLayoutPath}/${ecosystem.slug}#`,
+            name: "Users",
+            path: `${ecosystemLayoutPath}/${ecosystem.slug}/users`,
+          },
+          {
+            name: "Design (coming soon)",
+            path: `${ecosystemLayoutPath}/${ecosystem.slug}/#`,
           },
         ]}
-      >
+        scrollableClassName="container max-w-7xl"
+      />
+      <div className="container max-w-7xl flex flex-col grow pt-6 pb-10">
         {children}
-      </SidebarLayout>
+      </div>
     </div>
   );
 }

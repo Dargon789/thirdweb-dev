@@ -1,6 +1,7 @@
 import type { Address as ox__Address } from "ox";
 import { defineChain } from "../chains/utils.js";
 import type { ThirdwebClient } from "../client/client.js";
+import type { PurchaseData } from "../pay/types.js";
 import { getThirdwebBaseUrl } from "../utils/domains.js";
 import { getClientFetch } from "../utils/fetch.js";
 import { stringify } from "../utils/json.js";
@@ -8,7 +9,7 @@ import { ApiError } from "./types/Errors.js";
 import type { PreparedQuote, Quote } from "./types/Quote.js";
 
 /**
- * Retrieves a Universal Bridge quote for the provided buy intent. The quote will specify the necessary `originAmount` to receive the desired `destinationAmount`, which is specified with the `buyAmountWei` option.
+ * Retrieves a Bridge quote for the provided buy intent. The quote will specify the necessary `originAmount` to receive the desired `destinationAmount`, which is specified with the `buyAmountWei` option.
  *
  * @example
  * ```typescript
@@ -99,7 +100,6 @@ import type { PreparedQuote, Quote } from "./types/Quote.js";
  *
  * @throws Will throw an error if there is an issue fetching the quote.
  * @bridge Buy
- * @beta
  */
 export async function quote(options: quote.Options): Promise<quote.Result> {
   const {
@@ -130,48 +130,72 @@ export async function quote(options: quote.Options): Promise<quote.Result> {
     const errorJson = await response.json();
     throw new ApiError({
       code: errorJson.code || "UNKNOWN_ERROR",
-      message: errorJson.message || response.statusText,
       correlationId: errorJson.correlationId || undefined,
+      message: errorJson.message || response.statusText,
       statusCode: response.status,
     });
   }
 
   const { data }: { data: Quote } = await response.json();
   return {
-    originAmount: BigInt(data.originAmount),
-    destinationAmount: BigInt(data.destinationAmount),
     blockNumber: data.blockNumber ? BigInt(data.blockNumber) : undefined,
-    timestamp: data.timestamp,
+    destinationAmount: BigInt(data.destinationAmount),
     estimatedExecutionTimeMs: data.estimatedExecutionTimeMs,
-    steps: data.steps,
     intent: {
-      originChainId,
-      originTokenAddress,
+      amount,
+      buyAmountWei: amount,
       destinationChainId,
       destinationTokenAddress,
-      buyAmountWei: amount,
-      amount,
+      originChainId,
+      originTokenAddress,
     },
+    originAmount: BigInt(data.originAmount),
+    steps: data.steps,
+    timestamp: data.timestamp,
   };
 }
 
+/**
+ * Namespace containing types for the buy quote function.
+ * @namespace quote
+ * @bridge Buy
+ */
 export declare namespace quote {
+  /**
+   * Options for getting a buy quote.
+   * @interface Options
+   * @bridge Buy
+   */
   type Options = {
+    /** The origin chain ID */
     originChainId: number;
+    /** The origin token address */
     originTokenAddress: ox__Address.Address;
+    /** The destination chain ID */
     destinationChainId: number;
+    /** The destination token address */
     destinationTokenAddress: ox__Address.Address;
+    /** Your thirdweb client */
     client: ThirdwebClient;
+    /** Maximum number of steps in the route */
     maxSteps?: number;
   } & (
     | {
+        /** The amount to buy in wei */
         buyAmountWei: bigint;
       }
     | {
+        /** The amount to spend in wei */
         amount: bigint;
       }
   );
 
+  /**
+   * Result returned from getting a buy quote.
+   * Contains quote details and intent information.
+   * @interface Result
+   * @bridge Buy
+   */
   type Result = Quote & {
     intent: {
       originChainId: number;
@@ -185,7 +209,7 @@ export declare namespace quote {
 }
 
 /**
- * Prepares a **finalized** Universal Bridge quote for the provided buy request with transaction data. This function will return everything `quote` does, with the addition of a series of prepared transactions and the associated expiration timestamp.
+ * Prepares a **finalized** Bridge quote for the provided buy request with transaction data. This function will return everything `quote` does, with the addition of a series of prepared transactions and the associated expiration timestamp.
  *
  * @example
  * ```typescript
@@ -197,6 +221,8 @@ export declare namespace quote {
  *   destinationChainId: 10,
  *   destinationTokenAddress: NATIVE_TOKEN_ADDRESS,
  *   amount: toWei("0.01"),
+ *   sender: "0x...",
+ *   receiver: "0x...",
  *   client: thirdwebClient,
  * });
  * ```
@@ -282,6 +308,8 @@ export declare namespace quote {
  *   destinationChainId: 10,
  *   destinationTokenAddress: NATIVE_TOKEN_ADDRESS,
  *   amount: toWei("0.01"),
+ *   sender: "0x...",
+ *   receiver: "0x...",
  *   purchaseData: {
  *     size: "large",
  *     shippingAddress: "123 Main St, New York, NY 10001",
@@ -299,6 +327,8 @@ export declare namespace quote {
  *   destinationChainId: 10,
  *   destinationTokenAddress: NATIVE_TOKEN_ADDRESS,
  *   amount: toWei("0.01"),
+ *   sender: "0x...",
+ *   receiver: "0x...",
  *   maxSteps: 2, // Will only return a quote for routes with 2 or fewer steps
  *   client: thirdwebClient,
  * });
@@ -312,7 +342,7 @@ export declare namespace quote {
  * @param options.amount - The amount of the destination token to receive.
  * @param options.sender - The address of the sender.
  * @param options.receiver - The address of the recipient.
- * @param options.purchaseData - Arbitrary data to be passed to the purchase function and included with any webhooks or status calls.
+ * @param [options.purchaseData] - Arbitrary data to be passed to the purchase function and included with any webhooks or status calls.
  * @param [options.maxSteps] - Limit the number of total steps in the route.
  * @param options.client - Your thirdweb client.
  *
@@ -320,7 +350,6 @@ export declare namespace quote {
  *
  * @throws Will throw an error if there is an issue fetching the quote.
  * @bridge Buy
- * @beta
  */
 export async function prepare(
   options: prepare.Options,
@@ -337,86 +366,116 @@ export async function prepare(
     purchaseData,
     maxSteps,
     paymentLinkId,
+    slippageToleranceBps,
   } = options;
 
   const clientFetch = getClientFetch(client);
   const url = new URL(`${getThirdwebBaseUrl("bridge")}/v1/buy/prepare`);
 
   const response = await clientFetch(url.toString(), {
-    method: "POST",
+    body: stringify({
+      amount: amount.toString(), // legacy
+      buyAmountWei: amount.toString(),
+      destinationChainId: destinationChainId.toString(),
+      destinationTokenAddress,
+      maxSteps,
+      originChainId: originChainId.toString(),
+      originTokenAddress,
+      paymentLinkId,
+      purchaseData,
+      receiver,
+      sender,
+      slippageToleranceBps,
+    }),
     headers: {
       "Content-Type": "application/json",
     },
-    body: stringify({
-      buyAmountWei: amount.toString(), // legacy
-      amount: amount.toString(),
-      originChainId: originChainId.toString(),
-      originTokenAddress,
-      destinationChainId: destinationChainId.toString(),
-      destinationTokenAddress,
-      sender,
-      receiver,
-      purchaseData,
-      maxSteps,
-      paymentLinkId,
-    }),
+    method: "POST",
   });
   if (!response.ok) {
     const errorJson = await response.json();
     throw new ApiError({
       code: errorJson.code || "UNKNOWN_ERROR",
-      message: errorJson.message || response.statusText,
       correlationId: errorJson.correlationId || undefined,
+      message: errorJson.message || response.statusText,
       statusCode: response.status,
     });
   }
 
   const { data }: { data: PreparedQuote } = await response.json();
   return {
-    originAmount: BigInt(data.originAmount),
-    destinationAmount: BigInt(data.destinationAmount),
     blockNumber: data.blockNumber ? BigInt(data.blockNumber) : undefined,
-    timestamp: data.timestamp,
+    destinationAmount: BigInt(data.destinationAmount),
     estimatedExecutionTimeMs: data.estimatedExecutionTimeMs,
+    intent: {
+      amount,
+      destinationChainId,
+      destinationTokenAddress,
+      originChainId,
+      originTokenAddress,
+      receiver,
+      sender,
+    },
+    originAmount: BigInt(data.originAmount),
     steps: data.steps.map((step) => ({
       ...step,
       transactions: step.transactions.map((transaction) => ({
         ...transaction,
-        value: transaction.value ? BigInt(transaction.value) : undefined,
-        client,
         chain: defineChain(transaction.chainId),
+        client,
+        value: transaction.value ? BigInt(transaction.value) : undefined,
       })),
     })),
-    intent: {
-      originChainId,
-      originTokenAddress,
-      destinationChainId,
-      destinationTokenAddress,
-      amount,
-      sender,
-      receiver,
-    },
+    timestamp: data.timestamp,
   };
 }
 
+/**
+ * Namespace containing types for the buy prepare function.
+ * @namespace prepare
+ * @bridge Buy
+ */
 export declare namespace prepare {
+  /**
+   * Options for preparing a buy transaction.
+   * @interface Options
+   * @bridge Buy
+   */
   type Options = {
+    /** The origin chain ID */
     originChainId: number;
+    /** The origin token address */
     originTokenAddress: ox__Address.Address;
+    /** The destination chain ID */
     destinationChainId: number;
+    /** The destination token address */
     destinationTokenAddress: ox__Address.Address;
+    /** The sender address */
     sender: ox__Address.Address;
+    /** The receiver address */
     receiver: ox__Address.Address;
+    /** The amount to buy in wei */
     amount: bigint;
+    /** Your thirdweb client */
     client: ThirdwebClient;
-    purchaseData?: unknown;
+    /** Arbitrary purchase data */
+    purchaseData?: PurchaseData;
+    /** Maximum number of steps in the route */
     maxSteps?: number;
+    /** The maximum slippage in basis points (bps) allowed for the transaction. */
+    slippageToleranceBps?: number;
     /**
      * @hidden
      */
     paymentLinkId?: string;
   };
 
+  /**
+   * Result returned from preparing a buy transaction.
+   * Contains prepared quote with transaction data and intent information.
+   * @interface Result
+   * @bridge Buy
+   */
   type Result = PreparedQuote & {
     intent: {
       originChainId: number;
@@ -426,7 +485,7 @@ export declare namespace prepare {
       amount: bigint;
       sender: ox__Address.Address;
       receiver: ox__Address.Address;
-      purchaseData?: unknown;
+      purchaseData?: PurchaseData;
     };
   };
 }

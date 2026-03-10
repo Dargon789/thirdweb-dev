@@ -1,42 +1,26 @@
-import { getClientTransactions } from "@/api/analytics";
-import { LoadingChartState } from "components/analytics/empty-chart-state";
-import { Suspense } from "react";
 import type { ThirdwebClient } from "thirdweb";
-import type { AnalyticsQueryParams } from "types/analytics";
+import { getClientTransactions } from "@/api/analytics";
+import type { AnalyticsQueryParams } from "@/types/analytics";
 import { TransactionsChartsUI } from "./TransactionCharts";
 
-export function TransactionsCharts(
-  props: AnalyticsQueryParams & {
-    searchParams: { [key: string]: string | string[] | undefined };
-    client: ThirdwebClient;
-  },
-) {
-  return (
-    // TODO: Add better LoadingChartState
-    <Suspense
-      fallback={
-        <div className="h-[400px]">
-          <LoadingChartState />
-        </div>
-      }
-    >
-      <TransactionsChartCardAsync {...props} />
-    </Suspense>
-  );
-}
-
-async function TransactionsChartCardAsync(
-  props: AnalyticsQueryParams & {
-    searchParams: { [key: string]: string | string[] | undefined };
-    client: ThirdwebClient;
-  },
-) {
+export async function TransactionsChartCardAsync(props: {
+  params: AnalyticsQueryParams;
+  client: ThirdwebClient;
+  selectedChartQueryParam: string;
+  selectedChart: string | undefined;
+  authToken: string;
+}) {
+  const { params, authToken, client, selectedChart, selectedChartQueryParam } =
+    props;
   const [data, aggregatedData] = await Promise.all([
-    getClientTransactions(props),
-    getClientTransactions({
-      ...props,
-      period: "all",
-    }),
+    getClientTransactions(params, authToken),
+    getClientTransactions(
+      {
+        ...params,
+        period: "all",
+      },
+      authToken,
+    ),
   ]);
 
   if (!aggregatedData.length) {
@@ -45,10 +29,11 @@ async function TransactionsChartCardAsync(
 
   return (
     <TransactionsChartsUI
-      data={data}
       aggregatedData={aggregatedData}
-      searchParams={props.searchParams}
-      client={props.client}
+      client={client}
+      data={data}
+      selectedChart={selectedChart}
+      selectedChartQueryParam={selectedChartQueryParam}
     />
   );
 }

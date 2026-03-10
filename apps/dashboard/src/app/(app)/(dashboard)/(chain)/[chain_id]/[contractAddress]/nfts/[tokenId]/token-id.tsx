@@ -1,9 +1,15 @@
 "use client";
 
+import { ExternalLinkIcon } from "lucide-react";
+import Link from "next/link";
+import { Suspense, useState } from "react";
+import type { NFT, ThirdwebClient, ThirdwebContract } from "thirdweb";
+import { getNFT as getErc721NFT } from "thirdweb/extensions/erc721";
+import { getNFT as getErc1155NFT } from "thirdweb/extensions/erc1155";
+import { useReadContract } from "thirdweb/react";
 import { UnexpectedValueErrorMessage } from "@/components/blocks/error-fallbacks/unexpect-value-error-message";
+import { NFTMediaWithEmptyState } from "@/components/blocks/nft-media";
 import { WalletAddress } from "@/components/blocks/wallet-address";
-import { CopyTextButton } from "@/components/ui/CopyTextButton";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
@@ -13,21 +19,15 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { CopyTextButton } from "@/components/ui/CopyTextButton";
 import { CodeClient } from "@/components/ui/code/code.client";
+import { Spinner } from "@/components/ui/Spinner";
 import { TabButtons } from "@/components/ui/tabs";
 import { ToolTipLabel } from "@/components/ui/tooltip";
-import { useThirdwebClient } from "@/constants/thirdweb.client";
-import { useDashboardRouter } from "@/lib/DashboardRouter";
-import { resolveSchemeWithErrorHandler } from "@/lib/resolveSchemeWithErrorHandler";
-import { useChainSlug } from "hooks/chains/chainSlug";
-import { ExternalLinkIcon } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import type { NFT, ThirdwebClient, ThirdwebContract } from "thirdweb";
-import { getNFT as getErc721NFT } from "thirdweb/extensions/erc721";
-import { getNFT as getErc1155NFT } from "thirdweb/extensions/erc1155";
-import { useReadContract } from "thirdweb/react";
-import { NFTMediaWithEmptyState } from "tw-components/nft-media";
+import { useChainSlug } from "@/hooks/chains/chainSlug";
+import { resolveSchemeWithErrorHandler } from "@/utils/resolveSchemeWithErrorHandler";
+import type { ProjectMeta } from "../../../../../../team/[team_slug]/[project_slug]/contract/[chainIdOrSlug]/[contractAddress]/types";
+import { buildContractPagePath } from "../../_utils/contract-page-path";
 import { NftProperty } from "../components/nft-property";
 import { useNFTDrawerTabs } from "./useNftDrawerTabs";
 
@@ -53,6 +53,7 @@ interface TokenIdPageProps {
   isErc721: boolean;
   isLoggedIn: boolean;
   accountAddress: string | undefined;
+  projectMeta: ProjectMeta | undefined;
 }
 
 // TODO: verify the entire nft object with zod schema and display an error message
@@ -63,34 +64,32 @@ export const TokenIdPage: React.FC<TokenIdPageProps> = ({
   isErc721,
   isLoggedIn,
   accountAddress,
+  projectMeta,
 }) => {
   const [tab, setTab] = useState("Details");
-  const router = useDashboardRouter();
   const chainId = contract.chain.id;
   const chainSlug = useChainSlug(chainId || 1);
 
   const tabs = useNFTDrawerTabs({
-    contract,
-    tokenId,
-    isLoggedIn,
     accountAddress,
+    contract,
+    isLoggedIn,
+    tokenId,
   });
-
-  const client = useThirdwebClient();
 
   const { data: nft, isPending } = useReadContract(
     isErc721 ? getErc721NFT : getErc1155NFT,
     {
       contract,
-      tokenId: BigInt(tokenId || 0),
       includeOwner: true,
       tokenByIndex: false,
+      tokenId: BigInt(tokenId || 0),
     },
   );
 
   if (isPending) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
+      <div className="flex h-[400px] items-center justify-center py-20">
         <Spinner className="size-10" />
       </div>
     );
@@ -113,6 +112,13 @@ export const TokenIdPage: React.FC<TokenIdPageProps> = ({
       : undefined,
   };
 
+  const nftsPagePath = buildContractPagePath({
+    chainIdOrSlug: chainSlug.toString(),
+    contractAddress: contract.address,
+    projectMeta,
+    subpath: "/nfts",
+  });
+
   return (
     <div>
       <div className="flex flex-col gap-6 lg:flex-row">
@@ -120,7 +126,11 @@ export const TokenIdPage: React.FC<TokenIdPageProps> = ({
           {/* border */}
           <div className="absolute inset-0 z-0 rounded-lg border" />
           {/* media */}
-          <NFTMediaWithEmptyState metadata={nftMetadata} className="z-10" />
+          <NFTMediaWithEmptyState
+            className="z-10"
+            client={contract.client}
+            metadata={nftMetadata}
+          />
         </div>
 
         <div className="flex w-full flex-col gap-6">
@@ -129,15 +139,7 @@ export const TokenIdPage: React.FC<TokenIdPageProps> = ({
             <Breadcrumb className="mb-3">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink
-                    href={`/${chainSlug}/${contract.address}/nfts`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      router.push(`/${chainSlug}/${contract.address}/nfts`);
-                    }}
-                  >
-                    NFTs
-                  </BreadcrumbLink>
+                  <BreadcrumbLink href={nftsPagePath}>NFTs</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
@@ -155,46 +157,55 @@ export const TokenIdPage: React.FC<TokenIdPageProps> = ({
           </div>
 
           <TabButtons
-            tabClassName="!text-sm"
             tabs={[
               {
-                name: "Details",
-                onClick: () => setTab("Details"),
                 isActive: tab === "Details",
                 isDisabled: false,
+                name: "Details",
+                onClick: () => setTab("Details"),
               },
               ...tabs.map((tb) => ({
-                name: tb.title,
-                onClick: () => setTab(tb.title),
                 isActive: tab === tb.title,
                 isDisabled: tb.isDisabled,
+                name: tb.title,
+                onClick: () => setTab(tb.title),
                 toolTip: tb.isDisabled ? tb.disabledText : undefined,
               })),
             ].sort((a, b) => (a.isDisabled ? 1 : b.isDisabled ? -1 : 0))}
           />
 
           {/* tab contents */}
-          {tab === "Details" && <NFTDetailsTab nft={nft} client={client} />}
+          {tab === "Details" && (
+            <NFTDetailsTab client={contract.client} nft={nft} />
+          )}
 
-          {tabs.map((tb) => {
-            return (
-              tb.title === tab && (
-                <div key={tb.title} className="w-full">
-                  {tb.children}
+          <Suspense
+            fallback={
+              <div className="h-full">
+                <div className="flex items-center gap-1.5">
+                  <Spinner className="size-4" />
+                  <p className="text-sm text-muted-foreground"> Loading </p>
                 </div>
-              )
-            );
-          })}
+              </div>
+            }
+          >
+            {tabs.map((tb) => {
+              return (
+                tb.title === tab && (
+                  <div className="w-full" key={tb.title}>
+                    {tb.children}
+                  </div>
+                )
+              );
+            })}
+          </Suspense>
         </div>
       </div>
     </div>
   );
 };
 
-function NFTDetailsTab(props: {
-  nft: NFT;
-  client: ThirdwebClient;
-}) {
+function NFTDetailsTab(props: { nft: NFT; client: ThirdwebClient }) {
   const { nft, client } = props;
   const properties = nft.metadata.attributes || nft.metadata.properties;
 
@@ -207,6 +218,8 @@ function NFTDetailsTab(props: {
           <div>
             <p className="mb-1 text-muted-foreground text-sm">Token ID</p>
             <CopyTextButton
+              className="min-w-16 justify-between bg-card"
+              copyIconPosition="right"
               textToCopy={nft.id?.toString()}
               textToShow={
                 nft.id?.toString().length > 8
@@ -214,8 +227,6 @@ function NFTDetailsTab(props: {
                   : nft.id?.toString()
               }
               tooltip="Token ID"
-              copyIconPosition="right"
-              className="min-w-16 justify-between bg-card"
             />
           </div>
 
@@ -226,6 +237,7 @@ function NFTDetailsTab(props: {
               <WalletAddress
                 address={nft.owner}
                 className="h-auto rounded-full border bg-card px-2 py-1 pr-4 text-foreground text-sm"
+                client={client}
               />
             </div>
           )}
@@ -234,8 +246,8 @@ function NFTDetailsTab(props: {
           <div>
             <p className="mb-1 text-muted-foreground text-sm">Token Standard</p>
             <Badge
-              variant="outline"
               className="bg-card py-1 font-normal text-sm"
+              variant="outline"
             >
               {nft.type}
             </Badge>
@@ -246,8 +258,8 @@ function NFTDetailsTab(props: {
             <div className="w-full">
               <p className="mb-1 text-muted-foreground text-sm">Supply</p>
               <ToolTipLabel
-                label={nft.supply.toLocaleString("en-US")}
                 contentClassName="text-sm break-all"
+                label={nft.supply.toLocaleString("en-US")}
               >
                 <p className="max-w-[200px] truncate text-sm">
                   {nft.supply.toLocaleString("en-US")}
@@ -260,10 +272,10 @@ function NFTDetailsTab(props: {
           <div>
             <p className="mb-1 text-muted-foreground text-sm">Token URI</p>
             <IPFSLinkGroup
-              ipfsLink={nft.tokenURI}
-              tooltip="The URI of this NFT"
               client={client}
               httpsLinkTooltip="View URI"
+              ipfsLink={nft.tokenURI}
+              tooltip="The URI of this NFT"
             />
           </div>
 
@@ -272,10 +284,10 @@ function NFTDetailsTab(props: {
             <div>
               <p className="mb-1 text-muted-foreground text-sm">Media URI</p>
               <IPFSLinkGroup
-                ipfsLink={nft.metadata.image}
-                tooltip="The media URI of this NFT"
                 client={client}
                 httpsLinkTooltip="View Media"
+                ipfsLink={nft.metadata.image}
+                tooltip="The media URI of this NFT"
               />
             </div>
           )}
@@ -289,8 +301,8 @@ function NFTDetailsTab(props: {
             Attributes
             {Array.isArray(properties) && properties.length > 0 && (
               <Badge
-                variant="outline"
                 className="bg-card px-2 text-muted-foreground"
+                variant="outline"
               >
                 {properties.length}
               </Badge>
@@ -319,9 +331,7 @@ function NFTDetailsTab(props: {
   );
 }
 
-function NFTName(props: {
-  value: unknown;
-}) {
+function NFTName(props: { value: unknown }) {
   if (typeof props.value === "string") {
     return (
       <h2 className="font-bold text-3xl tracking-tight"> {props.value}</h2>
@@ -330,10 +340,10 @@ function NFTName(props: {
 
   return (
     <UnexpectedValueErrorMessage
-      title="Invalid Name"
-      description="Name is not a string"
-      value={props.value}
       className="mb-3 rounded-lg border border-border p-4"
+      description="Name is not a string"
+      title="Invalid Name"
+      value={props.value}
     />
   );
 }
@@ -352,21 +362,21 @@ function IPFSLinkGroup(props: {
   return (
     <div className="flex flex-row items-center gap-1.5">
       <CopyTextButton
+        className="max-w-[200px] truncate bg-card"
+        copyIconPosition="right"
         textToCopy={props.ipfsLink}
         textToShow={props.ipfsLink}
         tooltip={props.tooltip}
-        copyIconPosition="right"
-        className="max-w-[200px] truncate bg-card"
       />
       {httpLink && (
         <ToolTipLabel label={props.httpsLinkTooltip}>
           <Button
-            variant="outline"
-            size="sm"
             asChild
             className="size-[34px] rounded-full bg-card p-0 text-muted-foreground"
+            size="sm"
+            variant="outline"
           >
-            <Link href={httpLink} target="_blank">
+            <Link href={httpLink} rel="noopener noreferrer" target="_blank">
               <ExternalLinkIcon className="size-3" />
             </Link>
           </Button>
@@ -376,19 +386,17 @@ function IPFSLinkGroup(props: {
   );
 }
 
-function NFTDescription(props: {
-  value: unknown;
-}) {
+function NFTDescription(props: { value: unknown }) {
   if (typeof props.value === "string") {
     return <p className="text-muted-foreground text-sm"> {props.value}</p>;
   }
 
   return (
     <UnexpectedValueErrorMessage
-      title="Invalid Description"
-      description="Description is not a string"
-      value={props.value}
       className="mb-3 rounded-lg border border-border p-4"
+      description="Description is not a string"
+      title="Invalid Description"
+      value={props.value}
     />
   );
 }

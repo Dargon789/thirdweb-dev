@@ -1,5 +1,8 @@
 import type { Address } from "abitype";
-import type { BaseTransactionOptions } from "../../../../transaction/types.js";
+import type {
+  BaseTransactionOptions,
+  WithOverrides,
+} from "../../../../transaction/types.js";
 import { getClaimParams } from "../../../../utils/extensions/drops/get-claim-params.js";
 import { isGetContractMetadataSupported } from "../../../common/read/getContractMetadata.js";
 import {
@@ -54,18 +57,21 @@ export type ClaimToParams = {
  * @throws If no claim condition is set
  * @returns A promise that resolves with the submitted transaction hash.
  */
-export function claimTo(options: BaseTransactionOptions<ClaimToParams>) {
+export function claimTo(
+  options: BaseTransactionOptions<WithOverrides<ClaimToParams>>,
+) {
   return claim({
-    contract: options.contract,
     asyncParams: () =>
       getClaimParams({
-        type: "erc721",
         contract: options.contract,
-        to: options.to,
-        quantity: options.quantity,
         from: options.from,
+        quantity: options.quantity,
         singlePhaseDrop: options.singlePhaseDrop,
+        to: options.to,
+        type: "erc721",
       }),
+    contract: options.contract,
+    overrides: options.overrides,
   });
 }
 

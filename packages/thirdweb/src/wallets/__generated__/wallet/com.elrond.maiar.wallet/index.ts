@@ -5,7 +5,7 @@ export const wallet = {
   id: "com.elrond.maiar.wallet",
   name: "xPortal",
   homepage: "https://xportal.com",
-  image_id: "1bc53e49-1e7f-4129-4c87-3f8c7b91cb00",
+  image_id: "22bdb11a-39d3-42bb-f7cb-84b77f5a5200",
   app: {
     browser: null,
     ios: "https://apps.apple.com/ro/app/xportal/id1519405832",
@@ -23,10 +23,10 @@ export const wallet = {
   rdns: "com.elrond.maiar.wallet",
   mobile: {
     native: "xportal://",
-    universal: "https://xport.al",
+    universal: "https://xportal.app.link",
   },
   desktop: {
-    native: null,
-    universal: null,
+    native: "",
+    universal: "",
   },
 } as const;

@@ -1,19 +1,25 @@
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { fetchPublishedContracts } from "components/contract-components/fetchPublishedContracts";
 import { Suspense } from "react";
-import { serverThirdwebClient } from "../../../../../@/constants/thirdweb-client.server";
+import type { ThirdwebClient } from "thirdweb";
+import { fetchPublishedContracts } from "@/api/contract/fetchPublishedContracts";
+import { Spinner } from "@/components/ui/Spinner";
+import { serverThirdwebClient } from "@/constants/thirdweb-client.server";
 import { ProfileHeader } from "./components/profile-header";
 import { PublishedContracts } from "./components/published-contracts";
 
 export function ProfileUI(props: {
   profileAddress: string;
   ensName: string | undefined;
+  client: ThirdwebClient;
 }) {
   const { profileAddress, ensName } = props;
 
   return (
     <div className="container pt-8 pb-20">
-      <ProfileHeader profileAddress={profileAddress} ensName={ensName} />
+      <ProfileHeader
+        client={props.client}
+        ensName={ensName}
+        profileAddress={profileAddress}
+      />
       <div className="h-8" />
 
       <div>

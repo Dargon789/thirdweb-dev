@@ -1,47 +1,59 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
   AlertCircleIcon,
   CircleCheckIcon,
   CircleIcon,
   RefreshCwIcon,
 } from "lucide-react";
-import { DynamicHeight } from "../../ui/DynamicHeight";
-import { Spinner } from "../../ui/Spinner/Spinner";
+import { Button } from "@/components/ui/button";
+import { DynamicHeight } from "@/components/ui/DynamicHeight";
+import { Spinner } from "@/components/ui/Spinner";
 
-export type MultiStepState = {
-  status: "idle" | "pending" | "completed" | "error";
-  retryLabel: string;
+export type MultiStepState<T extends string> = {
+  id: T;
+  status:
+    | {
+        type: "idle" | "pending" | "completed";
+      }
+    | {
+        type: "error";
+        message: string;
+      };
   label: string;
-  execute: () => Promise<void>;
+  description?: string;
 };
 
-export function MultiStepStatus(props: {
-  steps: MultiStepState[];
+export function MultiStepStatus<T extends string>(props: {
+  steps: MultiStepState<T>[];
+  onRetry: (step: MultiStepState<T>) => void;
+  renderError?: (
+    step: MultiStepState<T>,
+    errorMessage: string,
+  ) => React.ReactNode;
 }) {
   return (
     <DynamicHeight>
-      <div className="space-y-4">
+      <div className="space-y-4 overflow-hidden">
         {props.steps.map((step) => (
-          <div key={step.label} className="flex items-start space-x-3 ">
-            {step.status === "completed" ? (
+          <div className="flex items-start space-x-3 " key={step.label}>
+            {step.status.type === "completed" ? (
               <CircleCheckIcon className="mt-0.5 size-5 flex-shrink-0 text-green-500" />
-            ) : step.status === "pending" ? (
+            ) : step.status.type === "pending" ? (
               <Spinner className="mt-0.5 size-5 flex-shrink-0 text-foreground" />
-            ) : step.status === "error" ? (
+            ) : step.status.type === "error" ? (
               <AlertCircleIcon className="mt-0.5 size-5 flex-shrink-0 text-red-500" />
             ) : (
               <CircleIcon className="mt-0.5 size-5 flex-shrink-0 text-muted-foreground/70" />
             )}
-            <div className="flex-1">
+            <div className="grow">
               <p
                 className={`font-medium ${
-                  step.status === "pending"
+                  step.status.type === "pending"
                     ? "text-foreground"
-                    : step.status === "completed"
+                    : step.status.type === "completed"
                       ? "text-green-500"
-                      : step.status === "error"
+                      : step.status.type === "error"
                         ? "text-red-500"
                         : "text-muted-foreground/70"
                 }`}
@@ -49,20 +61,33 @@ export function MultiStepStatus(props: {
                 {step.label}
               </p>
 
-              {step.status === "error" && (
-                <div className="mt-1 space-y-2">
-                  <p className="mb-1 text-red-500 text-sm">{step.retryLabel}</p>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => step.execute()}
-                  >
-                    <RefreshCwIcon className="size-4" />
-                    Retry
-                  </Button>
-                </div>
-              )}
+              {/* show description when this step is active */}
+              {(step.status.type === "pending" ||
+                step.status.type === "error") &&
+                step.description && (
+                  <p className="text-muted-foreground text-sm">
+                    {step.description}
+                  </p>
+                )}
+
+              {step.status.type === "error"
+                ? props.renderError?.(step, step.status.message) || (
+                    <div className="mt-1 space-y-2">
+                      <p className="mb-1 text-red-500 text-sm whitespace-pre-wrap break-all">
+                        {step.status.message}
+                      </p>
+                      <Button
+                        className="gap-2"
+                        onClick={() => props.onRetry(step)}
+                        size="sm"
+                        variant="destructive"
+                      >
+                        <RefreshCwIcon className="size-4" />
+                        Retry
+                      </Button>
+                    </div>
+                  )
+                : null}
             </div>
           </div>
         ))}

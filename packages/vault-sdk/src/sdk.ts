@@ -2,20 +2,28 @@ import { xchacha20poly1305 } from "@noble/ciphers/chacha";
 import { x25519 } from "@noble/curves/ed25519";
 import { hkdf } from "@noble/hashes/hkdf";
 import { sha256 } from "@noble/hashes/sha256";
-import { randomBytes } from "@noble/hashes/utils";
-import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
+import { bytesToHex, hexToBytes, randomBytes } from "@noble/hashes/utils";
+
+import {
+  address,
+  getBase58Encoder,
+  getTransactionDecoder,
+  getTransactionEncoder,
+} from "@solana/kit";
+
 import type { TypedData } from "abitype";
 import * as jose from "jose";
-
 import type {
   CheckedSignTypedDataPayload,
   CreateAccessTokenPayload,
   CreateEoaPayload,
   CreateServiceAccountPayload,
+  CreateSolanaAccountPayload,
   EncryptedPayload,
   GetServiceAccountPayload,
   ListAccessTokensPayload,
   ListEoaPayload,
+  ListSolanaAccountsPayload,
   Payload,
   PingPayload,
   PolicyComponent,
@@ -24,6 +32,8 @@ import type {
   RotateServiceAccountPayload,
   SignAuthorizationPayload,
   SignMessagePayload,
+  SignSolanaMessagePayload,
+  SignSolanaTransactionPayload,
   SignStructuredMessagePayload,
   SignTransactionPayload,
   UnencryptedErrorResponse,
@@ -60,9 +70,9 @@ function encryptForEnclave(
   // Format the encrypted package
   return {
     encryptedPayload: {
+      ciphertext: bytesToHex(ciphertext),
       ephemeralPublicKey: bytesToHex(ephemeralPublicKey),
       nonce: bytesToHex(nonce),
-      ciphertext: bytesToHex(ciphertext),
     },
     ephemeralPrivateKey: ephemeralPrivateKey,
   };
@@ -131,8 +141,8 @@ export async function createVaultClient(clientOptions?: {
 
   try {
     const response = await fetch(url, {
-      method: "GET",
       headers,
+      method: "GET",
     });
 
     // fetch doesn't throw on HTTP errors (like 4xx, 5xx) by default.
@@ -185,14 +195,14 @@ async function sendRequest<P extends Payload>({
 
   try {
     const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        ...client.headers,
-        "Content-Type": "application/json",
-        Accept: "application/json", // Good practice to specify accept header
-      },
       // Stringify the JSON payload for the request body
       body: JSON.stringify(encryptedPayload),
+      headers: {
+        ...client.headers,
+        Accept: "application/json",
+        "Content-Type": "application/json", // Good practice to specify accept header
+      },
+      method: "POST",
     });
 
     // IMPORTANT: Replicate ky's throwHttpErrors: false behavior.
@@ -207,7 +217,6 @@ async function sendRequest<P extends Payload>({
       // If JSON parsing fails (e.g., 500 error with HTML body),
       // construct a generic error response.
       return {
-        success: false,
         data: null,
         error: {
           code: "FETCH_PARSE_ERROR",
@@ -219,6 +228,7 @@ async function sendRequest<P extends Payload>({
               : String(parseError)
           }`,
         },
+        success: false,
       } as Prettify<P["output"]>; // Cast needed because error isn't strictly EncryptedError | UnencryptedError
     }
 
@@ -226,9 +236,9 @@ async function sendRequest<P extends Payload>({
     if (isErrorResponse(responseData)) {
       console.error("🚨 Error response from enclave:", responseData);
       return {
-        success: false,
         data: null,
-        error: responseData.error, // Use the error from the response body
+        error: responseData.error,
+        success: false, // Use the error from the response body
       } as Prettify<P["output"]>;
     }
 
@@ -244,13 +254,13 @@ async function sendRequest<P extends Payload>({
   } catch (error) {
     // Catch network errors during the fetch itself
     return {
-      success: false,
       data: null,
       error: {
         code: "FETCH_NETWORK_ERROR",
         message:
           error instanceof Error ? error.message : "Unknown network error",
       },
+      success: false,
     } as Prettify<P["output"]>; // Cast needed
   }
 }
@@ -264,11 +274,11 @@ type PayloadParams<P extends Payload> = {
 // ========== Helper functions ==========
 export function ping({ client, request: options }: PayloadParams<PingPayload>) {
   return sendRequest<PingPayload>({
+    client,
     request: {
       operation: "ping",
       ...options,
     },
-    client,
   });
 }
 
@@ -277,11 +287,11 @@ export function createServiceAccount({
   request: options,
 }: PayloadParams<CreateServiceAccountPayload>) {
   return sendRequest<CreateServiceAccountPayload>({
+    client,
     request: {
       operation: "serviceAccount:create",
       ...options,
     },
-    client,
   });
 }
 
@@ -290,11 +300,11 @@ export function getServiceAccount({
   request: options,
 }: PayloadParams<GetServiceAccountPayload>) {
   return sendRequest<GetServiceAccountPayload>({
+    client,
     request: {
       operation: "serviceAccount:get",
       ...options,
     },
-    client,
   });
 }
 
@@ -303,11 +313,11 @@ export function rotateServiceAccount({
   request: options,
 }: PayloadParams<RotateServiceAccountPayload>) {
   return sendRequest<RotateServiceAccountPayload>({
+    client,
     request: {
       operation: "serviceAccount:rotate",
       ...options,
     },
-    client,
   });
 }
 
@@ -316,11 +326,11 @@ export function createEoa({
   request: options,
 }: PayloadParams<CreateEoaPayload>) {
   return sendRequest<CreateEoaPayload>({
+    client,
     request: {
       operation: "eoa:create",
       ...options,
     },
-    client,
   });
 }
 
@@ -329,11 +339,11 @@ export function listEoas({
   request: options,
 }: PayloadParams<ListEoaPayload>) {
   return sendRequest<ListEoaPayload>({
+    client,
     request: {
       operation: "eoa:list",
       ...options,
     },
-    client,
   });
 }
 
@@ -342,11 +352,11 @@ export function signTransaction({
   request: options,
 }: PayloadParams<SignTransactionPayload>) {
   return sendRequest<SignTransactionPayload>({
+    client,
     request: {
       operation: "eoa:signTransaction",
       ...options,
     },
-    client,
   });
 }
 
@@ -355,11 +365,11 @@ export function signMessage({
   request: options,
 }: PayloadParams<SignMessagePayload>) {
   return sendRequest<SignMessagePayload>({
+    client,
     request: {
       operation: "eoa:signMessage",
       ...options,
     },
-    client,
   });
 }
 
@@ -368,11 +378,11 @@ export function createAccessToken({
   request: options,
 }: PayloadParams<CreateAccessTokenPayload>) {
   return sendRequest<CreateAccessTokenPayload>({
+    client,
     request: {
       operation: "accessToken:create",
       ...options,
     },
-    client,
   });
 }
 
@@ -384,15 +394,15 @@ export function signTypedData<
   request: options,
 }: PayloadParams<CheckedSignTypedDataPayload<Types, PrimaryType>>) {
   return sendRequest<CheckedSignTypedDataPayload<Types, PrimaryType>>({
+    client,
     request: {
-      operation: "eoa:signTypedData",
       auth: options.auth,
+      operation: "eoa:signTypedData",
       options: {
         from: options.options.from,
         typedData: options.options.typedData,
       },
     },
-    client,
   });
 }
 
@@ -401,11 +411,11 @@ export function revokeAccessToken({
   request: options,
 }: PayloadParams<RevokeAccessTokenPayload>) {
   return sendRequest<RevokeAccessTokenPayload>({
+    client,
     request: {
       operation: "accessToken:revoke",
       ...options,
     },
-    client,
   });
 }
 
@@ -414,11 +424,11 @@ export function signAuthorization({
   request: options,
 }: PayloadParams<SignAuthorizationPayload>) {
   return sendRequest<SignAuthorizationPayload>({
+    client,
     request: {
       operation: "eoa:signAuthorization",
       ...options,
     },
-    client,
   });
 }
 
@@ -427,11 +437,11 @@ export function signStructuredMessage({
   request: options,
 }: PayloadParams<SignStructuredMessagePayload>) {
   return sendRequest<SignStructuredMessagePayload>({
+    client,
     request: {
       operation: "eoa:signStructuredMessage",
       ...options,
     },
-    client,
   });
 }
 
@@ -440,11 +450,101 @@ export function listAccessTokens({
   request: options,
 }: PayloadParams<ListAccessTokensPayload>) {
   return sendRequest<ListAccessTokensPayload>({
+    client,
     request: {
       operation: "accessToken:list",
       ...options,
     },
+  });
+}
+
+// ========== Solana Functions ==========
+
+export function createSolanaAccount({
+  client,
+  request: options,
+}: PayloadParams<CreateSolanaAccountPayload>) {
+  return sendRequest<CreateSolanaAccountPayload>({
     client,
+    request: {
+      operation: "solana:create",
+      ...options,
+    },
+  });
+}
+
+export function listSolanaAccounts({
+  client,
+  request: options,
+}: PayloadParams<ListSolanaAccountsPayload>) {
+  return sendRequest<ListSolanaAccountsPayload>({
+    client,
+    request: {
+      operation: "solana:list",
+      ...options,
+    },
+  });
+}
+
+export function signSolanaTransaction({
+  client,
+  request: options,
+}: PayloadParams<SignSolanaTransactionPayload>) {
+  return sendRequest<SignSolanaTransactionPayload>({
+    client,
+    request: {
+      operation: "solana:signTransaction",
+      ...options,
+    },
+  });
+}
+
+/**
+ * Reconstruct a signed solana transaction from the vault signature using @solana/kit
+ */
+export function reconstructSolanaSignedTransaction(
+  base64Transaction: string,
+  base58Signature: string,
+  signerPubkey: string,
+): Uint8Array {
+  // Decode the base64 transaction into bytes
+  const base64TransactionBytes = new Uint8Array(
+    Buffer.from(base64Transaction, "base64"),
+  );
+  // Decode the transaction to get its structure
+  const transactionDecoder = getTransactionDecoder();
+  const transaction = transactionDecoder.decode(base64TransactionBytes);
+
+  // Decode the base58 signature to bytes
+  const base58Encoder = getBase58Encoder();
+  const signatureBytes = base58Encoder.encode(base58Signature);
+
+  // Add the signature to the transaction
+  const signedTransaction = {
+    ...transaction,
+    signatures: {
+      ...transaction.signatures,
+      [address(signerPubkey)]: signatureBytes,
+    },
+  };
+
+  // Re-encode the signed transaction
+  const transactionEncoder = getTransactionEncoder();
+  const signedTransactionBytes = transactionEncoder.encode(signedTransaction);
+
+  return new Uint8Array(signedTransactionBytes);
+}
+
+export function signSolanaMessage({
+  client,
+  request: options,
+}: PayloadParams<SignSolanaMessagePayload>) {
+  return sendRequest<SignSolanaMessagePayload>({
+    client,
+    request: {
+      operation: "solana:signMessage",
+      ...options,
+    },
   });
 }
 
@@ -534,12 +634,12 @@ export async function createSignedAccessToken({
 
     // 6. Prepare JWT Claims
     const claims = {
+      encrypted_token: bytesToHex(ciphertext),
+      ephemeral_public_key: bytesToHex(clientEphemeralPublicKey),
       // Match Rust SignedTokenClaims struct (ensure names match server expectation)
       exp: expiryTimestamp,
       iat: Math.floor(Date.now() / 1000),
-      encrypted_token: bytesToHex(ciphertext),
       nonce: bytesToHex(nonce),
-      ephemeral_public_key: bytesToHex(clientEphemeralPublicKey),
       policies: additionalPolicies,
     };
 

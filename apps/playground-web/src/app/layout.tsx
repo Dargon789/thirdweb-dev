@@ -1,34 +1,19 @@
+import type { Metadata } from "next";
 import { metadataBase } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Metadata } from "next";
-import { Fira_Code, Inter } from "next/font/google";
-import Script from "next/script";
-import { AppSidebar } from "./AppSidebar";
+import { AppSidebarLayout } from "./AppSidebar";
 import { Providers } from "./providers";
-import "./globals.css";
+import "@workspace/ui/global.css";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
+import { ThemeProvider } from "next-themes";
 import NextTopLoader from "nextjs-toploader";
-import { PHProvider } from "../lib/posthog/Posthog";
-import { PosthogHeadSetup } from "../lib/posthog/PosthogHeadSetup";
-import { PostHogPageView } from "../lib/posthog/PosthogPageView";
-import { MobileHeader } from "./MobileHeader";
-import { getSidebarLinks } from "./navLinks";
-
-const sansFont = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  weight: "variable",
-});
-
-const monoFont = Fira_Code({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  weight: "variable",
-});
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
+  description: "thirdweb playground",
   metadataBase,
   title: "thirdweb playground",
-  description: "thirdweb playground",
 };
 
 export default async function RootLayout({
@@ -36,27 +21,20 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const sidebarLinks = await getSidebarLinks();
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <Script
-          src="https://thirdweb.com/js/pl.js"
-          defer
-          data-domain="playground.thirdweb.com"
-          data-api="https://pl.thirdweb.com/api/event"
-        />
-        <PosthogHeadSetup />
-      </head>
-
-      <PHProvider>
-        <PostHogPageView />
-        <body
-          className={cn(
-            "bg-background font-sans antialiased ",
-            sansFont.variable,
-            monoFont.variable,
-          )}
+      <body
+        className={cn(
+          "bg-background font-sans antialiased ",
+          GeistSans.variable,
+          GeistMono.variable,
+        )}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          disableTransitionOnChange
+          enableSystem={false}
         >
           <NextTopLoader
             color="hsl(var(--foreground))"
@@ -64,17 +42,14 @@ export default async function RootLayout({
             shadow={false}
             showSpinner={false}
           />
-          <MobileHeader links={sidebarLinks} />
           <div className="flex flex-col lg:h-dvh lg:flex-row">
-            <AppSidebar links={sidebarLinks} />
-            <div className="flex grow flex-col lg:overflow-auto">
-              <div className="relative grow">
-                <Providers>{children}</Providers>
-              </div>
-            </div>
+            <AppSidebarLayout>
+              <Providers>{children}</Providers>
+            </AppSidebarLayout>
           </div>
-        </body>
-      </PHProvider>
+          <Toaster />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

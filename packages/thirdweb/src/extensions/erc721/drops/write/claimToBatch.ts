@@ -48,8 +48,8 @@ export function claimToBatch(
   options: BaseTransactionOptions<ClaimToBatchParams>,
 ) {
   return multicall({
-    contract: options.contract,
     asyncParams: () => getClaimToBatchParams(options),
+    contract: options.contract,
     overrides: options.overrides,
   });
 }
@@ -74,21 +74,21 @@ async function getClaimToBatchParams(
   const data = await Promise.all(
     content.map(async (item) => {
       const claimParams = await getClaimParams({
-        type: "erc721",
         contract: options.contract,
-        to: item.to,
         from: options.from,
         quantity: item.quantity,
+        to: item.to,
+        type: "erc721",
       });
 
       return encodeClaim({
-        receiver: claimParams.receiver,
-        quantity: claimParams.quantity,
-        currency: claimParams.currency,
-        pricePerToken: claimParams.pricePerToken,
         allowlistProof: claimParams.allowlistProof,
+        currency: claimParams.currency,
         data: claimParams.data,
         overrides: claimParams.overrides,
+        pricePerToken: claimParams.pricePerToken,
+        quantity: claimParams.quantity,
+        receiver: claimParams.receiver,
       });
     }),
   );
@@ -101,7 +101,7 @@ async function getClaimToBatchParams(
  * For identical addresses that stays next to each other in the array,
  * we can combine them into one transaction _without altering the claiming order_
  *
- * For exampple, this structure:
+ * For example, this structure:
  * [
  *   {
  *     to: "0xabc",
@@ -133,8 +133,8 @@ export function optimizeClaimContent(
       item.to.toLowerCase() === previousItem.to.toLowerCase()
     ) {
       results[results.length - 1] = {
-        to: item.to,
         quantity: item.quantity + previousItem.quantity,
+        to: item.to,
       };
     } else {
       results.push(item);

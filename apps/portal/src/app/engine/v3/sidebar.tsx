@@ -1,5 +1,5 @@
-import type { SideBar } from "@/components/Layouts/DocLayout";
 import {
+  BookOpenIcon,
   BracesIcon,
   CloudIcon,
   CodeIcon,
@@ -11,76 +11,87 @@ import {
   WalletIcon,
   WrenchIcon,
 } from "lucide-react";
+import type { SideBar } from "@/components/Layouts/DocLayout";
 
 const engineV3Slug = "/engine/v3";
 
 export const sidebar: SideBar = {
-  name: "Engine",
   links: [
     {
-      name: "Overview",
       href: engineV3Slug,
       icon: <CloudIcon />,
+      name: "Overview",
     },
     {
-      name: "Playground",
       href: "https://playground.thirdweb.com/engine/airdrop",
       icon: <ExternalLinkIcon />,
+      name: "Playground",
     },
     {
-      name: "Get Started",
       href: `${engineV3Slug}/get-started`,
       icon: <RocketIcon />,
+      name: "Get Started",
     },
     {
-      name: "Key Concepts",
       icon: <KeyIcon />,
       links: [
         {
-          name: "Vault",
           href: "/vault",
+          name: "Vault",
         },
       ],
+      name: "Key Concepts",
     },
     {
-      name: "Configure Wallets",
       icon: <WalletIcon />,
       links: [
         {
+          href: `${engineV3Slug}/configure-wallets/server-wallets`,
           name: "Smart Server Wallet",
-          href: `${engineV3Slug}/configure-wallets/smart-server-wallet`,
         },
       ],
+      name: "Configure Wallets",
     },
     {
-      name: "API Reference",
+      icon: <BookOpenIcon />,
+      links: [
+        {
+          href: `${engineV3Slug}/guides/session-keys`,
+          name: "Session Keys",
+        },
+      ],
+      name: "Guides",
+    },
+    {
       href: "https://engine.thirdweb.com/reference",
       icon: <BracesIcon />,
+      name: "API Reference",
     },
     {
-      name: "TypeScript SDK",
       href: "/references/typescript/v5/serverWallet",
       icon: <CodeIcon />,
+      name: "TypeScript SDK",
     },
     {
-      name: "Security",
       href: "/vault/security",
       icon: <ShieldQuestionIcon />,
+      name: "Security",
     },
     {
-      name: "Migrate from v2",
       href: `${engineV3Slug}/migrate`,
       icon: <WrenchIcon />,
+      name: "Migrate from v2",
     },
     {
-      name: "Troubleshoot",
       href: `${engineV3Slug}/troubleshoot`,
       icon: <WrenchIcon />,
+      name: "Troubleshoot",
     },
     {
-      name: "FAQ",
       href: `${engineV3Slug}/faq`,
       icon: <MessageCircleQuestionIcon />,
+      name: "FAQ",
     },
   ],
+  name: "Transactions",
 };
