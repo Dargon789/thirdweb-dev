@@ -1583,8 +1583,8 @@ importers:
         specifier: 3.1.0
         version: 3.1.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)
       react-native-quick-crypto:
-        specifier: 0.7.14
-        version: 0.7.14(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)
+        specifier: 1.0.16
+        version: 1.0.16(expo@53.0.17(@babel/core@7.28.4)(bufferutil@4.0.9)(graphql@16.13.1)(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)(utf-8-validate@5.0.10))(react-native-nitro-modules@0.35.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1))(react-native-quick-base64@2.2.2(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1))(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)
       react-native-svg:
         specifier: 15.12.0
         version: 15.12.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)
@@ -14432,10 +14432,6 @@ packages:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
 
-  is-generator-function@1.1.0:
-    resolution: {integrity: sha512-nPUB5km40q9e8UfN/Zc24eLlzdSf9OfKByBw9CIdw4H1giPMeA0OIJvbchsCu4npfI2QcMVBsGEBHKZ7wLTWmQ==}
-    engines: {node: '>= 0.4'}
-
   is-generator-function@1.1.2:
     resolution: {integrity: sha512-upqt1SkGkODW9tsGNG5mtXTXtECizwtS2kA161M+gJPc1xdb/Ax629af6YrTwcOeQHbewrPNlE5Dx7kzvXTizA==}
     engines: {node: '>= 0.4'}
@@ -17463,6 +17459,12 @@ packages:
       react: '*'
       react-native: '>=0.71.0'
 
+  react-native-nitro-modules@0.35.0:
+    resolution: {integrity: sha512-Eho1yEcLbsteGpBFn2XZOp5FIptnEciWzuYBW49S0jo41Un2LeyesIO/MqYLY/c5o7D9Fw9th4pxGtV7OAb0+g==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
   react-native-passkey@3.1.0:
     resolution: {integrity: sha512-qOJ0q7AqbUOGXDOObcfiOJo1BOnG+lIQMEgltgeqmyMC+2XDlr7YrOQZgLwZbXheGC7BXPpwMSev/gxkgbt3xw==}
     peerDependencies:
@@ -17475,8 +17477,29 @@ packages:
       react: '*'
       react-native: '*'
 
+  react-native-quick-base64@2.2.2:
+    resolution: {integrity: sha512-WLHSifHLoamr2kF00Gov0W9ud6CfPshe1rmqWTquVIi9c62qxOaJCFVDrXFZhEBU8B8PvGLVuOlVKH78yhY0Fg==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
   react-native-quick-crypto@0.7.14:
     resolution: {integrity: sha512-ePl0pNgw0TCl9sn9zVX6es58PHXIA6pdDm5+dHawypD+cacyvzfpAFEqYR6opFtnBff/HHtsQrS0zX0AAfwodQ==}
+
+  react-native-quick-crypto@1.0.16:
+    resolution: {integrity: sha512-UsKd6EgEl9et5FrTeYy82NHDigVSoJSLTyccWAhmO1Iri8rjgve93uzXuFP3EZPB7rwxoEmG/pCRsgESKxrw2A==}
+    peerDependencies:
+      expo: '>=48.0.0'
+      expo-build-properties: '*'
+      react: '*'
+      react-native: '*'
+      react-native-nitro-modules: '>=0.29.1'
+      react-native-quick-base64: '>=2.1.0'
+    peerDependenciesMeta:
+      expo:
+        optional: true
+      expo-build-properties:
+        optional: true
 
   react-native-svg@15.12.0:
     resolution: {integrity: sha512-iE25PxIJ6V0C6krReLquVw6R0QTsRTmEQc4K2Co3P6zsimU/jltcDBKYDy1h/5j9S/fqmMeXnpM+9LEWKJKI6A==}
@@ -17623,6 +17646,10 @@ packages:
   readable-stream@3.6.2:
     resolution: {integrity: sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==}
     engines: {node: '>= 6'}
+
+  readable-stream@4.5.2:
+    resolution: {integrity: sha512-yjavECdqeZ3GLXNgRXgeQEdz9fvDDkNKyHnbHRFtOr7/LcfgBcmct7t/ET+HaCTqfh06OzoAxrkN/IfjJBVe+g==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
   readable-stream@4.7.0:
     resolution: {integrity: sha512-oIGGmcpTLwPga8Bn6/Z75SVaH1z5dUut2ibSyAMVhmUggWpmDn2dapB0n7f8nwaSiRtepAsfJyfXIO5DCVAODg==}
@@ -19968,10 +19995,6 @@ packages:
 
   which-module@2.0.1:
     resolution: {integrity: sha512-iBdZ57RDvnOR9AGBhML2vFZf7h8vmBjhoaZqODJBFWHVtKkDmKuHai3cx5PgVMrX5YDNp27AofYbAwctSS+vhQ==}
-
-  which-typed-array@1.1.19:
-    resolution: {integrity: sha512-rEvr90Bck4WZt9HHFC4DJMsjvu7x+r6bImz0/BrbWb7A2djJ8hnZMrWnHo9F8ssv0OMErasDhftrfROTyqSDrw==}
-    engines: {node: '>= 0.4'}
 
   which-typed-array@1.1.20:
     resolution: {integrity: sha512-LYfpUkmqwl0h9A2HL09Mms427Q1RZWuOHsukfVcKRq9q95iQxdw0ix1JQrqbcDR9PH1QDwf5Qo8OZb5lksZ8Xg==}
@@ -45634,13 +45657,6 @@ snapshots:
 
   is-fullwidth-code-point@3.0.0: {}
 
-  is-generator-function@1.1.0:
-    dependencies:
-      call-bound: 1.0.4
-      get-proto: 1.0.1
-      has-tostringtag: 1.0.2
-      safe-regex-test: 1.1.0
-
   is-generator-function@1.1.2:
     dependencies:
       call-bound: 1.0.4
@@ -45748,7 +45764,7 @@ snapshots:
 
   is-typed-array@1.1.15:
     dependencies:
-      which-typed-array: 1.1.19
+      which-typed-array: 1.1.20
 
   is-typedarray@1.0.0: {}
 
@@ -50116,6 +50132,11 @@ snapshots:
       react: 19.2.1
       react-native: 0.78.1(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.7)(bufferutil@4.1.0)(react@19.2.1)(utf-8-validate@5.0.10)
 
+  react-native-nitro-modules@0.35.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1):
+    dependencies:
+      react: 19.2.1
+      react-native: 0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10)
+
   react-native-passkey@3.1.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1):
     dependencies:
       react: 19.2.1
@@ -50131,16 +50152,10 @@ snapshots:
       react: 19.2.1
       react-native: 0.78.1(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.7)(bufferutil@4.1.0)(react@19.2.1)(utf-8-validate@5.0.10)
 
-  react-native-quick-crypto@0.7.14(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1):
+  react-native-quick-base64@2.2.2(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1):
     dependencies:
-      '@craftzdog/react-native-buffer': 6.1.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)
-      events: 3.3.0
-      readable-stream: 4.7.0
-      string_decoder: 1.3.0
-      util: 0.12.5
-    transitivePeerDependencies:
-      - react
-      - react-native
+      react: 19.2.1
+      react-native: 0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10)
 
   react-native-quick-crypto@0.7.14(react-native@0.78.1(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.7)(bufferutil@4.1.0)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1):
     dependencies:
@@ -50152,6 +50167,21 @@ snapshots:
     transitivePeerDependencies:
       - react
       - react-native
+
+  react-native-quick-crypto@1.0.16(expo@53.0.17(@babel/core@7.28.4)(bufferutil@4.0.9)(graphql@16.13.1)(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)(utf-8-validate@5.0.10))(react-native-nitro-modules@0.35.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1))(react-native-quick-base64@2.2.2(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1))(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1):
+    dependencies:
+      '@craftzdog/react-native-buffer': 6.1.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)
+      events: 3.3.0
+      react: 19.2.1
+      react-native: 0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10)
+      react-native-nitro-modules: 0.35.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)
+      react-native-quick-base64: 2.2.2(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)
+      readable-stream: 4.5.2
+      safe-buffer: 5.2.1
+      string_decoder: 1.3.0
+      util: 0.12.5
+    optionalDependencies:
+      expo: 53.0.17(@babel/core@7.28.4)(bufferutil@4.0.9)(graphql@16.13.1)(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1)(utf-8-validate@5.0.10)
 
   react-native-svg@15.12.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10))(react@19.2.1):
     dependencies:
@@ -50529,6 +50559,14 @@ snapshots:
       inherits: 2.0.4
       string_decoder: 1.3.0
       util-deprecate: 1.0.2
+
+  readable-stream@4.5.2:
+    dependencies:
+      abort-controller: 3.0.0
+      buffer: 6.0.3
+      events: 3.3.0
+      process: 0.11.10
+      string_decoder: 1.3.0
 
   readable-stream@4.7.0:
     dependencies:
@@ -53184,9 +53222,9 @@ snapshots:
     dependencies:
       inherits: 2.0.4
       is-arguments: 1.2.0
-      is-generator-function: 1.1.0
+      is-generator-function: 1.1.2
       is-typed-array: 1.1.15
-      which-typed-array: 1.1.19
+      which-typed-array: 1.1.20
 
   utila@0.4.0: {}
 
@@ -54331,16 +54369,6 @@ snapshots:
       is-weakset: 2.0.4
 
   which-module@2.0.1: {}
-
-  which-typed-array@1.1.19:
-    dependencies:
-      available-typed-arrays: 1.0.7
-      call-bind: 1.0.8
-      call-bound: 1.0.4
-      for-each: 0.3.5
-      get-proto: 1.0.1
-      gopd: 1.2.0
-      has-tostringtag: 1.0.2
 
   which-typed-array@1.1.20:
     dependencies:
