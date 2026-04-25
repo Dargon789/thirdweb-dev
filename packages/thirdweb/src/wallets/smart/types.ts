@@ -106,6 +106,9 @@ export type SmartWalletConnectionOptions = {
   personalAccount: Account;
   client: ThirdwebClient;
   chain?: Chain;
+  passkeySigner?: {
+    name?: string;
+  }; // TODO define passkey signer
 };
 
 export type UserOperationV06 = {
