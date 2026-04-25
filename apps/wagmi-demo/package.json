@@ -17,7 +17,7 @@
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "thirdweb": "workspace:*",
-    "viem": "2.39.0",
+    "viem": "2.48.4",
     "wagmi": "2.19.4"
   },
   "devDependencies": {
