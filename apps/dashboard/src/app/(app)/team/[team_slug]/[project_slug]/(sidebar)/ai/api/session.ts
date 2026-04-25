@@ -11,6 +11,13 @@ import type {
   UpdatedSessionInfo,
 } from "./types";
 
+function isSafePathSegment(value: string): boolean {
+  // Allow only URL-safe characters in path segments to prevent injection of slashes or traversal.
+  // Adjust the allowed pattern if session IDs have a stricter format.
+  const SAFE_SEGMENT_REGEX = /^[A-Za-z0-9._~-]+$/;
+  return SAFE_SEGMENT_REGEX.test(value);
+}
+
 export async function createSession(params: {
   project: Project;
   context: NebulaContext | undefined;
@@ -46,6 +53,9 @@ export async function updateSession(params: {
   sessionId: string;
   contextFilters: NebulaContext | undefined;
 }) {
+  if (!isSafePathSegment(params.sessionId)) {
+    throw new Error("Invalid sessionId.");
+  }
   const body: Record<string, string | boolean | object> = {};
 
   if (params.contextFilters) {
@@ -75,6 +85,9 @@ export async function deleteSession(params: {
   project: Project;
   sessionId: string;
 }) {
+  if (!isSafePathSegment(params.sessionId)) {
+    throw new Error("Invalid sessionId.");
+  }
   const res = await fetchWithAuthToken({
     endpoint: `${NEXT_PUBLIC_THIRDWEB_AI_HOST}/session/${params.sessionId}`,
     method: "DELETE",
@@ -108,6 +121,9 @@ export async function getSessionById(params: {
   project: Project;
   sessionId: string;
 }) {
+  if (!isSafePathSegment(params.sessionId)) {
+    throw new Error("Invalid sessionId.");
+  }
   const res = await fetchWithAuthToken({
     endpoint: `${NEXT_PUBLIC_THIRDWEB_AI_HOST}/session/${params.sessionId}`,
     method: "GET",
