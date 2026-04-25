@@ -59,8 +59,15 @@ export const POST = async (req: NextRequest) => {
 
   const requestBody = (await req.json()) as RequestTestnetFundsPayload;
   const { chainId, toAddress, turnstileToken } = requestBody;
-  if (Number.isNaN(chainId)) {
+  const safeChainId = Number(chainId);
+  if (!Number.isFinite(safeChainId) || !Number.isInteger(safeChainId) || safeChainId <= 0) {
     throw new Error("Invalid chain ID.");
+  }
+
+  // Keep outbound Engine path constrained to known supported chains.
+  const amountToClaim = getFaucetClaimAmount(safeChainId);
+  if (amountToClaim === null) {
+    return NextResponse.json({ error: "Faucet not available for this chain." }, { status: 400 });
   }
 
   if (
@@ -224,7 +231,7 @@ export const POST = async (req: NextRequest) => {
       cacheSet(addressCacheKey, "claimed", 24 * 60 * 60),
     ]);
     // then actually transfer the funds
-    const url = `${THIRDWEB_ENGINE_URL}/backend-wallet/${chainId}/transfer`;
+    const url = `${THIRDWEB_ENGINE_URL}/backend-wallet/${safeChainId}/transfer`;
     const response = await fetch(url, {
       body: JSON.stringify({
         amount: amountToClaim,
