@@ -56,7 +56,6 @@ export const POST = async (req: NextRequest) => {
       { status: 400 },
     );
   }
-
   const requestBody = (await req.json()) as RequestTestnetFundsPayload;
   const { chainId, toAddress, turnstileToken } = requestBody;
   const safeChainId = Number(chainId);
