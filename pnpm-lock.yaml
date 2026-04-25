@@ -921,8 +921,8 @@ importers:
         specifier: 3.4.2
         version: 3.4.2(eslint@9.26.0(hono@4.10.6)(jiti@2.6.1))
       eslint-plugin-svg-jsx:
-        specifier: ^1.2.4
-        version: 1.2.4
+        specifier: ^1.3.0
+        version: 1.3.0(eslint@9.26.0(hono@4.10.6)(jiti@2.6.1))
       eslint-plugin-tailwindcss:
         specifier: ^3.18.0
         version: 3.18.0(tailwindcss@3.4.17(ts-node@10.9.2(@types/node@24.0.15)(typescript@5.8.3)))
@@ -13277,9 +13277,11 @@ packages:
       eslint: '>=8'
       storybook: ^9.0.15
 
-  eslint-plugin-svg-jsx@1.2.4:
-    resolution: {integrity: sha512-sClnpIQY9OOxDLpf3JJU/m6Xk11dJqoaSRC5eyAt8Akp86/DNbzO8C6tyr3wjfJnPvgWjisYnEkUTw2m9yG45Q==}
+  eslint-plugin-svg-jsx@1.3.0:
+    resolution: {integrity: sha512-Aqpad1wZSfkKIazxw/WaTBkKyYPDB+8hBgfsor+VSwoyGMfaA6Tz7aQqv9NoA2cxvaMUrjnoVnfDk/ETAnNEUA==}
     engines: {node: '>=5.0.0'}
+    peerDependencies:
+      eslint: '>=8'
 
   eslint-plugin-tailwindcss@3.18.0:
     resolution: {integrity: sha512-PQDU4ZMzFH0eb2DrfHPpbgo87Zgg2EXSMOj1NSfzdZm+aJzpuwGerfowMIaVehSREEa0idbf/eoNYAOHSJoDAQ==}
@@ -27360,7 +27362,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
       '@types/debug': 4.1.13
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.3.4
       pony-cause: 2.1.11
       semver: 7.7.4
       uuid: 9.0.1
@@ -30399,7 +30401,7 @@ snapshots:
       debug: 2.6.9
       invariant: 2.2.4
       metro: 0.81.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      metro-config: 0.81.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      metro-config: 0.81.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.81.4
       readline: 1.3.0
       semver: 7.7.4
@@ -30418,7 +30420,7 @@ snapshots:
       debug: 2.6.9
       invariant: 2.2.4
       metro: 0.81.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      metro-config: 0.81.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      metro-config: 0.81.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.81.4
       readline: 1.3.0
       semver: 7.7.4
@@ -43945,7 +43947,9 @@ snapshots:
       - supports-color
       - typescript
 
-  eslint-plugin-svg-jsx@1.2.4: {}
+  eslint-plugin-svg-jsx@1.3.0(eslint@9.26.0(hono@4.10.6)(jiti@2.6.1)):
+    dependencies:
+      eslint: 9.26.0(hono@4.10.6)(jiti@2.6.1)
 
   eslint-plugin-tailwindcss@3.18.0(tailwindcss@3.4.17(ts-node@10.9.2(@types/node@24.0.15)(typescript@5.8.3))):
     dependencies:
@@ -44529,7 +44533,7 @@ snapshots:
 
   extension-port-stream@3.0.0:
     dependencies:
-      readable-stream: 4.7.0
+      readable-stream: 3.6.2
       webextension-polyfill: 0.10.0
 
   external-editor@3.1.0:
@@ -47007,36 +47011,6 @@ snapshots:
       flow-enums-runtime: 0.0.6
       metro-core: 0.81.4
 
-  metro-config@0.81.4(bufferutil@4.0.9)(utf-8-validate@5.0.10):
-    dependencies:
-      connect: 3.7.0
-      cosmiconfig: 5.2.1
-      flow-enums-runtime: 0.0.6
-      jest-validate: 29.7.0
-      metro: 0.81.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      metro-cache: 0.81.4
-      metro-core: 0.81.4
-      metro-runtime: 0.81.4
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  metro-config@0.81.4(bufferutil@4.1.0)(utf-8-validate@5.0.10):
-    dependencies:
-      connect: 3.7.0
-      cosmiconfig: 5.2.1
-      flow-enums-runtime: 0.0.6
-      jest-validate: 29.7.0
-      metro: 0.81.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      metro-cache: 0.81.4
-      metro-core: 0.81.4
-      metro-runtime: 0.81.4
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
   metro-config@0.81.4(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       connect: 3.7.0
@@ -47051,7 +47025,6 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
-    optional: true
 
   metro-core@0.81.4:
     dependencies:
@@ -47183,7 +47156,6 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
-    optional: true
 
   metro@0.81.4(bufferutil@4.0.9)(utf-8-validate@5.0.10):
     dependencies:
@@ -47211,7 +47183,7 @@ snapshots:
       metro-babel-transformer: 0.81.4
       metro-cache: 0.81.4
       metro-cache-key: 0.81.4
-      metro-config: 0.81.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      metro-config: 0.81.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.81.4
       metro-file-map: 0.81.4
       metro-resolver: 0.81.4
@@ -47258,7 +47230,7 @@ snapshots:
       metro-babel-transformer: 0.81.4
       metro-cache: 0.81.4
       metro-cache-key: 0.81.4
-      metro-config: 0.81.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      metro-config: 0.81.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.81.4
       metro-file-map: 0.81.4
       metro-resolver: 0.81.4
@@ -47325,7 +47297,6 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
-    optional: true
 
   micromark-core-commonmark@2.0.3:
     dependencies:
