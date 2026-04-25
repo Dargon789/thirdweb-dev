@@ -155,8 +155,8 @@ importers:
         specifier: ^0.6.5
         version: 0.6.8
       abitype:
-        specifier: 1.0.8
-        version: 1.0.8(typescript@5.7.3)(zod@4.3.6)
+        specifier: 1.2.4
+        version: 1.2.4(typescript@5.7.3)(zod@4.3.6)
       chakra-react-select:
         specifier: ^4.7.6
         version: 4.10.1(@chakra-ui/react@2.10.9(@emotion/react@11.14.0(@types/react@19.0.10)(react@19.0.0))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@19.0.10)(react@19.0.0))(@types/react@19.0.10)(react@19.0.0))(@types/react@19.0.10)(framer-motion@12.4.7(@emotion/is-prop-valid@1.4.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(@emotion/react@11.14.0(@types/react@19.0.10)(react@19.0.0))(@types/react@19.0.10)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -605,10 +605,10 @@ importers:
     dependencies:
       '@abstract-foundation/agw-client':
         specifier: ^1.4.2
-        version: 1.10.0(abitype@1.2.3(typescript@5.7.3)(zod@4.3.6))(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))
+        version: 1.10.0(abitype@1.2.4(typescript@5.7.3)(zod@4.3.6))(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))
       '@abstract-foundation/agw-react':
         specifier: ^1.5.4
-        version: 1.10.0(@privy-io/cross-app-connect@0.2.2(@wagmi/core@2.22.1(@tanstack/query-core@5.90.2)(@types/react@19.0.10)(react@19.0.0)(typescript@5.7.3)(use-sync-external-store@1.6.0(react@19.0.0))(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)))(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)))(@privy-io/react-auth@2.17.3(c6ovah5rbv4qaryc7omx5o6aei))(@tanstack/react-query@5.66.9(react@19.0.0))(abitype@1.2.3(typescript@5.7.3)(zod@4.3.6))(react@19.0.0)(secp256k1@5.0.1)(thirdweb@packages+thirdweb)(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))(wagmi@2.19.4(soqgwjtedg7ffftzkpvy6qjjju))
+        version: 1.10.0(@privy-io/cross-app-connect@0.2.2(@wagmi/core@2.22.1(@tanstack/query-core@5.90.2)(@types/react@19.0.10)(react@19.0.0)(typescript@5.7.3)(use-sync-external-store@1.6.0(react@19.0.0))(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)))(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)))(@privy-io/react-auth@2.17.3(kwk5cioq5xmjc7m7q2gunogfra))(@tanstack/react-query@5.66.9(react@19.0.0))(abitype@1.2.4(typescript@5.7.3)(zod@4.3.6))(react@19.0.0)(secp256k1@5.0.1)(thirdweb@packages+thirdweb)(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))(wagmi@2.19.4(soqgwjtedg7ffftzkpvy6qjjju))
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.54.2(react@19.0.0))
@@ -1414,8 +1414,8 @@ importers:
         specifier: 2.21.8
         version: 2.21.8(@react-native-async-storage/async-storage@2.2.0(react-native@0.78.1(@babel/core@7.28.4)(@babel/preset-env@7.29.0(@babel/core@7.28.4))(@types/react@19.2.7)(bufferutil@4.0.9)(react@19.2.1)(utf-8-validate@5.0.10)))(aws4fetch@1.0.20)(bufferutil@4.0.9)(encoding@0.1.13)(ioredis@5.6.1)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@4.3.6)
       abitype:
-        specifier: 1.0.8
-        version: 1.0.8(typescript@5.8.3)(zod@4.3.6)
+        specifier: 1.2.4
+        version: 1.2.4(typescript@5.8.3)(zod@4.3.6)
       cross-spawn:
         specifier: 7.0.6
         version: 7.0.6
@@ -1746,8 +1746,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.3(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       abitype:
-        specifier: 1.0.8
-        version: 1.0.8(typescript@5.9.3)(zod@3.25.76)
+        specifier: 1.2.4
+        version: 1.2.4(typescript@5.9.3)(zod@4.3.6)
       jose:
         specifier: 6.0.11
         version: 6.0.11
@@ -11116,8 +11116,8 @@ packages:
       zod:
         optional: true
 
-  abitype@1.1.1:
-    resolution: {integrity: sha512-Loe5/6tAgsBukY95eGaPSDmQHIjRZYQq8PB1MpsNccDIK8WiV+Uw6WzaIXipvaxTEL2yEB0OpEaQv3gs8pkS9Q==}
+  abitype@1.2.3:
+    resolution: {integrity: sha512-Ofer5QUnuUdTFsBRwARMoWKOH1ND5ehwYhJ3OJ/BQO+StkwQjHw0XyVh4vDttzHB7QOFhPHa/o413PJ82gU/Tg==}
     peerDependencies:
       typescript: '>=5.0.4'
       zod: ^3.22.0 || ^4.0.0
@@ -11127,8 +11127,8 @@ packages:
       zod:
         optional: true
 
-  abitype@1.2.3:
-    resolution: {integrity: sha512-Ofer5QUnuUdTFsBRwARMoWKOH1ND5ehwYhJ3OJ/BQO+StkwQjHw0XyVh4vDttzHB7QOFhPHa/o413PJ82gU/Tg==}
+  abitype@1.2.4:
+    resolution: {integrity: sha512-dpKH+N27vRjarMVTFFkeY445VTKftzGWpL0FiT7xmVmzQRKazZexzC5uHG0f6XKsVLAuUlndnbGau6lRejClxg==}
     peerDependencies:
       typescript: '>=5.0.4'
       zod: ^3.22.0 || ^4.0.0
@@ -20557,18 +20557,18 @@ snapshots:
     optionalDependencies:
       graphql: 16.13.2
 
-  '@abstract-foundation/agw-client@1.10.0(abitype@1.2.3(typescript@5.7.3)(zod@4.3.6))(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))':
+  '@abstract-foundation/agw-client@1.10.0(abitype@1.2.4(typescript@5.7.3)(zod@4.3.6))(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))':
     dependencies:
-      abitype: 1.2.3(typescript@5.7.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.7.3)(zod@4.3.6)
       viem: 2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)
     optionalDependencies:
       typescript: 5.7.3
 
-  '@abstract-foundation/agw-react@1.10.0(@privy-io/cross-app-connect@0.2.2(@wagmi/core@2.22.1(@tanstack/query-core@5.90.2)(@types/react@19.0.10)(react@19.0.0)(typescript@5.7.3)(use-sync-external-store@1.6.0(react@19.0.0))(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)))(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)))(@privy-io/react-auth@2.17.3(c6ovah5rbv4qaryc7omx5o6aei))(@tanstack/react-query@5.66.9(react@19.0.0))(abitype@1.2.3(typescript@5.7.3)(zod@4.3.6))(react@19.0.0)(secp256k1@5.0.1)(thirdweb@packages+thirdweb)(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))(wagmi@2.19.4(soqgwjtedg7ffftzkpvy6qjjju))':
+  '@abstract-foundation/agw-react@1.10.0(@privy-io/cross-app-connect@0.2.2(@wagmi/core@2.22.1(@tanstack/query-core@5.90.2)(@types/react@19.0.10)(react@19.0.0)(typescript@5.7.3)(use-sync-external-store@1.6.0(react@19.0.0))(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)))(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)))(@privy-io/react-auth@2.17.3(kwk5cioq5xmjc7m7q2gunogfra))(@tanstack/react-query@5.66.9(react@19.0.0))(abitype@1.2.4(typescript@5.7.3)(zod@4.3.6))(react@19.0.0)(secp256k1@5.0.1)(thirdweb@packages+thirdweb)(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))(wagmi@2.19.4(soqgwjtedg7ffftzkpvy6qjjju))':
     dependencies:
-      '@abstract-foundation/agw-client': 1.10.0(abitype@1.2.3(typescript@5.7.3)(zod@4.3.6))(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))
+      '@abstract-foundation/agw-client': 1.10.0(abitype@1.2.4(typescript@5.7.3)(zod@4.3.6))(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))
       '@privy-io/cross-app-connect': 0.2.2(@wagmi/core@2.22.1(@tanstack/query-core@5.90.2)(@types/react@19.0.10)(react@19.0.0)(typescript@5.7.3)(use-sync-external-store@1.6.0(react@19.0.0))(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)))(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))
-      '@privy-io/react-auth': 2.17.3(c6ovah5rbv4qaryc7omx5o6aei)
+      '@privy-io/react-auth': 2.17.3(kwk5cioq5xmjc7m7q2gunogfra)
       '@tanstack/react-query': 5.66.9(react@19.0.0)
       react: 19.0.0
       secp256k1: 5.0.1
@@ -27360,7 +27360,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
       '@types/debug': 4.1.13
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.3.4
       pony-cause: 2.1.11
       semver: 7.7.4
       uuid: 9.0.1
@@ -28383,7 +28383,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@privy-io/react-auth@2.17.3(c6ovah5rbv4qaryc7omx5o6aei)':
+  '@privy-io/react-auth@2.17.3(kwk5cioq5xmjc7m7q2gunogfra)':
     dependencies:
       '@coinbase/wallet-sdk': 4.3.2
       '@floating-ui/react': 0.26.28(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -28429,7 +28429,7 @@ snapshots:
       viem: 2.39.0(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6)
       zustand: 5.0.12(@types/react@19.0.10)(react@19.0.0)(use-sync-external-store@1.6.0(react@19.0.0))
     optionalDependencies:
-      '@abstract-foundation/agw-client': 1.10.0(abitype@1.2.3(typescript@5.7.3)(zod@4.3.6))(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))
+      '@abstract-foundation/agw-client': 1.10.0(abitype@1.2.4(typescript@5.7.3)(zod@4.3.6))(typescript@5.7.3)(viem@2.45.1(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)(zod@4.3.6))
       '@solana/spl-token': 0.4.14(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.7.3)(utf-8-validate@6.0.6))(bufferutil@4.1.0)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.3)(utf-8-validate@6.0.6)
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.7.3)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
@@ -38314,7 +38314,7 @@ snapshots:
 
   '@wagmi/cli@2.10.0(bufferutil@4.1.0)(typescript@5.8.3)(utf-8-validate@5.0.10)':
     dependencies:
-      abitype: 1.2.3(typescript@5.8.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.8.3)(zod@4.3.6)
       bundle-require: 5.1.0(esbuild@0.25.5)
       cac: 6.7.14
       change-case: 5.4.4
@@ -41185,11 +41185,6 @@ snapshots:
       typescript: 5.8.3
       zod: 4.3.6
 
-  abitype@1.0.8(typescript@5.9.3)(zod@3.25.76):
-    optionalDependencies:
-      typescript: 5.9.3
-      zod: 3.25.76
-
   abitype@1.1.0(typescript@5.7.3)(zod@3.22.4):
     optionalDependencies:
       typescript: 5.7.3
@@ -41220,36 +41215,6 @@ snapshots:
       typescript: 5.8.3
       zod: 4.3.6
 
-  abitype@1.1.1(typescript@5.7.3)(zod@3.22.4):
-    optionalDependencies:
-      typescript: 5.7.3
-      zod: 3.22.4
-
-  abitype@1.1.1(typescript@5.7.3)(zod@3.25.76):
-    optionalDependencies:
-      typescript: 5.7.3
-      zod: 3.25.76
-
-  abitype@1.1.1(typescript@5.7.3)(zod@4.3.6):
-    optionalDependencies:
-      typescript: 5.7.3
-      zod: 4.3.6
-
-  abitype@1.1.1(typescript@5.8.3)(zod@3.22.4):
-    optionalDependencies:
-      typescript: 5.8.3
-      zod: 3.22.4
-
-  abitype@1.1.1(typescript@5.8.3)(zod@3.25.76):
-    optionalDependencies:
-      typescript: 5.8.3
-      zod: 3.25.76
-
-  abitype@1.1.1(typescript@5.8.3)(zod@4.3.6):
-    optionalDependencies:
-      typescript: 5.8.3
-      zod: 4.3.6
-
   abitype@1.2.3(typescript@5.7.3)(zod@3.22.4):
     optionalDependencies:
       typescript: 5.7.3
@@ -41260,12 +41225,42 @@ snapshots:
       typescript: 5.7.3
       zod: 4.3.6
 
-  abitype@1.2.3(typescript@5.8.3)(zod@4.3.6):
+  abitype@1.2.3(typescript@5.9.3)(zod@4.3.6):
+    optionalDependencies:
+      typescript: 5.9.3
+      zod: 4.3.6
+
+  abitype@1.2.4(typescript@5.7.3)(zod@3.22.4):
+    optionalDependencies:
+      typescript: 5.7.3
+      zod: 3.22.4
+
+  abitype@1.2.4(typescript@5.7.3)(zod@3.25.76):
+    optionalDependencies:
+      typescript: 5.7.3
+      zod: 3.25.76
+
+  abitype@1.2.4(typescript@5.7.3)(zod@4.3.6):
+    optionalDependencies:
+      typescript: 5.7.3
+      zod: 4.3.6
+
+  abitype@1.2.4(typescript@5.8.3)(zod@3.22.4):
+    optionalDependencies:
+      typescript: 5.8.3
+      zod: 3.22.4
+
+  abitype@1.2.4(typescript@5.8.3)(zod@3.25.76):
+    optionalDependencies:
+      typescript: 5.8.3
+      zod: 3.25.76
+
+  abitype@1.2.4(typescript@5.8.3)(zod@4.3.6):
     optionalDependencies:
       typescript: 5.8.3
       zod: 4.3.6
 
-  abitype@1.2.3(typescript@5.9.3)(zod@4.3.6):
+  abitype@1.2.4(typescript@5.9.3)(zod@4.3.6):
     optionalDependencies:
       typescript: 5.9.3
       zod: 4.3.6
@@ -44529,7 +44524,7 @@ snapshots:
 
   extension-port-stream@3.0.0:
     dependencies:
-      readable-stream: 4.7.0
+      readable-stream: 3.6.2
       webextension-polyfill: 0.10.0
 
   external-editor@3.1.0:
@@ -48612,7 +48607,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.7.3)(zod@3.22.4)
+      abitype: 1.2.4(typescript@5.7.3)(zod@3.22.4)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.7.3
@@ -48627,7 +48622,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.7.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.7.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.7.3
@@ -48642,7 +48637,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.9.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.9.3
@@ -48656,7 +48651,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.0.8(typescript@5.7.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.7.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.7.3
@@ -48670,7 +48665,7 @@ snapshots:
       '@noble/hashes': 1.7.1
       '@scure/bip32': 1.6.2
       '@scure/bip39': 1.5.4
-      abitype: 1.0.8(typescript@5.7.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.7.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.7.3
@@ -48684,7 +48679,7 @@ snapshots:
       '@noble/hashes': 1.7.1
       '@scure/bip32': 1.6.2
       '@scure/bip39': 1.5.4
-      abitype: 1.0.8(typescript@5.8.3)(zod@3.25.76)
+      abitype: 1.2.4(typescript@5.8.3)(zod@3.25.76)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3
@@ -48698,7 +48693,7 @@ snapshots:
       '@noble/hashes': 1.7.1
       '@scure/bip32': 1.6.2
       '@scure/bip39': 1.5.4
-      abitype: 1.0.8(typescript@5.8.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.8.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3
@@ -48712,7 +48707,7 @@ snapshots:
       '@noble/hashes': 1.7.2
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.0.8(typescript@5.7.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.7.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.7.3
@@ -48726,7 +48721,7 @@ snapshots:
       '@noble/hashes': 1.7.2
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.0.8(typescript@5.8.3)(zod@3.25.76)
+      abitype: 1.2.4(typescript@5.8.3)(zod@3.25.76)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3
@@ -48740,7 +48735,7 @@ snapshots:
       '@noble/hashes': 1.7.2
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.0.8(typescript@5.8.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.8.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3
@@ -48754,7 +48749,7 @@ snapshots:
       '@noble/hashes': 1.7.2
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.0.8(typescript@5.8.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.8.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3
@@ -48769,7 +48764,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.0.8(typescript@5.8.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.8.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3
@@ -48784,7 +48779,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.7.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.7.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.7.3
@@ -48799,7 +48794,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.8.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.8.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3
@@ -48814,7 +48809,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.7.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.7.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.7.3
@@ -48829,7 +48824,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.1(typescript@5.7.3)(zod@3.22.4)
+      abitype: 1.2.4(typescript@5.7.3)(zod@3.22.4)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.7.3
@@ -48844,7 +48839,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.1(typescript@5.7.3)(zod@3.25.76)
+      abitype: 1.2.4(typescript@5.7.3)(zod@3.25.76)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.7.3
@@ -48859,7 +48854,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.1(typescript@5.7.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.7.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.7.3
@@ -48874,7 +48869,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.1(typescript@5.8.3)(zod@3.22.4)
+      abitype: 1.2.4(typescript@5.8.3)(zod@3.22.4)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3
@@ -48889,7 +48884,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.1(typescript@5.8.3)(zod@3.25.76)
+      abitype: 1.2.4(typescript@5.8.3)(zod@3.25.76)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3
@@ -48904,7 +48899,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.1(typescript@5.8.3)(zod@4.3.6)
+      abitype: 1.2.4(typescript@5.8.3)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3
