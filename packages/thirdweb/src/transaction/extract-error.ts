@@ -1,11 +1,7 @@
 import type { Abi } from "abitype";
-import { decodeErrorResult, type Hex, stringify } from "viem";
-import { isInsufficientFundsError } from "../analytics/track/helpers.js";
-import { trackInsufficientFundsError } from "../analytics/track/transaction.js";
+import { type Hex, decodeErrorResult } from "viem";
 import { resolveContractAbi } from "../contract/actions/resolve-abi.js";
 import type { ThirdwebContract } from "../contract/contract.js";
-import { isHex } from "../utils/encoding/hex.js";
-import { IS_DEV } from "../utils/process.js";
 
 /**
  * @internal
@@ -13,33 +9,9 @@ import { IS_DEV } from "../utils/process.js";
 export async function extractError<abi extends Abi>(args: {
   error: unknown;
   contract?: ThirdwebContract<abi>;
-  fromAddress?: string;
 }) {
-  const { error, contract, fromAddress } = args;
-
-  // Track insufficient funds errors during transaction preparation
-  if (isInsufficientFundsError(error) && contract) {
-    trackInsufficientFundsError({
-      chainId: contract.chain?.id,
-      client: contract.client,
-      contractAddress: contract.address,
-      error,
-      walletAddress: fromAddress,
-    });
-  }
-
-  const result = await extractErrorResult({ contract, error });
-  if (result) {
-    return new TransactionError(result, contract);
-  }
-  return error;
-}
-
-export async function extractErrorResult<abi extends Abi>(args: {
-  error: unknown;
-  contract?: ThirdwebContract<abi>;
-}): Promise<string | undefined> {
   const { error, contract } = args;
+  console.log("err result", error);
   if (typeof error === "object") {
     // try to parse RPC error
     const errorObj = error as {
@@ -48,41 +20,51 @@ export async function extractErrorResult<abi extends Abi>(args: {
       data?: Hex;
     };
     if (errorObj.data) {
-      if (errorObj.data !== "0x" && isHex(errorObj.data)) {
+      if (errorObj.data !== "0x") {
         let abi = contract?.abi;
         if (contract && !abi) {
           abi = await resolveContractAbi(contract).catch(() => undefined);
         }
+        console.log("abi", abi);
         const parsedError = decodeErrorResult({
-          abi,
           data: errorObj.data,
+          abi,
         });
-        return `${parsedError.errorName}${parsedError.args ? ` - ${parsedError.args}` : ""}`;
+        console.log("parsedError", parsedError);
+        return new TransactionError(
+          `${parsedError.errorName}${
+            parsedError.args ? ` - ${parsedError.args}` : ""
+          }`,
+          contract,
+        );
       }
+      return new TransactionError("Execution Reverted", contract);
     }
   }
-  return `Execution Reverted: ${stringify(error)}`;
+  return error;
 }
+
+export const __DEV__ = process.env.NODE_ENV !== "production";
 
 class TransactionError<abi extends Abi> extends Error {
   public contractAddress: string | undefined;
   public chainId: number | undefined;
 
   constructor(reason: string, contract?: ThirdwebContract<abi>) {
-    let message = reason;
-    if (IS_DEV && contract) {
-      // show more infor in dev
-      message = [
-        reason,
-        "",
-        `contract: ${contract.address}`,
-        `chainId: ${contract.chain?.id}`,
-      ].join("\n");
-    }
-    super(message);
+    super();
     this.name = "TransactionError";
     this.contractAddress = contract?.address;
     this.chainId = contract?.chain?.id;
-    this.message = message;
+    if (__DEV__ && contract) {
+      // show more infor in dev
+      this.message = [
+        reason,
+        "",
+        `contract: ${this.contractAddress}`,
+        `chainId: ${this.chainId}`,
+      ].join("\n");
+    } else {
+      this.message = reason;
+    }
   }
 }
