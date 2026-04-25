@@ -61,7 +61,7 @@ export const POST = async (req: NextRequest) => {
   const { chainId, toAddress, turnstileToken } = requestBody;
   const safeChainId = Number(chainId);
   if (!Number.isFinite(safeChainId) || !Number.isInteger(safeChainId) || safeChainId <= 0) {
-    throw new Error("Invalid chain ID.");
+    return NextResponse.json({ error: "Invalid chain ID." }, { status: 400 });
   }
 
   // Keep outbound Engine path constrained to known supported chains.
