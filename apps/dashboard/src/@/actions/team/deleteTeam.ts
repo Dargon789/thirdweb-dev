@@ -3,6 +3,10 @@ import "server-only";
 import { getAuthToken } from "@/api/auth-token";
 import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 
+function isValidTeamId(teamId: string) {
+  return /^[A-Za-z0-9_-]+$/.test(teamId);
+}
+
 export async function deleteTeam(options: { teamId: string }) {
   const token = await getAuthToken();
   if (!token) {
@@ -12,8 +16,15 @@ export async function deleteTeam(options: { teamId: string }) {
     } as const;
   }
 
+  if (!isValidTeamId(options.teamId)) {
+    return {
+      errorMessage: "Invalid team ID.",
+      status: "error",
+    } as const;
+  }
+
   const res = await fetch(
-    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/teams/${options.teamId}`,
+    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/teams/${encodeURIComponent(options.teamId)}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
