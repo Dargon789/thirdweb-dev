@@ -6,6 +6,10 @@ import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 import type { ChainInfraSKU } from "@/types/billing";
 import { getAbsoluteUrl } from "@/utils/vercel";
 
+function isValidTeamSlug(slug: string): boolean {
+  return /^[a-z0-9-]{1,64}$/.test(slug);
+}
+
 export async function reSubscribePlan(options: {
   teamId: string;
 }): Promise<{ status: number }> {
@@ -57,9 +61,18 @@ export async function getChainInfraCheckoutURL(options: {
     } as const;
   }
 
+  if (!isValidTeamSlug(options.teamSlug)) {
+    return {
+      error: "Invalid team identifier.",
+      status: "error",
+    } as const;
+  }
+
+  const safeTeamSlug = encodeURIComponent(options.teamSlug);
+
   const res = await fetch(
     new URL(
-      `/v1/teams/${options.teamSlug}/checkout/create-link`,
+      `/v1/teams/${safeTeamSlug}/checkout/create-link`,
       NEXT_PUBLIC_THIRDWEB_API_HOST,
     ),
     {
