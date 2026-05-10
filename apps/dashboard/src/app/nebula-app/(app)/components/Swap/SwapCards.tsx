@@ -122,6 +122,7 @@ export function SwapTransactionCardLayout(props: {
 export function ApproveTransactionCard(props: {
   swapData: NebulaSwapData;
   client: ThirdwebClient;
+  onTxSettled?: (txHash: string) => void;
 }) {
   const { status, setStatus, sendTx } = useTxSetup();
 
