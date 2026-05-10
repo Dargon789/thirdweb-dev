@@ -163,7 +163,7 @@ export function NebulaTasksPage() {
         setNewTask({
           title: task.title,
           prompt: task.prompt,
-          interval: task.interval.replace(/[^\d]/g, ""), // Extract just the number
+interval: task.interval.replace(/[^\d.]/g, ""),
           agent: task.agent.toLowerCase(),
         });
         setEditingTask(taskId);
