@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { ConnectButton, ThirdwebProvider } from "thirdweb/react";
+<<<<<<<< HEAD:apps/dashboard/src/app/(app)/team/[team_slug]/[project_slug]/(sidebar)/ai/components/Chats.stories.tsx
 import { projectStub, randomLorem } from "@/storybook/stubs";
+========
+import { randomLorem } from "@/storybook/stubs";
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/components/Chats.stories.tsx
 import { storybookThirdwebClient } from "@/storybook/utils";
 import { type ChatMessage, Chats } from "./Chats";
 
@@ -23,7 +27,11 @@ const meta = {
       appDirectory: true,
     },
   },
+<<<<<<<< HEAD:apps/dashboard/src/app/(app)/team/[team_slug]/[project_slug]/(sidebar)/ai/components/Chats.stories.tsx
   title: "AI/Chats",
+========
+  title: "Nebula/Chats",
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/components/Chats.stories.tsx
 } satisfies Meta<typeof Variant>;
 
 export default meta;
@@ -63,7 +71,11 @@ export const SendTransaction: Story = {
       },
       {
         data: {
+<<<<<<<< HEAD:apps/dashboard/src/app/(app)/team/[team_slug]/[project_slug]/(sidebar)/ai/components/Chats.stories.tsx
           chain_id: 1,
+========
+          chainId: 1,
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/components/Chats.stories.tsx
           data: "0x",
           to: "0x1F846F6DAE38E1C88D71EAA191760B15f38B7A37",
           value: "0x16345785d8a0000",
@@ -225,7 +237,10 @@ export const Markdown: Story = {
 function Variant(props: { messages: ChatMessage[] }) {
   return (
     <Chats
+<<<<<<<< HEAD:apps/dashboard/src/app/(app)/team/[team_slug]/[project_slug]/(sidebar)/ai/components/Chats.stories.tsx
       project={projectStub("xxxxx", "team-1")}
+========
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/components/Chats.stories.tsx
       authToken="xxxxx"
       client={storybookThirdwebClient}
       enableAutoScroll={false}
