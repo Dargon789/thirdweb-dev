@@ -324,11 +324,7 @@ export function NebulaTasksPage() {
                         </Card>
                         <Card className="p-4">
                           <div className="text-2xl font-bold">
-                            {Math.round(
-                              (stats.successfulExecutions /
-                                stats.totalExecutions) *
-                                100
-                            )}
+{stats.totalExecutions > 0 ? Math.round((stats.successfulExecutions / stats.totalExecutions) * 100) : 0}
                             %
                           </div>
                           <div className="text-sm text-muted-foreground">
