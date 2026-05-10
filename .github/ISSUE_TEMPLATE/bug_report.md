@@ -29,15 +29,15 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
- - OS: [e.g. Windows 10, macOS, Ubuntu]
- - Browser [e.g. chrome, safari]
- - Browser Version [e.g. 22]
+ - OS: [e.g. Windows 11, macOS Sonoma, Ubuntu 22.04]
+ - Browser [e.g. Chrome, Safari, Firefox]
+ - Browser Version [e.g. 120]
 
 **Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Browser Version [e.g. 22]
+ - Device: [e.g. iPhone 15, Pixel 8]
+ - OS: [e.g. iOS 17, Android 14]
+ - Browser [e.g. Mobile Safari, Chrome]
+ - Browser Version [e.g. 120]
 
 **Additional context**
 Add any other context about the problem here.
