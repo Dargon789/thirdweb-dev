@@ -132,7 +132,7 @@ export function ApproveTransactionCard(props: {
       client={props.client}
       status={status}
       setStatus={setStatus}
-      sendTx={(tx) => sendTx(tx, undefined)}
+      sendTx={(tx) => sendTx(tx, props.onTxSettled)}
     />
   );
 }
