@@ -140,6 +140,7 @@ export function useTxSetup() {
         category: "nebula",
         action: "execute_transaction",
         label: "attempt",
+        chainId: tx.chain.id,
       });
 
       try {
