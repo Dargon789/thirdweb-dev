@@ -122,7 +122,6 @@ export function SwapTransactionCardLayout(props: {
 export function ApproveTransactionCard(props: {
   swapData: NebulaSwapData;
   client: ThirdwebClient;
-  onTxSettled?: (txHash: string) => void;
 }) {
   const { status, setStatus, sendTx } = useTxSetup();
 
@@ -132,7 +131,7 @@ export function ApproveTransactionCard(props: {
       client={props.client}
       status={status}
       setStatus={setStatus}
-      sendTx={(tx) => sendTx(tx, props.onTxSettled)}
+      sendTx={(tx) => sendTx(tx, undefined)}
     />
   );
 }
@@ -201,7 +200,7 @@ export function ApproveTransactionCardLayout(props: {
         {props.status.type !== "confirmed" && (
           <div className="flex items-center justify-end border-t px-4 py-4 lg:px-5">
             <TransactionButton
-              isPending={props.status.type === "sending"}
+              isPending={isTransactionPending}
               transactionCount={undefined}
               txChainID={swapData.transaction.chainId}
               variant="default"
