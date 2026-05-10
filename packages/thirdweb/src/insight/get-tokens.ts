@@ -1,12 +1,12 @@
 import type {
-  GetV1TokensErc20ByOwnerAddressData,
-  GetV1TokensErc20ByOwnerAddressResponse,
+  GetV1TokensData,
+  GetV1TokensResponse,
 } from "@thirdweb-dev/insight";
 import type { Chain } from "../chains/types.js";
 import type { ThirdwebClient } from "../client/client.js";
 import type { GetWalletBalanceResult } from "../wallets/utils/getWalletBalance.js";
 
-type OwnedToken = GetV1TokensErc20ByOwnerAddressResponse["data"][number];
+type OwnedToken = GetV1TokensResponse["data"][number];
 
 /**
  * Get ERC20 tokens owned by an address
@@ -26,10 +26,14 @@ export async function getOwnedTokens(args: {
   client: ThirdwebClient;
   chains: Chain[];
   ownerAddress: string;
-  queryOptions?: GetV1TokensErc20ByOwnerAddressData["query"];
+  tokenAddresses?: string[];
+  queryOptions?: Omit<
+    GetV1TokensData["query"],
+    "owner_address" | "chain_id" | "chain"
+  >;
 }): Promise<GetWalletBalanceResult[]> {
   const [
-    { getV1TokensErc20ByOwnerAddress },
+    { getV1Tokens },
     { getThirdwebDomains },
     { getClientFetch },
     { assertInsightEnabled },
@@ -42,23 +46,25 @@ export async function getOwnedTokens(args: {
     import("../utils/json.js"),
   ]);
 
-  const { client, chains, ownerAddress, queryOptions } = args;
+  const { client, chains, ownerAddress, tokenAddresses, queryOptions } = args;
 
   await assertInsightEnabled(chains);
 
-  const defaultQueryOptions: GetV1TokensErc20ByOwnerAddressData["query"] = {
-    chain: chains.map((chain) => chain.id),
+  const defaultQueryOptions: GetV1TokensData["query"] = {
+    chain_id: chains.length > 0 ? chains.map((chain) => chain.id) : [1],
+    include_native: "true",
     include_spam: "false",
-    metadata: "true",
     limit: 50,
+    metadata: "true",
+    owner_address: [ownerAddress],
+    token_address: tokenAddresses ? tokenAddresses : undefined,
+    sort_by: "balance",
+    sort_order: "desc",
   };
 
-  const result = await getV1TokensErc20ByOwnerAddress({
+  const result = await getV1Tokens({
     baseUrl: `https://${getThirdwebDomains().insight}`,
     fetch: getClientFetch(client),
-    path: {
-      ownerAddress: ownerAddress,
-    },
     query: {
       ...defaultQueryOptions,
       ...queryOptions,
@@ -82,13 +88,13 @@ async function transformOwnedToken(
     const decimals = t.decimals ?? 18;
     const value = BigInt(t.balance);
     return {
-      value,
-      displayValue: toTokens(value, decimals),
-      tokenAddress: t.token_address,
       chainId: t.chain_id,
       decimals,
-      symbol: t.symbol ?? "",
+      displayValue: toTokens(value, decimals),
       name: t.name ?? "",
+      symbol: t.symbol ?? "",
+      tokenAddress: t.token_address,
+      value,
     };
   });
 }

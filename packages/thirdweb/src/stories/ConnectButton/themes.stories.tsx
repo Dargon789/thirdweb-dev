@@ -1,16 +1,17 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { darkTheme } from "../../react/core/design-system/index.js";
 import { ConnectButton } from "../../react/web/ui/ConnectWallet/ConnectButton.js";
 import { storyClient } from "../utils.js";
 
 const meta = {
-  title: "Connect/ConnectButton/themes",
+  args: {
+    client: storyClient,
+  },
   component: ConnectButton,
   parameters: {
     layout: "centered",
   },
-  args: {
-    client: storyClient,
-  },
+  title: "Connect/ConnectButton/themes",
 } satisfies Meta<typeof ConnectButton>;
 
 type Story = StoryObj<typeof meta>;
@@ -24,6 +25,17 @@ export const Dark: Story = {
 export const Light: Story = {
   args: {
     theme: "light",
+  },
+};
+
+export const Custom: Story = {
+  args: {
+    theme: darkTheme({
+      colors: {
+        modalBg: "#0c0a2e",
+        borderColor: "#2f2987",
+      },
+    }),
   },
 };
 

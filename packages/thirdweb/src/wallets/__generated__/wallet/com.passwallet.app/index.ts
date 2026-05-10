@@ -3,9 +3,9 @@
 
 export const wallet = {
   id: "com.passwallet.app",
-  name: "Pass App: Web3 Smart Wallet",
+  name: "Pass App",
   homepage: "https://pass.app/",
-  image_id: "fbca9015-a370-4961-d25f-130e302d9600",
+  image_id: "d098fb77-70ae-4230-3059-3623ba048100",
   app: {
     browser: null,
     ios: "https://apps.apple.com/il/app/pass-app-web3-smart-wallet/id6670792141",

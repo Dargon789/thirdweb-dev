@@ -5,27 +5,22 @@ import {
   BadgeContainer,
   storybookLog,
   storybookThirdwebClient,
-<<<<<<< HEAD:apps/dashboard/src/app/nebula-app/(app)/components/ExecuteTransactionCard.stories.tsx
-} from "stories/utils";
-import { ConnectButton, ThirdwebProvider } from "thirdweb/react";
-=======
 } from "@/storybook/utils";
->>>>>>> upstream/main:apps/nebula/src/app/(app)/components/ExecuteTransactionCard.stories.tsx
 import { ExecuteTransactionCardLayout } from "./ExecuteTransactionCard";
 import type { TxStatus } from "./Swap/common";
 
 const meta = {
-<<<<<<< HEAD:apps/dashboard/src/app/nebula-app/(app)/components/ExecuteTransactionCard.stories.tsx
-  title: "Nebula/actions/ExecuteTransactionCard",
-=======
->>>>>>> upstream/main:apps/nebula/src/app/(app)/components/ExecuteTransactionCard.stories.tsx
   component: Story,
   parameters: {
     nextjs: {
       appDirectory: true,
     },
   },
+<<<<<<<< HEAD:apps/dashboard/src/app/(app)/team/[team_slug]/[project_slug]/(sidebar)/ai/components/ExecuteTransactionCard.stories.tsx
+  title: "AI/actions/ExecuteTransactionCard",
+========
   title: "Nebula/actions/ExecuteTransactionCard",
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/components/ExecuteTransactionCard.stories.tsx
 } satisfies Meta<typeof Story>;
 
 export default meta;
@@ -77,7 +72,11 @@ function Variant(props: { label: string; status: TxStatus }) {
         setStatus={setStatus}
         status={status}
         txData={{
+<<<<<<<< HEAD:apps/dashboard/src/app/(app)/team/[team_slug]/[project_slug]/(sidebar)/ai/components/ExecuteTransactionCard.stories.tsx
+          chain_id: 1,
+========
           chainId: 1,
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/components/ExecuteTransactionCard.stories.tsx
           data: "0x", // thirdweb.eth
           to: "0xEb0effdFB4dC5b3d5d3aC6ce29F3ED213E95d675",
           value: "0x16345785d8a0000", // 0.1 eth

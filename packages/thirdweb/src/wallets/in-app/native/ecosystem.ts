@@ -1,10 +1,10 @@
 import type { ThirdwebClient } from "../../../client/client.js";
-import type { Wallet } from "../../interfaces/wallet.js";
 import type {
   CreateWalletArgs,
   EcosystemWalletId,
 } from "../../wallet-types.js";
 import { createInAppWallet } from "../core/wallet/in-app-core.js";
+import type { EcosystemWallet } from "../core/wallet/types.js";
 
 /**
  * Creates an [Ecosystem Wallet](https://portal.thirdweb.com/connect/ecosystems/overview) based on various authentication methods.
@@ -48,7 +48,7 @@ import { createInAppWallet } from "../core/wallet/in-app-core.js";
  *
  * ### Connect to a restricted ecosystem wallet with your designated partner ID
  *
- * The parnter ID will be provided to you by the ecosystem with which you're integrating.
+ * The partner ID will be provided to you by the ecosystem with which you're integrating.
  *
  * ```ts
  * import { ecosystemWallet } from "thirdweb/wallets";
@@ -63,21 +63,13 @@ import { createInAppWallet } from "../core/wallet/in-app-core.js";
  */
 export function ecosystemWallet(
   ...args: CreateWalletArgs<EcosystemWalletId>
-): Wallet<EcosystemWalletId> {
+): EcosystemWallet {
   const [ecosystemId, createOptions] = args;
   const ecosystem = {
     id: ecosystemId,
     partnerId: createOptions?.partnerId,
   };
   return createInAppWallet({
-    ecosystem,
-    createOptions: {
-      auth: {
-        ...createOptions?.auth,
-        options: [], // controlled by ecosystem
-      },
-      partnerId: createOptions?.partnerId,
-    },
     connectorFactory: async (client: ThirdwebClient) => {
       const { InAppNativeConnector } = await import("./native-connector.js");
       return new InAppNativeConnector({
@@ -87,5 +79,13 @@ export function ecosystemWallet(
         // TODO (enclave): passkeyDomain for ecosystem wallets
       });
     },
-  }) as Wallet<EcosystemWalletId>;
+    createOptions: {
+      auth: {
+        ...createOptions?.auth,
+        options: [], // controlled by ecosystem
+      },
+      partnerId: createOptions?.partnerId,
+    },
+    ecosystem,
+  }) as EcosystemWallet;
 }

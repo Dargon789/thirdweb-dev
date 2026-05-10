@@ -1,10 +1,10 @@
 import type { AbiParameterToPrimitiveType } from "abitype";
+import { decodeAbiParameters } from "viem";
 import { readContract } from "../../../../../transaction/read-contract.js";
 import type { BaseTransactionOptions } from "../../../../../transaction/types.js";
 import { encodeAbiParameters } from "../../../../../utils/abi/encodeAbiParameters.js";
-import { decodeAbiParameters } from "viem";
-import type { Hex } from "../../../../../utils/encoding/hex.js";
 import { detectMethod } from "../../../../../utils/bytecode/detectExtension.js";
+import type { Hex } from "../../../../../utils/encoding/hex.js";
 
 /**
  * Represents the parameters for the "reverse" function.
@@ -14,21 +14,26 @@ export type ReverseParams = {
     type: "bytes";
     name: "reverseName";
   }>;
+  coinType: AbiParameterToPrimitiveType<{
+    type: "uint256";
+    name: "coinType";
+  }>;
 };
 
-export const FN_SELECTOR = "0xec11c823" as const;
+export const FN_SELECTOR = "0x5d78a217" as const;
 const FN_INPUTS = [
   {
-    type: "bytes",
     name: "reverseName",
+    type: "bytes",
+  },
+  {
+    name: "coinType",
+    type: "uint256",
   },
 ] as const;
 const FN_OUTPUTS = [
   {
     type: "string",
-  },
-  {
-    type: "address",
   },
   {
     type: "address",
@@ -70,7 +75,10 @@ export function isReverseSupported(availableSelectors: string[]) {
  * ```
  */
 export function encodeReverseParams(options: ReverseParams) {
-  return encodeAbiParameters(FN_INPUTS, [options.reverseName]);
+  return encodeAbiParameters(FN_INPUTS, [
+    options.reverseName,
+    options.coinType,
+  ]);
 }
 
 /**
@@ -128,6 +136,6 @@ export async function reverse(options: BaseTransactionOptions<ReverseParams>) {
   return readContract({
     contract: options.contract,
     method: [FN_SELECTOR, FN_INPUTS, FN_OUTPUTS] as const,
-    params: [options.reverseName],
+    params: [options.reverseName, options.coinType],
   });
 }

@@ -49,17 +49,17 @@ export async function sendEip712Transaction(
 
   const hash = await signEip712Transaction({
     account,
-    eip712Transaction,
     chainId: transaction.chain.id,
+    eip712Transaction,
   });
 
   const rpc = getRpcClient(transaction);
   const result = await eth_sendRawTransaction(rpc, hash);
 
   return {
-    transactionHash: result,
     chain: transaction.chain,
     client: transaction.client,
+    transactionHash: result,
   };
 }
 
@@ -94,24 +94,24 @@ export async function populateEip712Transaction(
 ): Promise<EIP721TransactionSerializable> {
   const { account, transaction } = options;
   const { gas, maxFeePerGas, maxPriorityFeePerGas, gasPerPubdata } =
-    await getZkGasFees({ transaction, from: getAddress(account.address) });
+    await getZkGasFees({ from: getAddress(account.address), transaction });
 
   // serialize the transaction (with fees, gas, nonce)
   const serializableTransaction = await toSerializableTransaction({
+    from: account.address,
     transaction: {
       ...transaction,
       gas,
       maxFeePerGas,
       maxPriorityFeePerGas,
     },
-    from: account.address,
   });
 
   return {
     ...serializableTransaction,
     ...transaction.eip712,
-    gasPerPubdata,
     from: account.address as Hex,
+    gasPerPubdata,
   };
 }
 
@@ -179,33 +179,67 @@ export async function getZkGasFees(args: {
     maxPriorityFeePerGas === undefined
   ) {
     const rpc = getRpcClient(transaction);
-    const params = await formatTransaction({ transaction, from });
-    const result = (await rpc({
-      // biome-ignore lint/suspicious/noExplicitAny: TODO add to RPC method types
-      method: "zks_estimateFee" as any,
-      // biome-ignore lint/suspicious/noExplicitAny: TODO add to RPC method types
-      params: [replaceBigInts(params, toHex)] as any,
-    })) as {
-      gas_limit: string;
-      max_fee_per_gas: string;
-      max_priority_fee_per_gas: string;
-      gas_per_pubdata_limit: string;
-    };
-    gas = toBigInt(result.gas_limit) * 2n; // overestimating to avoid issues when not accounting for paymaster extra gas ( we should really pass the paymaster input above for better accuracy )
-    const baseFee = toBigInt(result.max_fee_per_gas);
-    maxFeePerGas = baseFee * 2n; // bumping the base fee per gas to ensure fast inclusion
-    maxPriorityFeePerGas = toBigInt(result.max_priority_fee_per_gas) || 1n;
-    gasPerPubdata = toBigInt(result.gas_per_pubdata_limit) * 2n; // doubling for fast inclusion;
-    if (gasPerPubdata < 50000n) {
-      // enforce a minimum gas per pubdata limit
-      gasPerPubdata = 50000n;
+    const params = await formatTransaction({ from, transaction });
+
+    // Try zkSync-specific fee estimation first, fallback to standard EVM methods
+    try {
+      const result = (await rpc({
+        // biome-ignore lint/suspicious/noExplicitAny: TODO add to RPC method types
+        method: "zks_estimateFee" as any,
+        // biome-ignore lint/suspicious/noExplicitAny: TODO add to RPC method types
+        params: [replaceBigInts(params, toHex)] as any,
+      })) as {
+        gas_limit: string;
+        max_fee_per_gas: string;
+        max_priority_fee_per_gas: string;
+        gas_per_pubdata_limit: string;
+      };
+      gas = toBigInt(result.gas_limit) * 2n; // overestimating to avoid issues when not accounting for paymaster extra gas ( we should really pass the paymaster input above for better accuracy )
+      const baseFee = toBigInt(result.max_fee_per_gas);
+      maxFeePerGas = baseFee * 2n; // bumping the base fee per gas to ensure fast inclusion
+      maxPriorityFeePerGas = toBigInt(result.max_priority_fee_per_gas) || 1n;
+      gasPerPubdata = toBigInt(result.gas_per_pubdata_limit) * 2n; // doubling for fast inclusion;
+      if (gasPerPubdata < 50000n) {
+        // enforce a minimum gas per pubdata limit
+        gasPerPubdata = 50000n;
+      }
+    } catch {
+      // Fallback to standard EVM methods if zks_estimateFee is not available
+      const [{ estimateGas }, { getDefaultGasOverrides }] = await Promise.all([
+        import("../estimate-gas.js"),
+        import("../../../gas/fee-data.js"),
+      ]);
+
+      const [estimatedGas, gasOverrides] = await Promise.all([
+        gas === undefined
+          ? estimateGas({ transaction, from })
+          : Promise.resolve(gas),
+        getDefaultGasOverrides(transaction.client, transaction.chain),
+      ]);
+
+      gas = estimatedGas * 2n; // overestimating similar to zkSync estimation
+      if ("maxFeePerGas" in gasOverrides && gasOverrides.maxFeePerGas) {
+        maxFeePerGas = gasOverrides.maxFeePerGas * 2n; // bumping for fast inclusion
+      } else if ("gasPrice" in gasOverrides && gasOverrides.gasPrice) {
+        maxFeePerGas = gasOverrides.gasPrice * 2n;
+      }
+      if (
+        "maxPriorityFeePerGas" in gasOverrides &&
+        gasOverrides.maxPriorityFeePerGas
+      ) {
+        maxPriorityFeePerGas = gasOverrides.maxPriorityFeePerGas;
+      } else {
+        maxPriorityFeePerGas = 1n;
+      }
+      // Use 100k as default gasPerPubdata for non-zkSync chains
+      gasPerPubdata = 100000n;
     }
   }
   return {
     gas,
+    gasPerPubdata,
     maxFeePerGas,
     maxPriorityFeePerGas,
-    gasPerPubdata,
   };
 }
 
@@ -222,18 +256,18 @@ async function formatTransaction(args: {
   ]);
   const gasPerPubdata = eip712?.gasPerPubdata;
   return {
-    from,
-    to,
     data,
-    value,
-    gasPerPubdata,
     eip712Meta: {
       ...eip712,
-      gasPerPubdata: gasPerPubdata || 50000n,
       factoryDeps: eip712?.factoryDeps?.map((dep) =>
         Array.from(hexToBytes(dep)),
       ),
+      gasPerPubdata: gasPerPubdata || 50000n,
     },
+    from,
+    gasPerPubdata,
+    to,
     type: "0x71",
+    value,
   };
 }

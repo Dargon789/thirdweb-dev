@@ -1,16 +1,23 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { parseAbiItem } from "abitype";
 import open from "open";
 import ora, { type Ora } from "ora";
+import prompts from "prompts";
 import { parse } from "toml";
 import { createThirdwebClient } from "../../../client/client.js";
 import { upload } from "../../../storage/upload.js";
+import { checkPrerequisites } from "./check-prerequisites.js";
 
 const THIRDWEB_URL = "https://thirdweb.com";
 
 export async function publishStylus(secretKey?: string) {
   const spinner = ora("Checking if this is a Stylus project...").start();
+
+  checkPrerequisites(spinner, "cargo", ["--version"], "Rust (cargo)");
+  checkPrerequisites(spinner, "rustc", ["--version"], "Rust compiler (rustc)");
+
   const uri = await buildStylus(spinner, secretKey);
 
   const url = getUrl(uri, "publish").toString();
@@ -20,6 +27,10 @@ export async function publishStylus(secretKey?: string) {
 
 export async function deployStylus(secretKey?: string) {
   const spinner = ora("Checking if this is a Stylus project...").start();
+
+  checkPrerequisites(spinner, "cargo", ["--version"], "Rust (cargo)");
+  checkPrerequisites(spinner, "rustc", ["--version"], "Rust compiler (rustc)");
+
   const uri = await buildStylus(spinner, secretKey);
 
   const url = getUrl(uri, "deploy").toString();
@@ -77,9 +88,9 @@ async function buildStylus(spinner: Ora, secretKey?: string) {
     }
     spinner.succeed("Initcode generated.");
 
-    // Step 3: Run stylus command to generate abi
+    // Step 3: Run stylus command to generate abi (plain Solidity, no solc needed)
     spinner.start("Generating ABI...");
-    const abiResult = spawnSync("cargo", ["stylus", "export-abi", "--json"], {
+    const abiResult = spawnSync("cargo", ["stylus", "export-abi"], {
       encoding: "utf-8",
     });
     if (abiResult.status !== 0) {
@@ -87,45 +98,85 @@ async function buildStylus(spinner: Ora, secretKey?: string) {
       process.exit(1);
     }
 
-    const abiContent = abiResult.stdout.trim();
-    if (!abiContent) {
+    const solidityOutput = abiResult.stdout.trim();
+    if (!solidityOutput) {
       spinner.fail("Failed to generate ABI.");
+      process.exit(1);
+    }
+
+    const interfaces = parseSolidityInterfaces(solidityOutput);
+    if (interfaces.length === 0) {
+      spinner.fail("No interfaces found in ABI output.");
       process.exit(1);
     }
     spinner.succeed("ABI generated.");
 
-    // Step 4: Process the output
-    const contractName = extractContractNameFromExportAbi(abiContent);
-    if (!contractName) {
-      spinner.fail("Error: Could not determine contract name from ABI output.");
+    // Step 3.5: detect the constructor
+    spinner.start("Detecting constructor\u2026");
+    const constructorResult = spawnSync("cargo", ["stylus", "constructor"], {
+      encoding: "utf-8",
+    });
+
+    if (constructorResult.status !== 0) {
+      spinner.fail("Failed to get constructor signature.");
       process.exit(1);
     }
 
-    let cleanedAbi = "";
-    try {
-      const jsonMatch = abiContent.match(/\[.*\]/s);
-      if (jsonMatch) {
-        cleanedAbi = jsonMatch[0];
-      } else {
-        throw new Error("No valid JSON ABI found in the file.");
+    const constructorSigRaw = constructorResult.stdout.trim();
+    spinner.succeed(`Constructor found: ${constructorSigRaw || "none"}`);
+
+    // Step 4: Process the output
+    let selectedIndex = 0;
+
+    if (interfaces.length > 1) {
+      const response = await prompts({
+        choices: interfaces.map((iface, idx) => ({
+          title: iface.name,
+          value: idx,
+        })),
+        message: "Select entrypoint:",
+        name: "contract",
+        type: "select",
+      });
+
+      if (typeof response.contract !== "number") {
+        spinner.fail("No contract selected.");
+        process.exit(1);
       }
-    } catch (error) {
-      spinner.fail("Error: ABI file contains invalid format.");
-      console.error(error);
+
+      selectedIndex = response.contract;
+    }
+
+    const selectedInterface = interfaces[selectedIndex];
+    if (!selectedInterface) {
+      spinner.fail("No interface found.");
       process.exit(1);
+    }
+
+    const selectedContractName = selectedInterface.name.replace(/^I/, "");
+    // biome-ignore lint/suspicious/noExplicitAny: ABI is untyped JSON from parseAbiItem
+    const abiArray: any[] = selectedInterface.abi;
+
+    const constructorAbi = constructorSigToAbi(constructorSigRaw);
+    if (
+      constructorAbi &&
+      // biome-ignore lint/suspicious/noExplicitAny: ABI entries have varying shapes
+      !abiArray.some((e: any) => e.type === "constructor")
+    ) {
+      abiArray.unshift(constructorAbi);
     }
 
     const metadata = {
       compiler: {},
       language: "rust",
       output: {
-        abi: JSON.parse(cleanedAbi),
+        abi: abiArray,
         devdoc: {},
         userdoc: {},
       },
       settings: {
         compilationTarget: {
-          "src/main.rs": contractName,
+          "src/main.rs": selectedContractName,
         },
       },
       sources: {},
@@ -152,20 +203,20 @@ async function buildStylus(spinner: Ora, secretKey?: string) {
       client,
       files: [
         {
-          name: contractName,
-          metadataUri,
-          bytecodeUri,
           analytics: {
-            command: "publish-stylus",
-            contract_name: contractName,
             cli_version: "",
+            command: "publish-stylus",
+            contract_name: selectedContractName,
             project_type: "stylus",
           },
+          bytecodeUri,
           compilers: {
             stylus: [
-              { compilerVersion: "", evmVersion: "", metadataUri, bytecodeUri },
+              { bytecodeUri, compilerVersion: "", evmVersion: "", metadataUri },
             ],
           },
+          metadataUri,
+          name: selectedContractName,
         },
       ],
     });
@@ -178,12 +229,94 @@ async function buildStylus(spinner: Ora, secretKey?: string) {
   }
 }
 
-function extractContractNameFromExportAbi(abiRawOutput: string): string | null {
-  const match = abiRawOutput.match(/<stdin>:(I[A-Za-z0-9_]+)/);
-  if (match?.[1]) {
-    return match[1].replace(/^I/, "");
+// biome-ignore lint/suspicious/noExplicitAny: ABI items from parseAbiItem are untyped
+type AbiEntry = any;
+type ParsedInterface = { name: string; abi: AbiEntry[] };
+
+function parseSolidityInterfaces(source: string): ParsedInterface[] {
+  const results: ParsedInterface[] = [];
+
+  const ifaceRegex = /interface\s+(I?[A-Za-z0-9_]+)\s*\{([\s\S]*?)\n\}/g;
+  for (
+    let ifaceMatch = ifaceRegex.exec(source);
+    ifaceMatch !== null;
+    ifaceMatch = ifaceRegex.exec(source)
+  ) {
+    const name = ifaceMatch[1] ?? "";
+    const body = ifaceMatch[2] ?? "";
+    const abi: AbiEntry[] = [];
+
+    // Build struct lookup: name -> tuple type string
+    const structs = new Map<string, string>();
+    const structRegex = /struct\s+(\w+)\s*\{([^}]*)\}/g;
+    for (
+      let structMatch = structRegex.exec(body);
+      structMatch !== null;
+      structMatch = structRegex.exec(body)
+    ) {
+      const fields = (structMatch[2] ?? "")
+        .split(";")
+        .map((f) => f.trim())
+        .filter(Boolean)
+        .map((f) => f.split(/\s+/)[0] ?? "");
+      structs.set(structMatch[1] ?? "", `(${fields.join(",")})`);
+    }
+
+    // Resolve struct references in a type string (iterative for nested structs)
+    const resolveStructs = (sig: string): string => {
+      let resolved = sig;
+      for (let i = 0; i < 10; i++) {
+        let changed = false;
+        for (const [sName, sTuple] of structs) {
+          const re = new RegExp(`\\b${sName}\\b(\\[\\])?`, "g");
+          const next = resolved.replace(
+            re,
+            (_, arr) => `${sTuple}${arr ?? ""}`,
+          );
+          if (next !== resolved) {
+            resolved = next;
+            changed = true;
+          }
+        }
+        if (!changed) break;
+      }
+      return resolved;
+    };
+
+    // Extract each statement (function/error/event) delimited by ;
+    const statements = body
+      .split(";")
+      .map((s) => s.replace(/\n/g, " ").trim())
+      .filter(
+        (s) =>
+          s.startsWith("function ") ||
+          s.startsWith("error ") ||
+          s.startsWith("event "),
+      );
+
+    for (const stmt of statements) {
+      // Strip Solidity qualifiers that abitype doesn't expect
+      let cleaned = stmt
+        .replace(/\b(external|public|internal|private)\b/g, "")
+        .replace(/\b(memory|calldata|storage)\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      // Resolve struct type names to tuple types
+      cleaned = resolveStructs(cleaned);
+
+      try {
+        const parsed = parseAbiItem(cleaned);
+        abi.push(parsed);
+      } catch {
+        // Skip unparseable items
+      }
+    }
+
+    results.push({ abi, name });
   }
-  return null;
+
+  return results;
 }
 
 function getUrl(hash: string, command: string) {
@@ -200,4 +333,25 @@ function extractBytecode(rawOutput: string): string {
     throw new Error("Could not find start of bytecode");
   }
   return rawOutput.slice(hexStart).trim();
+}
+
+function constructorSigToAbi(sig: string) {
+  if (!sig || !sig.startsWith("constructor")) return undefined;
+
+  const sigClean = sig
+    .replace(/^constructor\s*\(?/, "")
+    .replace(/\)\s*$/, "")
+    .replace(/\s+(payable|nonpayable)\s*$/, "");
+
+  const mutability = sig.includes("payable") ? "payable" : "nonpayable";
+
+  const inputs =
+    sigClean === ""
+      ? []
+      : sigClean.split(",").map((p) => {
+          const [type, name = ""] = p.trim().split(/\s+/);
+          return { internalType: type, name, type };
+        });
+
+  return { inputs, stateMutability: mutability, type: "constructor" };
 }

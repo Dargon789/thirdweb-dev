@@ -27,7 +27,7 @@ export interface WalletNameProps
    * If not passed, the component will return `null`.
    *
    * You can/should pass a descriptive text/component to this prop, indicating that the
-   * name was not fetched succesfully
+   * name was not fetched successfully
    * @example
    * ```tsx
    * <WalletName fallbackComponent={<span>Failed to load</span>}
@@ -103,7 +103,7 @@ export function WalletName({
   formatFn,
   ...restProps
 }: WalletNameProps) {
-  const nameQuery = useWalletName({ queryOptions, formatFn });
+  const nameQuery = useWalletName({ formatFn, queryOptions });
   if (nameQuery.isLoading) {
     return loadingComponent || null;
   }

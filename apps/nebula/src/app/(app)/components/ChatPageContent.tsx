@@ -52,49 +52,7 @@ export function ChatPageContent(props: {
   const [userHasSubmittedMessage, setUserHasSubmittedMessage] = useState(false);
   const [messages, setMessages] = useState<Array<ChatMessage>>(() => {
     if (props.session?.history) {
-<<<<<<< HEAD:apps/dashboard/src/app/nebula-app/(app)/components/ChatPageContent.tsx
-      const _messages: ChatMessage[] = [];
-
-      for (const message of props.session.history) {
-        if (message.role === "action") {
-          try {
-            const content = JSON.parse(message.content) as {
-              session_id: string;
-              data: string;
-              type: "sign_transaction" | (string & {});
-            };
-
-            if (content.type === "sign_transaction") {
-              const txData = JSON.parse(content.data);
-              _messages.push({
-                type: "action",
-                subtype: "sign_transaction",
-                data: txData,
-              });
-            } else if (content.type === "sign_swap") {
-              const swapData = JSON.parse(content.data);
-              _messages.push({
-                type: "action",
-                subtype: "sign_swap",
-                data: swapData,
-              });
-            }
-          } catch (e) {
-            console.error("error processing message", e, { message });
-          }
-        } else {
-          _messages.push({
-            text: message.content,
-            type: message.role,
-            request_id: undefined,
-          });
-        }
-      }
-
-      return _messages;
-=======
       return parseHistoryToMessages(props.session.history);
->>>>>>> upstream/main:apps/nebula/src/app/(app)/components/ChatPageContent.tsx
     }
     return [];
   });
@@ -527,82 +485,12 @@ async function handleNebulaPrompt(params: {
           return;
         }
 
-<<<<<<< HEAD:apps/dashboard/src/app/nebula-app/(app)/components/ChatPageContent.tsx
-        hasReceivedResponse = true;
-        setMessages((prev) => {
-          const lastMessage = prev[prev.length - 1];
-
-          // append to previous assistant message
-          if (lastMessage?.type === "assistant") {
-            return [
-              ...prev.slice(0, -1),
-              {
-                text: lastMessage.text + res.data.v,
-                type: "assistant",
-                request_id: requestIdForMessage,
-              },
-            ];
-          }
-
-          // start a new assistant message
-          return [
-            ...prev,
-            {
-              text: res.data.v,
-              type: "assistant",
-              request_id: requestIdForMessage,
-            },
-          ];
-        });
-      }
-
-      if (res.event === "presence") {
-        setMessages((prev) => {
-          const lastMessage = prev[prev.length - 1];
-
-          // append to previous presence message
-          if (lastMessage?.type === "presence") {
-            return [
-              ...prev.slice(0, -1),
-              {
-                type: "presence",
-                texts: [...lastMessage.texts, res.data.data],
-              },
-            ];
-          }
-
-          // start a new presence message
-          return [...prev, { texts: [res.data.data], type: "presence" }];
-        });
-      }
-
-      if (res.event === "action") {
-        hasReceivedResponse = true;
-        if (res.type === "sign_transaction") {
-=======
         case "image": {
           hasReceivedResponse = true;
->>>>>>> upstream/main:apps/nebula/src/app/(app)/components/ChatPageContent.tsx
           setMessages((prevMessages) => {
             return [
               ...prevMessages,
               {
-<<<<<<< HEAD:apps/dashboard/src/app/nebula-app/(app)/components/ChatPageContent.tsx
-                type: "action",
-                subtype: res.type,
-                data: res.data,
-              },
-            ];
-          });
-        } else if (res.type === "sign_swap") {
-          setMessages((prevMessages) => {
-            return [
-              ...prevMessages,
-              {
-                type: "action",
-                subtype: res.type,
-=======
->>>>>>> upstream/main:apps/nebula/src/app/(app)/components/ChatPageContent.tsx
                 data: res.data,
                 request_id: res.request_id,
                 type: "image",

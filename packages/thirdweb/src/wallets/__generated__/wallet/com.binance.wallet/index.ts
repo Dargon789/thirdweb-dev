@@ -13,7 +13,8 @@ export const wallet = {
     mac: null,
     windows: null,
     linux: null,
-    chrome: null,
+    chrome:
+      "https://chromewebstore.google.com/detail/binance-wallet/cadiboklkpojfamcoggejbbdjcoiljjk?utm_source=walletconnect",
     firefox: null,
     safari: null,
     edge: null,
@@ -25,7 +26,7 @@ export const wallet = {
     universal: "https://app.binance.com/cedefi",
   },
   desktop: {
-    native: null,
-    universal: null,
+    native: "",
+    universal: "https://www.binance.com/en/web3wallet",
   },
 } as const;

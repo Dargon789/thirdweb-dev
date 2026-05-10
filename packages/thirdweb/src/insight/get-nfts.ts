@@ -6,12 +6,12 @@ import type {
   GetV1NftsResponse,
 } from "@thirdweb-dev/insight";
 import type { Chain } from "../chains/types.js";
-import type { ThirdwebClient } from "../client/client.js";
-import type { NFT } from "../utils/nft/parseNft.js";
-
 import { getCachedChain } from "../chains/utils.js";
+import type { ThirdwebClient } from "../client/client.js";
 import { getContract } from "../contract/contract.js";
 import { getAddress } from "../utils/address.js";
+import type { NFT } from "../utils/nft/parseNft.js";
+
 type OwnedNFT = GetV1NftsResponse["data"][number];
 type ContractNFT = GetV1NftsByContractAddressResponse["data"][number];
 
@@ -33,6 +33,7 @@ export async function getOwnedNFTs(args: {
   client: ThirdwebClient;
   chains: Chain[];
   ownerAddress: string;
+  contractAddresses?: string[];
   includeMetadata?: boolean;
   queryOptions?: Omit<GetV1NftsData["query"], "owner_address" | "chain">;
 }): Promise<(NFT & { quantityOwned: bigint })[]> {
@@ -50,8 +51,8 @@ export async function getOwnedNFTs(args: {
     import("viem"),
   ]);
 
-  // TODO (insight): add support for contract address filters
-  const { client, chains, ownerAddress, queryOptions } = args;
+  const { client, chains, ownerAddress, contractAddresses, queryOptions } =
+    args;
 
   await assertInsightEnabled(chains);
 
@@ -59,7 +60,8 @@ export async function getOwnedNFTs(args: {
     chain: chains.map((chain) => chain.id),
     // metadata: includeMetadata ? "true" : "false", TODO (insight): add support for this
     limit: 50,
-    owner_address: ownerAddress,
+    owner_address: [ownerAddress],
+    contract_address: contractAddresses ? contractAddresses : undefined,
   };
 
   const result = await getV1Nfts({
@@ -134,10 +136,10 @@ export async function getContractNFTs(args: {
 
   const defaultQueryOptions: GetV1NftsByContractAddressData["query"] = {
     chain: chains.map((chain) => chain.id),
-    // metadata: includeMetadata ? "true" : "false", TODO (insight): add support for this
-    limit: 50,
     include_owners:
       includeOwners === true ? ("true" as const) : ("false" as const),
+    // metadata: includeMetadata ? "true" : "false", TODO (insight): add support for this
+    limit: 50,
   };
 
   await assertInsightEnabled(chains);
@@ -213,7 +215,7 @@ export async function getNFT(args: {
 
   const defaultQueryOptions: GetV1NftsByContractAddressByTokenIdData["query"] =
     {
-      chain: chain.id,
+      chain_id: [chain.id],
       include_owners:
         includeOwners === true ? ("true" as const) : ("false" as const),
     };
@@ -259,13 +261,19 @@ async function transformNFTModel(
       let parsedNft: NFT;
       const {
         contract,
+
+        // biome-ignore lint/correctness/noUnusedVariables: explicitly unused to not include it in the resulting metadata
         extra_metadata,
+        // biome-ignore lint/correctness/noUnusedVariables: explicitly unused to not include it in the resulting metadata
         collection,
         metadata_url,
+        // biome-ignore lint/correctness/noUnusedVariables: explicitly unused to not include it in the resulting metadata
         chain_id,
         token_id,
+        // biome-ignore lint/correctness/noUnusedVariables: explicitly unused to not include it in the resulting metadata
         status,
         balance,
+        // biome-ignore lint/correctness/noUnusedVariables: explicitly unused to not include it in the resulting metadata
         token_type,
         ...rest
       } = nft;
@@ -282,9 +290,9 @@ async function transformNFTModel(
       }
 
       const metadata = replaceIPFSGatewayRecursively({
-        uri: nft.metadata_url ?? "",
-        image: nft.image_url,
         attributes: nft.extra_metadata?.attributes ?? undefined,
+        image: nft.image_url,
+        uri: nft.metadata_url ?? "",
         ...metadataToUse,
       });
 
@@ -300,26 +308,31 @@ async function transformNFTModel(
         }).catch(() => 0n);
 
         parsedNft = parseNFT(metadata, {
+          chainId: contract?.chain_id ?? 0,
+          owner: owners?.[0],
+          supply: supply,
+          tokenAddress: contract?.address ?? "",
           tokenId: BigInt(token_id),
           tokenUri: replaceIPFSGateway(metadata_url) ?? "",
           type: "ERC1155",
-          owner: owners?.[0],
-          tokenAddress: contract?.address ?? "",
-          chainId: contract?.chain_id ?? 0,
-          supply: supply,
         });
       } else {
         parsedNft = parseNFT(metadata, {
-          tokenId: BigInt(token_id),
-          type: "ERC721",
-          owner: owners?.[0],
-          tokenUri: replaceIPFSGateway(metadata_url) ?? "",
-          tokenAddress: contract?.address ?? "",
           chainId: contract?.chain_id ?? 0,
+          owner: owners?.[0],
+          tokenAddress: contract?.address ?? "",
+          tokenId: BigInt(token_id),
+          tokenUri: replaceIPFSGateway(metadata_url) ?? "",
+          type: "ERC721",
         });
       }
 
-      return parsedNft;
+      return {
+        ...parsedNft,
+        ...(contract?.type === "erc1155"
+          ? { quantityOwned: balance ? BigInt(balance) : undefined }
+          : {}),
+      };
     }),
   );
 }
