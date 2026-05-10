@@ -3,12 +3,13 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { Ecosystem, Partner } from "../../../../types";
+import type { Ecosystem, Partner } from "@/api/team/ecosystems";
 
 type UpdatePartnerParams = {
   partnerId: string;
   ecosystem: Ecosystem;
   name: string;
+  imageUrl?: string | null;
   allowlistedDomains: string[];
   allowlistedBundleIds: string[];
   accessControl?: {
@@ -39,19 +40,20 @@ export function useUpdatePartner(
       const res = await fetch(
         `${params.ecosystem.url}/${params.ecosystem.id}/partner/${params.partnerId}`,
         {
-          method: "PATCH",
+          body: JSON.stringify({
+            accessControl: params.accessControl,
+            allowlistedBundleIds: params.allowlistedBundleIds,
+            allowlistedDomains: params.allowlistedDomains,
+            imageUrl: params.imageUrl,
+            name: params.name,
+          }),
 
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
             "x-thirdweb-team-id": teamId,
           },
-          body: JSON.stringify({
-            name: params.name,
-            allowlistedDomains: params.allowlistedDomains,
-            allowlistedBundleIds: params.allowlistedBundleIds,
-            accessControl: params.accessControl,
-          }),
+          method: "PATCH",
         },
       );
 

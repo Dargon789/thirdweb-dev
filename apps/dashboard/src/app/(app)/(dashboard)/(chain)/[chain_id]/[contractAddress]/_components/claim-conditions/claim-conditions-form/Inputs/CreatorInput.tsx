@@ -1,6 +1,6 @@
-import { Input } from "@/components/ui/input";
 import { useActiveAccount } from "thirdweb/react";
-import { CustomFormControl } from "../common";
+import { FormFieldSetup } from "@/components/blocks/FormFieldSetup";
+import { Input } from "@/components/ui/input";
 import { useClaimConditionsFormContext } from "../index";
 
 /**
@@ -14,8 +14,7 @@ interface CreatorInputProps {
 export const CreatorInput: React.FC<CreatorInputProps> = ({
   creatorAddress,
 }) => {
-  const { formDisabled, claimConditionType, isAdmin } =
-    useClaimConditionsFormContext();
+  const { claimConditionType, isAdmin } = useClaimConditionsFormContext();
   const walletAddress = useActiveAccount()?.address;
 
   if (claimConditionType !== "creator") {
@@ -23,9 +22,9 @@ export const CreatorInput: React.FC<CreatorInputProps> = ({
   }
 
   return (
-    <CustomFormControl
-      disabled={formDisabled}
-      label="Creator address"
+    <FormFieldSetup
+      isRequired={false}
+      errorMessage={undefined}
       helperText={
         <>
           This wallet address will be able to indefinitely claim.{" "}
@@ -33,8 +32,14 @@ export const CreatorInput: React.FC<CreatorInputProps> = ({
             "To use a different address, please connect a different wallet."}
         </>
       }
+      label="Creator address"
     >
-      <Input disabled readOnly value={creatorAddress || walletAddress} />
-    </CustomFormControl>
+      <Input
+        disabled
+        readOnly
+        value={creatorAddress || walletAddress}
+        className="disabled:opacity-100 max-w-sm"
+      />
+    </FormFieldSetup>
   );
 };

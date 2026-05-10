@@ -1,8 +1,15 @@
 "use client";
 
-import type { Team } from "@/api/team";
-import type { TeamAccountRole } from "@/api/team-members";
-import { GradientAvatar } from "@/components/blocks/Avatars/GradientAvatar";
+import { EllipsisIcon, PlusIcon } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { ThirdwebClient } from "thirdweb";
+import { createTeam } from "@/actions/team/createTeam";
+import type { Team } from "@/api/team/get-team";
+import type { TeamAccountRole } from "@/api/team/team-members";
+import { GradientAvatar } from "@/components/blocks/avatar/gradient-avatar";
+import { TeamPlanBadge } from "@/components/blocks/TeamPlanBadge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,13 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ToolTipLabel } from "@/components/ui/tooltip";
-import { EllipsisIcon, PlusIcon } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import type { ThirdwebClient } from "thirdweb";
-import { TeamPlanBadge } from "../../components/TeamPlanBadge";
-import { getValidTeamPlan } from "../../team/components/TeamHeader/getValidTeamPlan";
+import { useDashboardRouter } from "@/lib/DashboardRouter";
 import { SearchInput } from "../components/SearchInput";
 
 export function AccountTeamsUI(props: {
@@ -26,6 +27,7 @@ export function AccountTeamsUI(props: {
   }[];
   client: ThirdwebClient;
 }) {
+  const router = useDashboardRouter();
   const [teamSearchValue, setTeamSearchValue] = useState("");
   const teamsToShow = !teamSearchValue
     ? props.teamsWithRole
@@ -34,6 +36,22 @@ export function AccountTeamsUI(props: {
           .toLowerCase()
           .includes(teamSearchValue.toLowerCase());
       });
+
+  const createTeamAndRedirect = () => {
+    toast.promise(
+      createTeam().then((res) => {
+        if (res.status === "error") {
+          throw new Error(res.errorMessage);
+        }
+        router.push(`/team/${res.data.slug}`);
+      }),
+      {
+        error: "Failed to create team",
+        loading: "Creating team",
+        success: "Team created",
+      },
+    );
+  };
 
   return (
     <div>
@@ -45,20 +63,18 @@ export function AccountTeamsUI(props: {
           </p>
         </div>
 
-        <ToolTipLabel label="Coming Soon">
-          <Button disabled className="gap-2 max-sm:w-full">
-            <PlusIcon className="size-4" />
-            Create Team
-          </Button>
-        </ToolTipLabel>
+        <Button className="gap-2 max-sm:w-full" onClick={createTeamAndRedirect}>
+          <PlusIcon className="size-4" />
+          Create Team
+        </Button>
       </div>
 
       <div className="h-4" />
 
       <SearchInput
+        onValueChange={setTeamSearchValue}
         placeholder="Search Teams"
         value={teamSearchValue}
-        onValueChange={setTeamSearchValue}
       />
 
       <div className="h-4" />
@@ -68,10 +84,10 @@ export function AccountTeamsUI(props: {
         {teamsToShow.map((v) => {
           return (
             <li
-              key={v.team.id}
               className="border-border border-b p-4 last:border-b-0"
+              key={v.team.id}
             >
-              <TeamRow team={v.team} role={v.role} client={props.client} />
+              <TeamRow client={props.client} role={v.role} team={v.team} />
             </li>
           );
         })}
@@ -100,23 +116,25 @@ function TeamRow(props: {
   role: TeamAccountRole;
   client: ThirdwebClient;
 }) {
-  const plan = getValidTeamPlan(props.team);
-
   return (
     <div className="flex items-center justify-between gap-2">
       {/* start */}
       <div className="flex items-center gap-4">
         <GradientAvatar
           className="size-8"
-          src={props.team.image || ""}
-          id={props.team.id}
           client={props.client}
+          id={props.team.id}
+          src={props.team.image || ""}
         />
 
         <div>
           <div className="flex items-center gap-3">
             <p className="font-semibold text-sm">{props.team.name}</p>
-            <TeamPlanBadge plan={plan} />
+            <TeamPlanBadge
+              plan={props.team.billingPlan}
+              teamSlug={props.team.slug}
+              isLegacyPlan={props.team.isLegacyPlan}
+            />
           </div>
           <p className="text-muted-foreground text-sm capitalize">
             {props.role.toLowerCase()}
@@ -128,22 +146,22 @@ function TeamRow(props: {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="icon" variant="ghost" className="!h-auto !w-auto p-1.5">
+          <Button className="!h-auto !w-auto p-1.5" size="icon" variant="ghost">
             <EllipsisIcon className="size-4 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent className="w-[180px]">
           <DropdownMenuItem>
-            <Link href={`/team/${props.team.slug}`} className="w-full p-1 ">
+            <Link className="w-full p-1 " href={`/team/${props.team.slug}`}>
               View
             </Link>
           </DropdownMenuItem>
 
           <DropdownMenuItem>
             <Link
-              href={`/team/${props.team.slug}/~/settings`}
               className="w-full p-1 "
+              href={`/team/${props.team.slug}/~/settings`}
             >
               Manage
             </Link>

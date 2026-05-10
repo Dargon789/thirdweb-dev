@@ -10,11 +10,6 @@ export function TokenImageBasic() {
   return (
     <div>
       <CodeExample
-        header={{
-          title: "TokenIcon",
-          description: "Show the default native icon of a network",
-        }}
-        preview={<TokenImageBasicPreview />}
         code={`import { TokenProvider, TokenIcon } from "thirdweb/react";
 
 function App() {
@@ -28,14 +23,18 @@ function App() {
     </TokenProvider>
   )
 }`}
+        header={{
+          description: "Show the default native icon of a network",
+          title: "TokenIcon",
+        }}
         lang="tsx"
+        preview={<TokenImageBasicPreview />}
       />
       <p className="my-4 text-muted-foreground text-sm">
         Override the {`token's`} icon using the iconResolver prop.
       </p>
 
       <CodeExample
-        preview={<TokenImageOverridePreview />}
         code={`\
 import { TokenProvider, TokenIcon } from "thirdweb/react";
 
@@ -49,12 +48,12 @@ function App() {
     >
       <TokenIcon
         className="h-auto w-20 rounded-full"
-        iconResolver="/usdc.svg"
       />
     </TokenProvider>
   )
 }`}
         lang="tsx"
+        preview={<TokenImageOverridePreview />}
       />
     </div>
   );
@@ -63,11 +62,6 @@ function App() {
 export function TokenNameBasic() {
   return (
     <CodeExample
-      header={{
-        title: "TokenName",
-        description: "Show the name of the token",
-      }}
-      preview={<TokenNameBasicPreview />}
       code={`import { TokenProvider, TokenName } from "thirdweb/react";
 
 function App() {
@@ -81,7 +75,12 @@ function App() {
     </TokenProvider>
   )
 }`}
+      header={{
+        description: "Show the name of the token",
+        title: "TokenName",
+      }}
       lang="tsx"
+      preview={<TokenNameBasicPreview />}
     />
   );
 }
@@ -89,11 +88,6 @@ function App() {
 export function TokenSymbolBasic() {
   return (
     <CodeExample
-      header={{
-        title: "TokenSymbol",
-        description: "Show the symbol of the token",
-      }}
-      preview={<TokenSymbolBasicPreview />}
       code={`import { TokenProvider, TokenSymbol } from "thirdweb/react";
 
 function App() {
@@ -107,7 +101,12 @@ function App() {
     </TokenProvider>
   )
 }`}
+      header={{
+        description: "Show the symbol of the token",
+        title: "TokenSymbol",
+      }}
       lang="tsx"
+      preview={<TokenSymbolBasicPreview />}
     />
   );
 }

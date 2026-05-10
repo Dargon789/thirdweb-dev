@@ -1,4 +1,4 @@
-import type { Ecosystem } from "../../../../../types";
+import type { Ecosystem } from "@/api/team/ecosystems";
 import { AddPartnerDialogButton } from "../client/AddPartnerDialogButton";
 import { PartnersTable } from "./partners-table";
 
@@ -29,17 +29,17 @@ export function EcosystemPartnersSection({
           </p>
         </div>
         <AddPartnerDialogButton
-          teamSlug={teamSlug}
-          ecosystem={ecosystem}
           authToken={authToken}
+          ecosystem={ecosystem}
+          teamSlug={teamSlug}
         />
       </div>
 
       <PartnersTable
-        ecosystem={ecosystem}
         authToken={authToken}
-        teamSlug={teamSlug}
+        ecosystem={ecosystem}
         teamId={teamId}
+        teamSlug={teamSlug}
       />
     </div>
   );

@@ -1,10 +1,11 @@
-import { getTeamBySlug } from "@/api/team";
-import { OpCreditsGrantedModalWrapperServer } from "components/onboarding/OpCreditsGrantedModalWrapperServer";
-import { PosthogIdentifierServer } from "components/wallets/PosthogIdentifierServer";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { EnsureValidConnectedWalletLoginServer } from "../../components/EnsureValidConnectedWalletLogin/EnsureValidConnectedWalletLoginServer";
-import { isTeamOnboardingComplete } from "../../login/onboarding/isOnboardingRequired";
+import { getAuthToken } from "@/api/auth-token";
+import {
+  getTeamBySlug,
+  hasToCompleteTeamOnboarding,
+} from "@/api/team/get-team";
+import { EnsureValidConnectedWalletLoginServer } from "@/components/misc/EnsureValidConnectedWalletLogin/EnsureValidConnectedWalletLoginServer";
 import { SaveLastVisitedTeamPage } from "../components/last-visited-page/SaveLastVisitedPage";
 import {
   PastDueBanner,
@@ -16,26 +17,42 @@ export default async function RootTeamLayout(props: {
   params: Promise<{ team_slug: string }>;
 }) {
   const { team_slug } = await props.params;
-  const team = await getTeamBySlug(team_slug).catch(() => null);
+
+  const [authToken, team] = await Promise.all([
+    getAuthToken(),
+    getTeamBySlug(team_slug).catch(() => null),
+  ]);
 
   if (!team) {
     redirect("/team");
   }
 
-  if (!isTeamOnboardingComplete(team)) {
+  if (!authToken) {
+    redirect("/login");
+  }
+
+  if (await hasToCompleteTeamOnboarding(team, `/team/${team_slug}`)) {
     redirect(`/get-started/team/${team.slug}`);
   }
 
   return (
     <div className="flex min-h-dvh flex-col">
       <div className="flex grow flex-col">
-        {team.billingStatus === "pastDue" && (
-          <PastDueBanner teamSlug={team_slug} />
-        )}
+        {(() => {
+          // Show only one banner at a time following priority:
+          // 1. Service cut off (invalid payment)
+          // 2. Past due invoices
+          // 3. Starter legacy plan discontinued notice
+          if (team.billingStatus === "invalidPayment") {
+            return <ServiceCutOffBanner teamSlug={team_slug} />;
+          }
 
-        {team.billingStatus === "invalidPayment" && (
-          <ServiceCutOffBanner teamSlug={team_slug} />
-        )}
+          if (team.billingStatus === "pastDue") {
+            return <PastDueBanner teamSlug={team_slug} />;
+          }
+
+          return null;
+        })()}
 
         {props.children}
       </div>
@@ -43,13 +60,7 @@ export default async function RootTeamLayout(props: {
       <SaveLastVisitedTeamPage teamId={team.id} />
 
       <Suspense fallback={null}>
-        <OpCreditsGrantedModalWrapperServer />
-      </Suspense>
-      <Suspense fallback={null}>
         <EnsureValidConnectedWalletLoginServer />
-      </Suspense>
-      <Suspense fallback={null}>
-        <PosthogIdentifierServer />
       </Suspense>
     </div>
   );

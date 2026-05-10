@@ -1,11 +1,14 @@
-import { ChakraProviderSetup } from "@/components/ChakraProviderSetup";
-import { getActiveAccountCookie, getJWTCookie } from "@/constants/cookie";
-import { ContractPublishForm } from "components/contract-components/contract-publish-form";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { fetchDeployMetadata } from "thirdweb/contract";
-import { getUserThirdwebClient } from "../../../../api/lib/getAuthToken";
+import {
+  getAuthToken,
+  getAuthTokenWalletAddress,
+  getUserThirdwebClient,
+} from "@/api/auth-token";
+import { serverThirdwebClient } from "@/constants/thirdweb-client.server";
 import { getLatestPublishedContractsWithPublisherMapping } from "../../../published-contract/[publisher]/[contract_id]/utils/getPublishedContractsWithPublisherMapping";
+import { ContractPublishForm } from "./contract-publish-form";
 
 type DirectDeployPageProps = {
   params: Promise<{
@@ -22,10 +25,9 @@ export default async function PublishContractPage(
     ? decodedPublishUri
     : `ipfs://${decodedPublishUri}`;
 
-  const client = await getUserThirdwebClient();
   const publishMetadataFromUri = await fetchDeployMetadata({
+    client: serverThirdwebClient,
     uri: publishUri,
-    client,
   }).catch(() => null);
 
   if (!publishMetadataFromUri) {
@@ -36,7 +38,7 @@ export default async function PublishContractPage(
 
   const pathname = `/contracts/publish/${params.publish_uri}`;
 
-  const address = await getActiveAccountCookie();
+  const address = await getAuthTokenWalletAddress();
   if (!address) {
     redirect(`/login?next=${encodeURIComponent(pathname)}`);
   }
@@ -49,9 +51,9 @@ export default async function PublishContractPage(
   if (!publishMetadataFromUri.version) {
     const publishedContract =
       await getLatestPublishedContractsWithPublisherMapping({
-        publisher: address,
+        client: serverThirdwebClient,
         contract_id: publishMetadataFromUri.name,
-        client,
+        publisher: address,
       });
 
     if (publishedContract) {
@@ -63,28 +65,31 @@ export default async function PublishContractPage(
     }
   }
 
-  const token = await getJWTCookie(address);
+  const token = await getAuthToken();
   if (!token) {
     redirect(`/login?next=${encodeURIComponent(pathname)}`);
   }
 
+  const userThirdwebClient = await getUserThirdwebClient({
+    teamId: undefined,
+  });
+
   return (
     <div className="container flex max-w-[1130px] flex-col gap-8 py-8">
-      <ChakraProviderSetup>
-        <ContractPublishForm
-          jwt={token}
-          publishMetadata={publishMetadata}
-          onPublishSuccess={async () => {
-            "use server";
-            // we are pretty brutal here and simply invalidate ALL published contracts (for everyone!) and versions no matter what
-            // TODO: we can be more granular here and only invalidate the specific contract and version etc
-            revalidatePath(
-              "/(dashboard)/published-contract/[publisher]/[contract_id]",
-              "layout",
-            );
-          }}
-        />
-      </ChakraProviderSetup>
+      <ContractPublishForm
+        client={userThirdwebClient}
+        isLoggedIn={!!token}
+        onPublishSuccess={async () => {
+          "use server";
+          // we are pretty brutal here and simply invalidate ALL published contracts (for everyone!) and versions no matter what
+          // TODO: we can be more granular here and only invalidate the specific contract and version etc
+          revalidatePath(
+            "/(dashboard)/published-contract/[publisher]/[contract_id]",
+            "layout",
+          );
+        }}
+        publishMetadata={publishMetadata}
+      />
     </div>
   );
 }

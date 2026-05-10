@@ -1,36 +1,43 @@
-import { resolveSchemeWithErrorHandler } from "@/lib/resolveSchemeWithErrorHandler";
-import type { ThirdwebClient } from "thirdweb";
+import { FileTextIcon } from "lucide-react";
+import { Img } from "@/components/blocks/Img";
+import { serverThirdwebClient } from "@/constants/thirdweb-client.server";
+import { resolveSchemeWithErrorHandler } from "@/utils/resolveSchemeWithErrorHandler";
 
 export function DeployContractInfo(props: {
   name: string;
   displayName?: string;
   description?: string;
   logo?: string;
-  client: ThirdwebClient;
 }) {
   const contractNameDisplay = props.displayName || props.name;
 
   const contractImageLink = resolveSchemeWithErrorHandler({
-    client: props.client,
+    client: serverThirdwebClient,
     uri: props.logo,
   });
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-1 items-center gap-4">
-        {contractImageLink && (
-          <div className="hidden shrink-0 items-center justify-center rounded-xl border border-border bg-card p-2 md:flex">
-            {/*eslint-disable-next-line @next/next/no-img-element*/}
-            <img className="size-12" alt={props.name} src={contractImageLink} />
-          </div>
-        )}
-
-        <div className="flex flex-col gap-1">
-          <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
-            {contractNameDisplay}
-          </h1>
-          <p className="text-muted-foreground text-sm">{props.description}</p>
+    <div className="space-y-4">
+      <div className="flex">
+        <div className="p-2 rounded-full border bg-card">
+          <Img
+            alt={props.name}
+            className="size-8 rounded-lg"
+            fallback={
+              <div className="flex items-center justify-center">
+                <FileTextIcon className="size-6 text-muted-foreground" />
+              </div>
+            }
+            src={contractImageLink || ""}
+          />
         </div>
+      </div>
+
+      <div className="space-y-0.5">
+        <h1 className="font-bold text-3xl tracking-tight">
+          {contractNameDisplay}
+        </h1>
+        <p className="text-muted-foreground">{props.description}</p>
       </div>
     </div>
   );

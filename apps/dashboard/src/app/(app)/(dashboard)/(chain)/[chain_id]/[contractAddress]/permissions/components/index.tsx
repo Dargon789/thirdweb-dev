@@ -1,23 +1,21 @@
 "use client";
 
-import { ButtonGroup, Flex } from "@chakra-ui/react";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { ROLE_DESCRIPTION_MAP } from "constants/mappings";
+import { RotateCcwIcon } from "lucide-react";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import type { ThirdwebContract } from "thirdweb";
+import { useActiveAccount, useReadContract } from "thirdweb/react";
+import { TransactionButton } from "@/components/tx-button";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { ROLE_DESCRIPTION_MAP } from "@/constants/mappings";
 import {
   createSetAllRoleMembersTx,
   getAllRoleMembers,
-} from "contract-ui/hooks/permissions";
-import { useTrack } from "hooks/analytics/useTrack";
-import { useTxNotifications } from "hooks/useTxNotifications";
-import { useMemo } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import type { ThirdwebContract } from "thirdweb";
-import {
-  useActiveAccount,
-  useReadContract,
-  useSendAndConfirmTransaction,
-} from "thirdweb/react";
-import { Button } from "tw-components";
+} from "@/hooks/contract-ui/permissions";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
+import { parseError } from "@/utils/errorParser";
 import { ContractPermission } from "./contract-permission";
 
 type PermissionFormContext = {
@@ -31,12 +29,11 @@ export function Permissions({
   contract: ThirdwebContract;
   isLoggedIn: boolean;
 }) {
-  const trackEvent = useTrack();
   const account = useActiveAccount();
   const allRoleMembers = useReadContract(getAllRoleMembers, {
     contract,
   });
-  const sendTx = useSendAndConfirmTransaction();
+  const sendAndConfirmTx = useSendAndConfirmTx();
 
   const transformedQueryData = useMemo(() => {
     if (!allRoleMembers.data) {
@@ -50,93 +47,93 @@ export function Permissions({
     values: transformedQueryData,
   });
 
-  const { onSuccess, onError } = useTxNotifications(
-    "Permissions updated",
-    "Failed to update permissions",
-  );
-
   const roles = useMemo(() => {
     return Object.keys(allRoleMembers.data || ROLE_DESCRIPTION_MAP);
   }, [allRoleMembers.data]);
 
   return (
-    <FormProvider {...form}>
-      <Flex
-        gap={4}
-        direction="column"
-        as="form"
-        onSubmit={form.handleSubmit((d) => {
+    <Form {...form}>
+      <form
+        className="bg-card rounded-lg border"
+        onSubmit={form.handleSubmit((values) => {
           if (!account) {
-            onError(new Error("Wallet not connected!"));
+            toast.error("Wallet not connected!");
             return;
           }
-          trackEvent({
-            category: "permissions",
-            action: "set-permissions",
-            label: "attempt",
-          });
+
+          // remove empty values
+          const cleanedValues: { [k: string]: string[] } = {};
+
+          for (const k in values) {
+            const originalValue = values[k];
+            if (originalValue) {
+              const cleanedValue: string[] = [];
+              for (const v of originalValue) {
+                if (v !== "") {
+                  cleanedValue.push(v);
+                }
+              }
+              cleanedValues[k] = cleanedValue;
+            }
+          }
+
           const tx = createSetAllRoleMembersTx({
             account,
             contract,
-            roleMemberMap: d,
+            roleMemberMap: cleanedValues,
           });
-          sendTx.mutate(tx, {
-            onSuccess: () => {
-              trackEvent({
-                category: "permissions",
-                action: "set-permissions",
-                label: "success",
-              });
-              form.reset(d);
-              onSuccess();
-            },
+
+          sendAndConfirmTx.mutate(tx, {
             onError: (error) => {
-              trackEvent({
-                category: "permissions",
-                action: "set-permissions",
-                label: "error",
-                error,
+              toast.error("Failed to update permissions", {
+                description: parseError(error),
               });
-              onError(error);
+            },
+            onSuccess: () => {
+              toast.success("Permissions updated successfully");
             },
           });
         })}
       >
-        {roles.map((role) => {
-          return (
-            <ContractPermission
-              isPending={allRoleMembers.isPending}
-              key={role}
-              role={role}
-              description={ROLE_DESCRIPTION_MAP[role] || ""}
-              contract={contract}
-            />
-          );
-        })}
-        <ButtonGroup justifyContent="flex-end">
+        <div>
+          {roles.map((role) => {
+            return (
+              <ContractPermission
+                contract={contract}
+                description={ROLE_DESCRIPTION_MAP[role] || ""}
+                isPending={allRoleMembers.isPending}
+                key={role}
+                role={role}
+              />
+            );
+          })}
+        </div>
+
+        <div className="flex justify-end gap-3 p-4 lg:p-6">
           <Button
-            borderRadius="md"
-            isDisabled={
-              !allRoleMembers.data ||
-              sendTx.isPending ||
-              !form.formState.isDirty
-            }
+            variant="outline"
+            disabled={!allRoleMembers.data || sendAndConfirmTx.isPending}
             onClick={() => form.reset(allRoleMembers.data)}
+            className="gap-2 bg-background"
           >
+            <RotateCcwIcon className="size-4 text-muted-foreground" />
             Reset
           </Button>
           <TransactionButton
+            client={contract.client}
             isLoggedIn={isLoggedIn}
+            isPending={sendAndConfirmTx.isPending}
+            transactionCount={undefined}
             txChainID={contract.chain.id}
-            transactionCount={1}
-            disabled={!form.formState.isDirty}
             type="submit"
-            isPending={sendTx.isPending}
+            variant="default"
           >
-            {sendTx.isPending ? "Updating permissions" : "Update permissions"}
+            {sendAndConfirmTx.isPending
+              ? "Updating permissions"
+              : "Update permissions"}
           </TransactionButton>
-        </ButtonGroup>
-      </Flex>
-    </FormProvider>
+        </div>
+      </form>
+    </Form>
   );
 }

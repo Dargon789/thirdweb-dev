@@ -1,10 +1,9 @@
+import { formatDistance } from "date-fns";
+import type { ThirdwebClient } from "thirdweb";
+import { useActiveAccount } from "thirdweb/react";
 import { WalletAddress } from "@/components/blocks/wallet-address";
 import { Badge } from "@/components/ui/badge";
-import { Flex, SimpleGrid, useBreakpointValue } from "@chakra-ui/react";
-import { formatDistance } from "date-fns/formatDistance";
-import { useAllChainsData } from "hooks/chains/allChains";
-import { useActiveAccount } from "thirdweb/react";
-import { Card, Heading, Text } from "tw-components";
+import { useAllChainsData } from "@/hooks/chains/allChains";
 
 export type AccountSignerType = {
   signer: string;
@@ -16,16 +15,17 @@ export type AccountSignerType = {
 interface AccountSignerProps {
   item: AccountSignerType;
   contractChainId: number;
+  client: ThirdwebClient;
 }
 
-export const AccountSigner: React.FC<AccountSignerProps> = ({
+export function AccountSigner({
   item,
   contractChainId,
-}) => {
+  client,
+}: AccountSignerProps) {
   const address = useActiveAccount()?.address;
   const { idToChain } = useAllChainsData();
   const chain = contractChainId ? idToChain.get(contractChainId) : undefined;
-  const isMobile = useBreakpointValue({ base: true, md: false });
   const {
     isAdmin,
     signer,
@@ -34,54 +34,49 @@ export const AccountSigner: React.FC<AccountSignerProps> = ({
     endTimestamp,
   } = item;
   return (
-    <Card position="relative" p={8}>
-      <Flex direction="column" gap={8}>
-        <Flex flexDir="column" gap={2} mt={{ base: 4, md: 0 }}>
-          <Flex
-            gap={3}
-            alignItems="center"
-            flexDir={{ base: "column", lg: "row" }}
-          >
-            <Heading size="label.lg">
-              <WalletAddress shortenAddress={isMobile} address={signer} />
-            </Heading>
-            <div className="flex flex-row gap-2">
-              {isAdmin ? <Badge>Admin Key</Badge> : <Badge>Scoped key</Badge>}
-              {signer === address && (
-                <Badge variant="success">Currently connected</Badge>
-              )}
-            </div>
-          </Flex>
-        </Flex>
+    <div className="p-4 rounded-lg bg-card border lg:p-6">
+      <div className="flex lg:items-center lg:justify-between items-start flex-col lg:flex-row gap-4">
+        <WalletAddress
+          address={signer}
+          client={client}
+          className="h-auto py-1"
+          iconClassName="size-5"
+        />
+        <div className="flex flex-row gap-2">
+          {isAdmin ? <Badge>Admin Key</Badge> : <Badge>Scoped key</Badge>}
+          {signer === address && (
+            <Badge variant="secondary">Currently connected</Badge>
+          )}
+        </div>
+      </div>
 
-        {isAdmin ? null : (
-          <SimpleGrid columns={{ base: 2, md: 4 }} gap={2}>
-            <div className="flex flex-col">
-              <Text fontWeight="bold">Maximum value per transaction</Text>
-              <Text textTransform="capitalize">
-                {nativeTokenLimitPerTransaction.toString()}{" "}
-                {chain?.nativeCurrency.symbol}
-              </Text>
-            </div>
-            <div className="flex flex-col">
-              <Text fontWeight="bold">Approved targets</Text>
-              <Text textTransform="capitalize">{approvedTargets.length}</Text>
-            </div>
-            <div className="flex flex-col">
-              <Text fontWeight="bold">Expiration</Text>
-              <Text>
-                {formatDistance(
-                  new Date(new Date(Number(endTimestamp * 1000n))),
-                  new Date(),
-                  {
-                    addSuffix: true,
-                  },
-                )}
-              </Text>
-            </div>
-          </SimpleGrid>
-        )}
-      </Flex>
-    </Card>
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-16 border-t pt-4 mt-6 lg:mt-4 border-dashed">
+        <div className="space-y-0.5 text-sm">
+          <div className="font-medium">Maximum value per transaction</div>
+          <div className="capitalize">
+            {nativeTokenLimitPerTransaction.toString()}{" "}
+            {chain?.nativeCurrency.symbol}
+          </div>
+        </div>
+
+        <div className="space-y-0.5 text-sm">
+          <div className="font-medium">Approved targets</div>
+          <div className="capitalize">{approvedTargets.length}</div>
+        </div>
+
+        <div className="space-y-0.5 text-sm">
+          <div className="font-medium">Expiration</div>
+          <div>
+            {formatDistance(
+              new Date(new Date(Number(endTimestamp * 1000n))),
+              new Date(),
+              {
+                addSuffix: true,
+              },
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
-};
+}

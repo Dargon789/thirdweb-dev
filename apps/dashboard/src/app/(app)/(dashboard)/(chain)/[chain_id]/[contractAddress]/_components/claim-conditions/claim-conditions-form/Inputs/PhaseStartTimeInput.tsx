@@ -1,6 +1,6 @@
-import { Input } from "@chakra-ui/react";
-import { toDateTimeLocal } from "utils/date-utils";
-import { CustomFormControl } from "../common";
+import { FormFieldSetup } from "@/components/blocks/FormFieldSetup";
+import { Input } from "@/components/ui/input";
+import { toDateTimeLocal } from "@/utils/date-utils";
 import { useClaimConditionsFormContext } from "../index";
 
 /**
@@ -10,25 +10,27 @@ export const PhaseStartTimeInput: React.FC = () => {
   const { form, phaseIndex, field, formDisabled } =
     useClaimConditionsFormContext();
   return (
-    <CustomFormControl
-      label="When will this phase start?"
-      helperText="This time is in your local timezone."
-      disabled={formDisabled}
-      error={
+    <FormFieldSetup
+      isRequired={true}
+      errorMessage={
         form.getFieldState(`phases.${phaseIndex}.startTime`, form.formState)
-          .error
+          .error?.message
       }
+      helperText="This time is in your local timezone."
+      label="When will this phase start?"
     >
       <Input
-        type="datetime-local"
-        value={toDateTimeLocal(field.startTime)}
+        disabled={formDisabled}
+        className="max-w-sm"
         onChange={(e) =>
           form.setValue(
             `phases.${phaseIndex}.startTime`,
             new Date(e.target.value),
           )
         }
+        type="datetime-local"
+        value={toDateTimeLocal(field.startTime)}
       />
-    </CustomFormControl>
+    </FormFieldSetup>
   );
 };

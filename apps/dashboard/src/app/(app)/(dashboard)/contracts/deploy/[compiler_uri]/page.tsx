@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { fetchDeployMetadata } from "thirdweb/contract";
-import { getUserThirdwebClient } from "../../../../api/lib/getAuthToken";
+import { serverThirdwebClient } from "@/constants/thirdweb-client.server";
 import { DeployContractInfo } from "../../../published-contract/components/contract-info";
 import { DeployFormForUri } from "../../../published-contract/components/uri-based-deploy";
 
@@ -13,10 +13,9 @@ type DirectDeployPageProps = {
 export default async function DirectDeployPage(props: DirectDeployPageProps) {
   const params = await props.params;
   const parsedUri = decodeURIComponent(params.compiler_uri);
-  const client = await getUserThirdwebClient();
 
   const metadata = await fetchDeployMetadata({
-    client,
+    client: serverThirdwebClient,
     // force `ipfs://` prefix
     uri: parsedUri.startsWith("ipfs://") ? parsedUri : `ipfs://${parsedUri}`,
   }).catch(() => null);
@@ -28,11 +27,10 @@ export default async function DirectDeployPage(props: DirectDeployPageProps) {
   return (
     <div className="container flex flex-col gap-4 py-8">
       <DeployContractInfo
-        name={metadata.name}
-        displayName={metadata.displayName}
         description={metadata.description}
+        displayName={metadata.displayName}
         logo={metadata.logo}
-        client={client}
+        name={metadata.name}
       />
       <DeployFormForUri
         contractMetadata={metadata}

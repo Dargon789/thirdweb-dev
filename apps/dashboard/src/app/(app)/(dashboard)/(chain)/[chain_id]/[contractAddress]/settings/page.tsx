@@ -1,53 +1,18 @@
-import { DEFAULT_FEE_RECIPIENT } from "constants/addresses";
-import { notFound } from "next/navigation";
-import { localhost } from "thirdweb/chains";
-import { getPlatformFeeInfo } from "thirdweb/extensions/common";
-import { getRawAccount } from "../../../../../account/settings/getAccount";
-import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
-import { getContractPageMetadata } from "../_utils/getContractPageMetadata";
-import { ContractSettingsPage } from "./ContractSettingsPage";
-import { ContractSettingsPageClient } from "./ContractSettingsPage.client";
+import { getRawAccount } from "@/api/account/get-account";
+import type { PublicContractPageParams } from "../types";
+import { SharedContractSettingsPage } from "./shared-settings-page";
 
 export default async function Page(props: {
-  params: Promise<{
-    contractAddress: string;
-    chain_id: string;
-  }>;
+  params: Promise<PublicContractPageParams>;
 }) {
-  const params = await props.params;
-  const info = await getContractPageParamsInfo(params);
-
-  if (!info) {
-    notFound();
-  }
-
-  const { contract } = info;
-
-  if (contract.chain.id === localhost.id) {
-    const account = await getRawAccount();
-    return (
-      <ContractSettingsPageClient contract={contract} isLoggedIn={!!account} />
-    );
-  }
-
-  const [account, metadata] = await Promise.all([
-    getRawAccount(),
-    getContractPageMetadata(info.contract),
-  ]);
-
-  let hasDefaultFeeConfig = true;
-  try {
-    const feeInfo = await getPlatformFeeInfo({ contract });
-    hasDefaultFeeConfig =
-      feeInfo[0].toLowerCase() === DEFAULT_FEE_RECIPIENT.toLowerCase();
-  } catch {}
+  const [params, account] = await Promise.all([props.params, getRawAccount()]);
 
   return (
-    <ContractSettingsPage
-      contract={info.contract}
-      functionSelectors={metadata.functionSelectors}
+    <SharedContractSettingsPage
+      chainIdOrSlug={params.chain_id}
+      contractAddress={params.contractAddress}
       isLoggedIn={!!account}
-      hasDefaultFeeConfig={hasDefaultFeeConfig}
+      projectMeta={undefined}
     />
   );
 }

@@ -1,5 +1,9 @@
 "use client";
 
+import { PlusIcon, Trash2Icon } from "lucide-react";
+import { useId } from "react";
+import { type Control, useFieldArray } from "react-hook-form";
+import type { ThirdwebClient } from "thirdweb";
 import { SingleNetworkSelector } from "@/components/blocks/NetworkSelectors";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,21 +24,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useThirdwebClient } from "@/constants/thirdweb.client";
-import { PlusIcon, Trash2Icon } from "lucide-react";
-import { type Control, useFieldArray } from "react-hook-form";
 import type { PartnerFormValues } from "./partner-form.client";
 
 type AllowedOperationsSectionProps = {
   control: Control<PartnerFormValues>;
   enabled: boolean;
   onToggle: (checked: boolean) => void;
+  client: ThirdwebClient;
 };
 
 export function AllowedOperationsSection({
   control,
   enabled,
   onToggle,
+  client,
 }: AllowedOperationsSectionProps) {
   // Setup field array for allowed operations
   const allowedOperationsFields = useFieldArray({
@@ -42,11 +45,12 @@ export function AllowedOperationsSection({
     name: "accessControl.allowedOperations",
   });
 
+  const allowedOperationsId = useId();
   return (
     <div className="rounded-lg border border-border p-4">
       <div className="mb-4 flex items-center justify-between gap-6 ">
         <div>
-          <Label htmlFor="allowed-operations-switch" className="text-base">
+          <Label className="text-base" htmlFor={allowedOperationsId}>
             Allowed Operations
           </Label>
           <p className="mt-0.5 text-muted-foreground text-xs">
@@ -54,8 +58,8 @@ export function AllowedOperationsSection({
           </p>
         </div>
         <Switch
-          id="allowed-operations-switch"
           checked={enabled}
+          id={allowedOperationsId}
           onCheckedChange={onToggle}
         />
       </div>
@@ -65,8 +69,8 @@ export function AllowedOperationsSection({
           <div className="flex flex-col gap-6">
             {allowedOperationsFields.fields.map((field, index) => (
               <div
-                key={field.id}
                 className="rounded-md border border-border p-4"
+                key={field.id}
               >
                 <div className="mb-4 flex items-center justify-between">
                   <FormField
@@ -80,6 +84,7 @@ export function AllowedOperationsSection({
                           this partner
                         </FormDescription>
                         <Select
+                          defaultValue={field.value}
                           onValueChange={(value) => {
                             // Update the signature method
                             field.onChange(value);
@@ -88,22 +93,21 @@ export function AllowedOperationsSection({
                             if (value === "eth_signTransaction") {
                               // Remove any existing fields for other methods
                               allowedOperationsFields.update(index, {
-                                signMethod: value,
                                 allowedTransactions: [],
+                                signMethod: value,
                               });
                             } else if (value === "eth_signTypedData_v4") {
                               allowedOperationsFields.update(index, {
-                                signMethod: value,
                                 allowedTypedData: [],
+                                signMethod: value,
                               });
                             } else if (value === "personal_sign") {
                               allowedOperationsFields.update(index, {
-                                signMethod: value,
                                 allowedPersonalSigns: [],
+                                signMethod: value,
                               });
                             }
                           }}
-                          defaultValue={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -127,13 +131,13 @@ export function AllowedOperationsSection({
                     )}
                   />
                   <Button
-                    variant="outline"
                     aria-label="Remove operation"
+                    className="!w-auto ml-4 h-10 px-3"
                     onClick={() => {
                       allowedOperationsFields.remove(index);
                     }}
-                    className="!w-auto ml-4 h-10 px-3"
                     type="button"
+                    variant="outline"
                   >
                     <Trash2Icon className="size-4 shrink-0 text-destructive-text" />
                   </Button>
@@ -142,31 +146,43 @@ export function AllowedOperationsSection({
                 {/* Render different fields based on the signature method */}
                 {allowedOperationsFields.fields[index]?.signMethod ===
                   "eth_signTransaction" && (
-                  <TransactionRestrictions control={control} index={index} />
+                  <TransactionRestrictions
+                    client={client}
+                    control={control}
+                    index={index}
+                  />
                 )}
 
                 {allowedOperationsFields.fields[index]?.signMethod ===
                   "eth_signTypedData_v4" && (
-                  <TypedDataRestrictions control={control} index={index} />
+                  <TypedDataRestrictions
+                    client={client}
+                    control={control}
+                    index={index}
+                  />
                 )}
 
                 {allowedOperationsFields.fields[index]?.signMethod ===
                   "personal_sign" && (
-                  <PersonalSignRestrictions control={control} index={index} />
+                  <PersonalSignRestrictions
+                    client={client}
+                    control={control}
+                    index={index}
+                  />
                 )}
               </div>
             ))}
 
             <Button
-              variant="outline"
               className="w-full gap-2 bg-background"
               onClick={() => {
                 allowedOperationsFields.append({
-                  signMethod: "eth_signTransaction",
                   allowedTransactions: [],
+                  signMethod: "eth_signTransaction",
                 });
               }}
               type="button"
+              variant="outline"
             >
               <PlusIcon className="size-4" />
               Add operation
@@ -182,11 +198,12 @@ export function AllowedOperationsSection({
 function TransactionRestrictions({
   control,
   index,
+  client,
 }: {
   control: Control<PartnerFormValues>;
   index: number;
+  client: ThirdwebClient;
 }) {
-  const client = useThirdwebClient();
   const transactionsArray = useFieldArray({
     control,
     name: `accessControl.allowedOperations.${index}.allowedTransactions`,
@@ -208,8 +225,8 @@ function TransactionRestrictions({
       <div className="flex flex-col gap-4">
         {transactionsArray.fields.map((field, txIndex) => (
           <div
-            key={field.id}
             className="flex flex-row gap-4 rounded-md border border-border p-4"
+            key={field.id}
           >
             <div className="flex flex-1 flex-col gap-2">
               <FormField
@@ -221,8 +238,8 @@ function TransactionRestrictions({
                     <FormControl>
                       <SingleNetworkSelector
                         chainId={field.value}
-                        onChange={(chainId) => field.onChange(chainId)}
                         client={client}
+                        onChange={(chainId) => field.onChange(chainId)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -274,13 +291,13 @@ function TransactionRestrictions({
               </div>
             </div>
             <Button
-              variant="outline"
               aria-label="Remove transaction"
+              className="!w-auto ml-2 px-3"
               onClick={() => {
                 transactionsArray.remove(txIndex);
               }}
-              className="!w-auto ml-2 px-3"
               type="button"
+              variant="outline"
             >
               <Trash2Icon className="size-4 shrink-0 text-destructive-text" />
             </Button>
@@ -288,17 +305,17 @@ function TransactionRestrictions({
         ))}
 
         <Button
-          variant="outline"
           className="w-full gap-2 bg-background"
           onClick={() => {
             transactionsArray.append({
               chainId: 1,
               contractAddress: "",
-              selector: "",
               maxValue: "",
+              selector: "",
             });
           }}
           type="button"
+          variant="outline"
         >
           <PlusIcon className="size-4" />
           Add transaction
@@ -312,11 +329,12 @@ function TransactionRestrictions({
 function TypedDataRestrictions({
   control,
   index,
+  client,
 }: {
   control: Control<PartnerFormValues>;
   index: number;
+  client: ThirdwebClient;
 }) {
-  const client = useThirdwebClient();
   const typedDataArray = useFieldArray({
     control,
     name: `accessControl.allowedOperations.${index}.allowedTypedData`,
@@ -332,8 +350,8 @@ function TypedDataRestrictions({
       <div className="flex flex-col gap-4">
         {typedDataArray.fields.map((field, dataIndex) => (
           <div
-            key={field.id}
             className="flex flex-row gap-4 rounded-md border border-border p-4"
+            key={field.id}
           >
             <div className="flex flex-1 flex-col gap-2">
               <FormField
@@ -371,8 +389,8 @@ function TypedDataRestrictions({
                     <FormControl>
                       <SingleNetworkSelector
                         chainId={field.value}
-                        onChange={(chainId) => field.onChange(chainId)}
                         client={client}
+                        onChange={(chainId) => field.onChange(chainId)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -398,13 +416,13 @@ function TypedDataRestrictions({
               </div>
             </div>
             <Button
-              variant="outline"
               aria-label="Remove typed data"
+              className="!w-auto ml-2 px-3"
               onClick={() => {
                 typedDataArray.remove(dataIndex);
               }}
-              className="!w-auto ml-2 px-3"
               type="button"
+              variant="outline"
             >
               <Trash2Icon className="size-4 shrink-0 text-destructive-text" />
             </Button>
@@ -412,17 +430,17 @@ function TypedDataRestrictions({
         ))}
 
         <Button
-          variant="outline"
           className="w-full gap-2 bg-background"
           onClick={() => {
             typedDataArray.append({
-              domain: "",
-              verifyingContract: undefined,
               chainId: undefined,
+              domain: "",
               primaryType: undefined,
+              verifyingContract: undefined,
             });
           }}
           type="button"
+          variant="outline"
         >
           <PlusIcon className="size-4" />
           Add typed data
@@ -436,9 +454,11 @@ function TypedDataRestrictions({
 function PersonalSignRestrictions({
   control,
   index,
+  client,
 }: {
   control: Control<PartnerFormValues>;
   index: number;
+  client: ThirdwebClient;
 }) {
   const personalSignArray = useFieldArray({
     control,
@@ -454,7 +474,7 @@ function PersonalSignRestrictions({
       </FormDescription>
       <div className="flex flex-col gap-4">
         {personalSignArray.fields.map((field, signIndex) => (
-          <div key={field.id} className="rounded-md border border-border p-3">
+          <div className="rounded-md border border-border p-3" key={field.id}>
             <div className="mb-4 flex items-center justify-between">
               <FormField
                 control={control}
@@ -463,6 +483,7 @@ function PersonalSignRestrictions({
                   <FormItem className="flex-1">
                     <FormLabel>Message Type</FormLabel>
                     <Select
+                      defaultValue={field.value}
                       onValueChange={(value) => {
                         // Update the message type
                         field.onChange(value);
@@ -470,17 +491,16 @@ function PersonalSignRestrictions({
                         // Reset the message data based on the selected type
                         if (value === "userOp") {
                           personalSignArray.update(signIndex, {
-                            messageType: value,
                             allowedTransactions: [],
+                            messageType: value,
                           });
                         } else if (value === "other") {
                           personalSignArray.update(signIndex, {
-                            messageType: value,
                             message: "",
+                            messageType: value,
                           });
                         }
                       }}
-                      defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -497,13 +517,13 @@ function PersonalSignRestrictions({
                 )}
               />
               <Button
-                variant="outline"
                 aria-label="Remove personal sign"
+                className="!w-auto ml-4 h-10 px-3"
                 onClick={() => {
                   personalSignArray.remove(signIndex);
                 }}
-                className="!w-auto ml-4 h-10 px-3"
                 type="button"
+                variant="outline"
               >
                 <Trash2Icon className="size-4 shrink-0 text-destructive-text" />
               </Button>
@@ -511,6 +531,7 @@ function PersonalSignRestrictions({
 
             {personalSignArray.fields[signIndex]?.messageType === "userOp" ? (
               <UserOpTransactions
+                client={client}
                 control={control}
                 opIndex={index}
                 signIndex={signIndex}
@@ -537,15 +558,15 @@ function PersonalSignRestrictions({
         ))}
 
         <Button
-          variant="outline"
           className="w-full gap-2 bg-background"
           onClick={() => {
             personalSignArray.append({
-              messageType: "other",
               message: "",
+              messageType: "other",
             });
           }}
           type="button"
+          variant="outline"
         >
           <PlusIcon className="size-4" />
           Add personal sign
@@ -560,12 +581,13 @@ function UserOpTransactions({
   control,
   opIndex,
   signIndex,
+  client,
 }: {
   control: Control<PartnerFormValues>;
   opIndex: number;
   signIndex: number;
+  client: ThirdwebClient;
 }) {
-  const client = useThirdwebClient();
   const userOpTransactionsArray = useFieldArray({
     control,
     name: `accessControl.allowedOperations.${opIndex}.allowedPersonalSigns.${signIndex}.allowedTransactions`,
@@ -583,8 +605,8 @@ function UserOpTransactions({
       <div className="flex flex-col gap-4">
         {userOpTransactionsArray.fields.map((field, txIndex) => (
           <div
-            key={field.id}
             className="flex flex-row gap-4 rounded-md border border-border p-4"
+            key={field.id}
           >
             <div className="flex flex-1 flex-col gap-2">
               <FormField
@@ -596,8 +618,8 @@ function UserOpTransactions({
                     <FormControl>
                       <SingleNetworkSelector
                         chainId={field.value}
-                        onChange={(chainId) => field.onChange(chainId)}
                         client={client}
+                        onChange={(chainId) => field.onChange(chainId)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -649,13 +671,13 @@ function UserOpTransactions({
               </div>
             </div>
             <Button
-              variant="outline"
               aria-label="Remove transaction"
+              className="!w-auto ml-2 px-3"
               onClick={() => {
                 userOpTransactionsArray.remove(txIndex);
               }}
-              className="!w-auto ml-2 px-3"
               type="button"
+              variant="outline"
             >
               <Trash2Icon className="size-4 shrink-0 text-destructive-text" />
             </Button>
@@ -663,17 +685,17 @@ function UserOpTransactions({
         ))}
 
         <Button
-          variant="outline"
           className="w-full gap-2 bg-background"
           onClick={() => {
             userOpTransactionsArray.append({
               chainId: 1,
               contractAddress: "",
-              selector: "",
               maxValue: "",
+              selector: "",
             });
           }}
           type="button"
+          variant="outline"
         >
           <PlusIcon className="size-4" />
           Add transaction

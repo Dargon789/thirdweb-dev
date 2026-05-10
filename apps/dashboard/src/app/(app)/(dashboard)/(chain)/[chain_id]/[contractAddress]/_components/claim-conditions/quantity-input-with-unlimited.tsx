@@ -1,26 +1,24 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
 
-interface QuantityInputWithUnlimitedProps {
+export function QuantityInputWithUnlimited(props: {
   value: string;
   onChange: (value: string) => void;
   hideMaxButton?: true;
   decimals?: number;
   isDisabled: boolean;
   isRequired: boolean;
-}
+}) {
+  const {
+    value = "0",
+    onChange,
+    hideMaxButton,
+    isDisabled,
+    isRequired,
+    decimals,
+  } = props;
 
-export const QuantityInputWithUnlimited: React.FC<
-  QuantityInputWithUnlimitedProps
-> = ({
-  value = "0",
-  onChange,
-  hideMaxButton,
-  isDisabled,
-  isRequired,
-  decimals,
-}) => {
   const [stringValue, setStringValue] = useState<string>(
     Number.isNaN(Number(value)) ? "0" : value.toString(),
   );
@@ -45,12 +43,10 @@ export const QuantityInputWithUnlimited: React.FC<
   };
 
   return (
-    <div className="flex flex-row items-center rounded-md border border-border">
+    <div className="flex flex-row items-center rounded-md border border-border pr-1 bg-background max-w-sm">
       <Input
-        required={isRequired}
+        className="border-none"
         disabled={isDisabled}
-        value={stringValue === "unlimited" ? "Unlimited" : stringValue}
-        onChange={(e) => updateValue(e.currentTarget.value)}
         onBlur={() => {
           if (value === "unlimited") {
             setStringValue("unlimited");
@@ -60,21 +56,23 @@ export const QuantityInputWithUnlimited: React.FC<
             setStringValue("0");
           }
         }}
-        className="border-none"
+        onChange={(e) => updateValue(e.currentTarget.value)}
+        required={isRequired}
+        value={stringValue === "unlimited" ? "Unlimited" : stringValue}
       />
       {hideMaxButton ? null : (
         <Button
+          className="text-muted-foreground bg-transparent hover:accent"
           disabled={isDisabled}
-          variant="ghost"
-          size="sm"
-          className="mr-1 text-primary"
           onClick={() => {
             updateValue("unlimited");
           }}
+          size="sm"
+          variant="ghost"
         >
           Unlimited
         </Button>
       )}
     </div>
   );
-};
+}

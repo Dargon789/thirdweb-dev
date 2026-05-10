@@ -1,81 +1,68 @@
 "use client";
 
-import { useThirdwebClient } from "@/constants/thirdweb.client";
-import { Input } from "@chakra-ui/react";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { useV5DashboardChain } from "lib/v5-adapter";
-import { type ChangeEvent, useState } from "react";
-import type { StoredChain } from "stores/chainStores";
-import { prepareTransaction, toWei } from "thirdweb";
-import { useSendAndConfirmTransaction } from "thirdweb/react";
-import { Card } from "tw-components";
+import { ArrowUpRightIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { prepareTransaction, type ThirdwebClient, toWei } from "thirdweb";
+import type { ChainMetadata } from "thirdweb/chains";
+import { TransactionButton } from "@/components/tx-button";
+import { Input } from "@/components/ui/input";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
+import { mapV4ChainToV5Chain } from "@/utils/map-chains";
 
-interface DepositNativeProps {
+export function DepositNative(props: {
   address: string;
   symbol: string;
-  chain: StoredChain;
+  chain: ChainMetadata;
   isLoggedIn: boolean;
-}
-
-export const DepositNative: React.FC<DepositNativeProps> = ({
-  address,
-  symbol,
-  chain,
-  isLoggedIn,
-}) => {
-  const client = useThirdwebClient();
-  const { mutate: transfer, isPending } = useSendAndConfirmTransaction();
+  client: ThirdwebClient;
+}) {
+  const sendAndConfirmTx = useSendAndConfirmTx();
   const [amount, setAmount] = useState("");
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.currentTarget.value);
-  };
-  const v5Chain = useV5DashboardChain(chain.chainId);
 
   return (
-    <Card
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        gap: 16,
-        alignItems: "center",
-      }}
-      maxW={{ base: "100%", md: "49%" }}
-    >
+    <div className="flex flex-row items-center max-w-lg">
       <Input
-        placeholder={`Amount in ${symbol}. ex: 0.001`}
-        onChange={handleChange}
+        onChange={(e) => setAmount(e.currentTarget.value)}
+        placeholder="0.001"
         type="number"
+        className="border-r-0 rounded-r-none bg-card"
         value={amount}
       />
-      <TransactionButton
-        isLoggedIn={isLoggedIn}
-        txChainID={v5Chain.id}
-        transactionCount={1}
-        isPending={isPending}
-        disabled={
-          amount.length === 0 || Number.parseFloat(amount) <= 0 || !address
-        }
-        onClick={() => {
-          if (!address) {
-            throw new Error("Invalid address");
-          }
 
+      <TransactionButton
+        client={props.client}
+        variant="default"
+        disabled={amount.length === 0 || Number.parseFloat(amount) <= 0}
+        isLoggedIn={props.isLoggedIn}
+        className="border-l-0 rounded-l-none px-6"
+        isPending={sendAndConfirmTx.isPending}
+        onClick={() => {
           const transaction = prepareTransaction({
-            to: address,
-            chain: v5Chain,
-            client,
+            // eslint-disable-next-line no-restricted-syntax
+            chain: mapV4ChainToV5Chain(props.chain),
+            client: props.client,
+            to: props.address,
             value: toWei(amount),
           });
-          transfer(transaction, {
+          sendAndConfirmTx.mutate(transaction, {
             onSuccess: () => {
+              toast.success("Deposit successful");
               setAmount("");
+            },
+            onError: (error) => {
+              toast.error("Deposit failed", {
+                description: error.message,
+              });
             },
           });
         }}
-        style={{ minWidth: 160 }}
+        transactionCount={undefined}
+        txChainID={props.chain.chainId}
       >
         Deposit
+        <ArrowUpRightIcon className="w-4 h-4" />
       </TransactionButton>
-    </Card>
+    </div>
   );
-};
+}

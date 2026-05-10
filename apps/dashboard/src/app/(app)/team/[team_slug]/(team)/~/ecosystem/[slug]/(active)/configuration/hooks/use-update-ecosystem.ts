@@ -3,7 +3,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { Ecosystem } from "../../../../types";
+import type { Ecosystem } from "@/api/team/ecosystems";
 
 export function useUpdateEcosystem(
   params: {
@@ -20,13 +20,13 @@ export function useUpdateEcosystem(
     // Returns true if the update was successful
     mutationFn: async (params: Ecosystem): Promise<boolean> => {
       const res = await fetch(`${params.url}/${params.id}`, {
-        method: "PATCH",
+        body: JSON.stringify(params),
         headers: {
+          Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",
           "x-thirdweb-team-id": teamId,
-          Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify(params),
+        method: "PATCH",
       });
 
       if (!res.ok) {

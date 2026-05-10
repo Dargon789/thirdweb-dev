@@ -1,25 +1,24 @@
 "use client";
 
-import { voteTokenBalances } from "@3rdweb-sdk/react/hooks/useVote";
-import { Divider, Flex, Stat, StatLabel, StatNumber } from "@chakra-ui/react";
 import { useMemo } from "react";
 import type { ThirdwebContract } from "thirdweb";
 import * as VoteExt from "thirdweb/extensions/vote";
 import { useActiveAccount, useReadContract } from "thirdweb/react";
-import { Card, Heading } from "tw-components";
+import { voteTokenBalances } from "@/hooks/useVote";
+import { StatCard } from "../overview/components/stat-card";
 import { DelegateButton } from "./components/delegate-button";
 import { Proposal } from "./components/proposal";
 import { ProposalButton } from "./components/proposal-button";
 
-interface ProposalsPageProps {
+type ProposalsPageProps = {
   contract: ThirdwebContract;
   isLoggedIn: boolean;
-}
+};
 
-export const ContractProposalsPage: React.FC<ProposalsPageProps> = ({
+export function ContractProposalsPage({
   contract,
   isLoggedIn,
-}) => {
+}: ProposalsPageProps) {
   const address = useActiveAccount()?.address;
   const proposalsQuery = useReadContract(VoteExt.getAll, {
     contract,
@@ -32,46 +31,61 @@ export const ContractProposalsPage: React.FC<ProposalsPageProps> = ({
     [proposalsQuery.data],
   );
   const voteTokenBalancesQuery = useReadContract(voteTokenBalances, {
-    contract,
     addresses: balanceAddresses,
+    contract,
     queryOptions: {
       enabled: balanceAddresses.length > 0,
     },
   });
 
   return (
-    <Flex direction="column" gap={6}>
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Heading size="title.sm">Proposals</Heading>
+    <div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+        <h2 className="text-2xl font-semibold tracking-tight">Proposals</h2>
         <div className="flex flex-col flex-wrap gap-3 md:flex-row">
           <DelegateButton contract={contract} isLoggedIn={isLoggedIn} />
           <ProposalButton contract={contract} isLoggedIn={isLoggedIn} />
         </div>
       </div>
-      <div className="flex flex-col gap-4">
-        {proposals.map((proposal) => (
-          <Proposal
-            key={proposal.proposalId.toString()}
-            contract={contract}
-            proposal={proposal}
-            isLoggedIn={isLoggedIn}
-          />
-        ))}
-        <Divider />
-        <Heading size="title.sm">Voting Tokens</Heading>
-        <div className="flex flex-row gap-2">
+
+      <div className="mb-6">
+        {proposals.length > 0 && (
+          <div className="space-y-6">
+            {proposals.map((proposal) => (
+              <Proposal
+                contract={contract}
+                isLoggedIn={isLoggedIn}
+                key={proposal.proposalId.toString()}
+                proposal={proposal}
+              />
+            ))}
+          </div>
+        )}
+
+        {proposals.length === 0 && (
+          <div className="flex flex-col gap-2 py-20 border rounded-md bg-card justify-center items-center">
+            <p className="text-muted-foreground">No proposals found</p>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Voting Tokens</h2>
+        <div className="flex flex-row gap-3">
           {voteTokenBalancesQuery.data?.map((balance) => (
-            <Card as={Stat} key={balance.address} maxWidth="240px">
-              <StatLabel>
-                {balance.address?.toLowerCase() === address?.toLowerCase()
+            <StatCard
+              isPending={voteTokenBalancesQuery.isPending}
+              label={
+                balance.address?.toLowerCase() === address?.toLowerCase()
                   ? "Your Balance"
-                  : "Contract Balance"}
-              </StatLabel>
-              <StatNumber>{balance.balance}</StatNumber>
-            </Card>
+                  : "Contract Balance"
+              }
+              value={balance.balance}
+              key={balance.address}
+            />
           ))}
         </div>
       </div>
-    </Flex>
+    </div>
   );
-};
+}

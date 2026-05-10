@@ -1,11 +1,9 @@
 "use client";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { useTrack } from "hooks/analytics/useTrack";
-import { useAllChainsData } from "hooks/chains/allChains";
 import { toast } from "sonner";
 import type { ThirdwebContract } from "thirdweb";
 import { cancelAuction, cancelListing } from "thirdweb/extensions/marketplace";
-import { useSendAndConfirmTransaction } from "thirdweb/react";
+import { TransactionButton } from "@/components/tx-button";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
 
 interface CancelTabProps {
   id: string;
@@ -20,56 +18,32 @@ export const CancelTab: React.FC<CancelTabProps> = ({
   isAuction,
   isLoggedIn,
 }) => {
-  const trackEvent = useTrack();
-  const { idToChain } = useAllChainsData();
-  const network = idToChain.get(contract.chain.id);
   const transaction = isAuction
-    ? cancelAuction({ contract, auctionId: BigInt(id) })
+    ? cancelAuction({ auctionId: BigInt(id), contract })
     : cancelListing({ contract, listingId: BigInt(id) });
-  const cancelQuery = useSendAndConfirmTransaction();
+  const sendAndConfirmTx = useSendAndConfirmTx();
   return (
-    <div className="flex flex-col gap-3 pt-3">
-      <TransactionButton
-        isLoggedIn={isLoggedIn}
-        txChainID={contract.chain.id}
-        transactionCount={1}
-        isPending={cancelQuery.isPending}
-        onClick={() => {
-          trackEvent({
-            category: "marketplace",
-            action: "cancel-listing",
-            label: "attempt",
-          });
-          const promise = cancelQuery.mutateAsync(transaction, {
-            onSuccess: () => {
-              trackEvent({
-                category: "marketplace",
-                action: "cancel-listing",
-                label: "success",
-                network,
-              });
-            },
-            onError: (error) => {
-              trackEvent({
-                category: "marketplace",
-                action: "cancel-listing",
-                label: "error",
-                network,
-                error,
-              });
-              console.error(error);
-            },
-          });
-          toast.promise(promise, {
-            loading: `Cancelling ${isAuction ? "auction" : "listing"}`,
-            success: "Item cancelled successfully",
-            error: "Failed to cancel",
-          });
-        }}
-        className="self-end"
-      >
-        Cancel {isAuction ? "Auction" : "Listing"}
-      </TransactionButton>
-    </div>
+    <TransactionButton
+      className="self-end"
+      client={contract.client}
+      isLoggedIn={isLoggedIn}
+      isPending={sendAndConfirmTx.isPending}
+      onClick={() => {
+        const promise = sendAndConfirmTx.mutateAsync(transaction, {
+          onError: (error) => {
+            console.error(error);
+          },
+        });
+        toast.promise(promise, {
+          error: "Failed to cancel",
+          loading: `Cancelling ${isAuction ? "auction" : "listing"}`,
+          success: "Item cancelled successfully",
+        });
+      }}
+      transactionCount={1}
+      txChainID={contract.chain.id}
+    >
+      Cancel {isAuction ? "Auction" : "Listing"}
+    </TransactionButton>
   );
 };

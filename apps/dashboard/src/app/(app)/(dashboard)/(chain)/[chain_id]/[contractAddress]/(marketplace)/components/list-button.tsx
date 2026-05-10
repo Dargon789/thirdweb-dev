@@ -1,5 +1,10 @@
 "use client";
 
+import { PlusIcon } from "lucide-react";
+import { useState } from "react";
+import type { ThirdwebContract } from "thirdweb";
+import { useActiveAccount } from "thirdweb/react";
+import { ListerOnly } from "@/components/contracts/roles/lister-only";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -9,13 +14,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { TabButtons } from "@/components/ui/tabs";
-import { ListerOnly } from "@3rdweb-sdk/react/components/roles/lister-only";
-import { isAlchemySupported } from "lib/wallet/nfts/isAlchemySupported";
-import { isMoralisSupported } from "lib/wallet/nfts/isMoralisSupported";
-import { PlusIcon } from "lucide-react";
-import { useState } from "react";
-import type { ThirdwebContract } from "thirdweb";
-import { useActiveAccount } from "thirdweb/react";
 import { CreateListingsForm } from "./list-form";
 
 interface CreateListingButtonProps {
@@ -41,18 +39,18 @@ export const CreateListingButton: React.FC<CreateListingButtonProps> = ({
   const [listingMode, setListingMode] =
     useState<(typeof LISTING_MODES)[number]>("Select NFT");
 
-  const isSupportedChain =
-    contract.chain.id &&
-    (isInsightSupported ||
-      isAlchemySupported(contract.chain.id) ||
-      isMoralisSupported(contract.chain.id));
-
   return (
     <ListerOnly contract={contract}>
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet onOpenChange={setOpen} open={open}>
         <SheetTrigger asChild>
-          <Button variant="primary" {...restButtonProps} disabled={!address}>
-            {createText} <PlusIcon className="ml-2 size-5" />
+          <Button
+            {...restButtonProps}
+            disabled={!address}
+            className="gap-2"
+            size="sm"
+          >
+            <PlusIcon className="size-4" />
+            {createText}
           </Button>
         </SheetTrigger>
         <SheetContent className="w-full overflow-y-auto sm:min-w-[540px] lg:min-w-[700px]">
@@ -63,39 +61,37 @@ export const CreateListingButton: React.FC<CreateListingButtonProps> = ({
           If the chain is not supported by the indexer providers
           we don't show the tabs, we only show the Manual input form.
           Otherwise we show both */}
-          {isSupportedChain ? (
+          {isInsightSupported ? (
             <>
               <TabButtons
                 tabs={LISTING_MODES.map((mode) => ({
-                  name: mode,
                   isActive: mode === listingMode,
+                  name: mode,
                   onClick: () => setListingMode(mode),
                 }))}
-                tabClassName="text-sm gap-2 !text-sm"
-                tabContainerClassName="gap-0.5"
               />
               <div className="mt-5">
                 <CreateListingsForm
-                  isLoggedIn={isLoggedIn}
-                  contract={contract}
-                  type={type}
                   actionText={createText}
-                  setOpen={setOpen}
-                  mode={listingMode === "Select NFT" ? "automatic" : "manual"}
+                  contract={contract}
                   isInsightSupported={isInsightSupported}
+                  isLoggedIn={isLoggedIn}
+                  mode={listingMode === "Select NFT" ? "automatic" : "manual"}
+                  setOpen={setOpen}
+                  type={type}
                 />
               </div>
             </>
           ) : (
             <div className="mt-5">
               <CreateListingsForm
-                isLoggedIn={isLoggedIn}
-                contract={contract}
-                type={type}
                 actionText={createText}
-                setOpen={setOpen}
-                mode="manual"
+                contract={contract}
                 isInsightSupported={isInsightSupported}
+                isLoggedIn={isLoggedIn}
+                mode="manual"
+                setOpen={setOpen}
+                type={type}
               />
             </div>
           )}

@@ -1,7 +1,12 @@
 "use client";
 
+import { format } from "date-fns";
+import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
-
+import {
+  EmptyChartState,
+  LoadingChartState,
+} from "@/components/analytics/empty-chart-state";
 import {
   Card,
   CardContent,
@@ -17,13 +22,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { formatDate } from "date-fns";
-import { useMemo } from "react";
-import {
-  EmptyChartState,
-  LoadingChartState,
-} from "../../../../components/analytics/empty-chart-state";
-import { cn } from "../../../lib/utils";
+import { cn } from "@/lib/utils";
 
 type ThirdwebBarChartProps<TConfig extends ChartConfig> = {
   // metadata
@@ -45,6 +44,10 @@ type ThirdwebBarChartProps<TConfig extends ChartConfig> = {
   toolTipValueFormatter?: (value: unknown) => React.ReactNode;
   hideLabel?: boolean;
   emptyChartState?: React.ReactElement;
+  className?: string;
+  xAxis?: {
+    showHour?: boolean;
+  };
 };
 
 export function ThirdwebBarChart<TConfig extends ChartConfig>(
@@ -56,7 +59,7 @@ export function ThirdwebBarChart<TConfig extends ChartConfig>(
     props.variant || configKeys.length > 4 ? "stacked" : "grouped";
 
   return (
-    <Card>
+    <Card className={cn("overflow-hidden", props.className)}>
       {props.header && (
         <CardHeader>
           <CardTitle className={cn("mb-2", props.header.titleClassName)}>
@@ -71,20 +74,25 @@ export function ThirdwebBarChart<TConfig extends ChartConfig>(
       {props.customHeader && props.customHeader}
 
       <CardContent className={cn(!props.header && "pt-6")}>
-        <ChartContainer config={props.config} className={props.chartClassName}>
+        <ChartContainer className={props.chartClassName} config={props.config}>
           {props.isPending ? (
             <LoadingChartState />
           ) : props.data.length === 0 ? (
-            <EmptyChartState>{props.emptyChartState}</EmptyChartState>
+            <EmptyChartState content={props.emptyChartState} />
           ) : (
             <BarChart accessibilityLayer data={props.data}>
               <CartesianGrid vertical={false} />
               <XAxis
-                dataKey="time"
-                tickLine={false}
                 axisLine={false}
+                dataKey="time"
+                tickFormatter={(value) =>
+                  format(
+                    new Date(value),
+                    props.xAxis?.showHour ? "MMM dd, HH:mm" : "MMM dd",
+                  )
+                }
+                tickLine={false}
                 tickMargin={10}
-                tickFormatter={(value) => formatDate(new Date(value), "MMM d")}
               />
               <ChartTooltip
                 content={
@@ -104,15 +112,15 @@ export function ThirdwebBarChart<TConfig extends ChartConfig>(
               )}
               {configKeys.map((key) => (
                 <Bar
-                  key={key}
+                  className="stroke-background"
                   dataKey={key}
                   // if stacked then they should all be the same stackId
                   // if grouped then they should all be unique stackId (so the key works great)
-                  stackId={variant === "stacked" ? "a" : key}
                   fill={props.config[key]?.color}
+                  key={key}
                   radius={[4, 4, 4, 4]}
+                  stackId={variant === "stacked" ? "a" : key}
                   strokeWidth={1}
-                  className="stroke-background"
                 />
               ))}
             </BarChart>

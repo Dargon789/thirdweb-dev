@@ -1,15 +1,15 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { mobileViewport } from "../../../../../stories/utils";
+import type { Meta, StoryObj } from "@storybook/nextjs";
+import { mobileViewport, storybookThirdwebClient } from "@/storybook/utils";
 import { HeaderLoggedOut } from "./HeaderLoggedOut";
 
 const meta = {
-  title: "Headers/LoggedOut",
   component: Variants,
   parameters: {
     nextjs: {
       appDirectory: true,
     },
   },
+  title: "Headers/LoggedOut",
 } satisfies Meta<typeof Variants>;
 
 export default meta;
@@ -34,7 +34,7 @@ function Variants() {
   return (
     <div className="background flex min-h-dvh flex-col gap-6">
       <div className="border-b bg-card">
-        <HeaderLoggedOut />
+        <HeaderLoggedOut client={storybookThirdwebClient} />
       </div>
     </div>
   );

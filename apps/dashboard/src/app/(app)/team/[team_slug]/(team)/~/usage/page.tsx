@@ -1,15 +1,24 @@
-import { getProjects } from "@/api/projects";
-import { getTeamBySlug } from "@/api/team";
-import { getTeamSubscriptions } from "@/api/team-subscription";
-import { fetchRPCUsage } from "@/api/usage/rpc";
-import { getThirdwebClient } from "@/constants/thirdweb.server";
-import { normalizeTimeISOString } from "lib/time";
+import { format, parseISO } from "date-fns";
+import { InfoIcon } from "lucide-react";
 import { redirect } from "next/navigation";
-import { getValidAccount } from "../../../../../account/settings/getAccount";
-import { getAuthToken } from "../../../../../api/lib/getAuthToken";
-import { loginRedirect } from "../../../../../login/loginRedirect";
-import { getAccountUsage } from "./getAccountUsage";
-import { Usage } from "./overview/components/Usage";
+import { getValidAccount } from "@/api/account/get-account";
+import { getTeamBySlug } from "@/api/team/get-team";
+import { getBilledUsage } from "@/api/usage/billing-preview";
+import { UpsellContent } from "@/components/blocks/upsell-wrapper";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { getValidTeamPlan } from "@/utils/getValidTeamPlan";
+import {
+  formatPrice,
+  UsageCategoryDetails,
+} from "../../_components/usage-category-details";
 
 export default async function Page(props: {
   params: Promise<{
@@ -17,38 +26,34 @@ export default async function Page(props: {
   }>;
 }) {
   const params = await props.params;
-  const [account, team, authToken] = await Promise.all([
+  const [, team] = await Promise.all([
     getValidAccount(`/team/${params.team_slug}/~/usage`),
     getTeamBySlug(params.team_slug),
-    getAuthToken(),
   ]);
 
   if (!team) {
     redirect("/team");
   }
 
-  if (!authToken) {
-    loginRedirect(`/team/${params.team_slug}/~/usage`);
+  const usagePreview = await getBilledUsage(team.slug);
+  const validPlan = getValidTeamPlan(team);
+
+  if (validPlan === "free") {
+    return (
+      <div className="grow flex flex-col justify-center items-center">
+        <UpsellContent
+          currentPlan={team.billingPlan}
+          isLegacyPlan={team.isLegacyPlan}
+          featureDescription="View RPC, Wallet, Storage, Gas Sponsorship, Engine Cloud, Webhooks usage and more"
+          featureName="Usage"
+          requiredPlan="starter"
+          teamSlug={params.team_slug}
+        />
+      </div>
+    );
   }
 
-  const [accountUsage, subscriptions, projects, rpcUsage] = await Promise.all([
-    getAccountUsage(),
-    getTeamSubscriptions(team.slug),
-    getProjects(team.slug),
-    fetchRPCUsage({
-      authToken,
-      period: "day",
-      // 7 days ago
-      from: normalizeTimeISOString(
-        new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-      ),
-      // now
-      to: normalizeTimeISOString(new Date()),
-      teamId: team.id,
-    }),
-  ]);
-
-  if (!accountUsage || !subscriptions) {
+  if (usagePreview.status === "error") {
     return (
       <div className="flex min-h-[350px] items-center justify-center rounded-lg border p-4 text-destructive-text">
         Something went wrong. Please try again later.
@@ -56,26 +61,85 @@ export default async function Page(props: {
     );
   }
 
-  const client = getThirdwebClient({
-    jwt: authToken,
-    teamId: team.id,
+  const grandTotalCents = usagePreview.data.result.reduce((total, category) => {
+    const categoryTotal = category.lineItems.reduce(
+      (sum, item) => sum + item.amountUsdCents,
+      0,
+    );
+    return total + categoryTotal;
+  }, 0);
+
+  // sort the categories by their sub-total
+  const sortedCategories = usagePreview.data.result.sort((a, b) => {
+    const aTotal = a.lineItems.reduce(
+      (sum, item) => sum + item.amountUsdCents,
+      0,
+    );
+    const bTotal = b.lineItems.reduce(
+      (sum, item) => sum + item.amountUsdCents,
+      0,
+    );
+    return bTotal - aTotal;
   });
 
   return (
-    <Usage
-      // TODO - remove accountUsage when we have all the data available from team
-      usage={accountUsage}
-      subscriptions={subscriptions}
-      account={account}
-      team={team}
-      client={client}
-      rpcUsage={rpcUsage.ok ? rpcUsage.data : []}
-      projects={projects.map((project) => ({
-        id: project.id,
-        name: project.name,
-        image: project.image,
-        slug: project.slug,
-      }))}
-    />
+    <div className="flex flex-col gap-8">
+      {usagePreview.data.planVersion < 5 && (
+        <Alert variant="warning">
+          <InfoIcon className="h-4 w-4" />
+          <AlertTitle>Outdated Plan</AlertTitle>
+          <AlertDescription>
+            <p>
+              You are on an outdated plan. Some of this information may be
+              inaccurate.
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex flex-col items-start text-xl">
+            Usage Summary
+          </CardTitle>
+          <CardDescription>
+            {format(parseISO(usagePreview.data.periodStart), "MMM d, yyyy")} -{" "}
+            {format(parseISO(usagePreview.data.periodEnd), "MMM d, yyyy")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="font-semibold text-3xl text-foreground">
+            {formatPrice(grandTotalCents, { inCents: true })}
+          </div>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Total estimated cost based on usage in the current billing period so
+            far.
+          </p>
+        </CardContent>
+        <CardFooter>
+          <Alert variant="info">
+            <InfoIcon className="h-4 w-4" />
+            <AlertTitle>Billing Thresholds and Discounts</AlertTitle>
+            <AlertDescription>
+              <p>
+                Partial payments due to billing thresholds as well as discounts
+                are not reflected in this estimate.
+                <br />
+                This means the invoice you receive at the end of the billing
+                period may be lower.
+              </p>
+            </AlertDescription>
+          </Alert>
+        </CardFooter>
+      </Card>
+
+      <div className="space-y-6">
+        {sortedCategories.map((category, index) => (
+          <UsageCategoryDetails
+            category={category}
+            key={`${category.category}_${index}`}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

@@ -1,32 +1,18 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { StarIcon } from "lucide-react";
 import { apiServerProxy } from "@/actions/proxies";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button, type ButtonProps } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/Spinner";
 import { ToolTipLabel } from "@/components/ui/tooltip";
+import { useFavoriteChainIds } from "@/hooks/favorite-chains";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Star } from "lucide-react";
-import { useActiveAccount } from "thirdweb/react";
-
-async function favoriteChains() {
-  const res = await apiServerProxy<{ data: string[] }>({
-    pathname: "/v1/chains/favorites",
-    method: "GET",
-  });
-
-  if (!res.ok) {
-    throw new Error(res.error);
-  }
-
-  const result = res.data;
-  return result.data ?? [];
-}
 
 async function addChainToFavorites(chainId: number) {
   const res = await apiServerProxy({
-    method: "POST",
     body: JSON.stringify({}),
+    method: "POST",
     pathname: `/v1/chains/${chainId}/favorite`,
   });
 
@@ -40,8 +26,8 @@ async function addChainToFavorites(chainId: number) {
 
 async function removeChainFromFavorites(chainId: number) {
   const res = await apiServerProxy<{ data?: { favorite: boolean } }>({
-    pathname: `/v1/chains/${chainId}/favorite`,
     method: "DELETE",
+    pathname: `/v1/chains/${chainId}/favorite`,
   });
 
   if (!res.ok) {
@@ -50,15 +36,6 @@ async function removeChainFromFavorites(chainId: number) {
 
   const result = res.data;
   return result?.data?.favorite;
-}
-
-export function useFavoriteChainIds() {
-  const address = useActiveAccount()?.address;
-  return useQuery({
-    queryKey: ["favoriteChains", address],
-    queryFn: () => favoriteChains(),
-    enabled: !!address,
-  });
 }
 
 export function StarButton(props: {
@@ -92,19 +69,19 @@ export function StarButton(props: {
   return (
     <ToolTipLabel label={label} side="right">
       <Button
-        className={props.className}
-        variant={props.variant ?? "ghost"}
-        size="icon"
         aria-label={label}
+        className={props.className}
+        disabled={mutation.isPending || favChainsQuery.isPending}
         onClick={() => {
           mutation.mutate(isPreferred);
         }}
-        disabled={mutation.isPending || favChainsQuery.isPending}
+        size="icon"
+        variant={props.variant ?? "ghost"}
       >
         {mutation.isPending ? (
           <Spinner className={cn("size-6", props.iconClassName)} />
         ) : (
-          <Star
+          <StarIcon
             className={cn(
               "size-6 text-foreground transition-all",
               props.iconClassName,

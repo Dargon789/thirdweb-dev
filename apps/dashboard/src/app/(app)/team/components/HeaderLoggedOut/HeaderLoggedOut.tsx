@@ -1,16 +1,18 @@
 "use client";
 
-import { ToggleThemeButton } from "@/components/color-mode-toggle";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { ThirdwebClient } from "thirdweb";
+import { ToggleThemeButton } from "@/components/blocks/color-mode-toggle";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { SecondaryNavLinks } from "../../../components/Header/SecondaryNav/SecondaryNav";
 import { MobileBurgerMenuButton } from "../../../components/MobileBurgerMenuButton";
 import { ThirdwebMiniLogo } from "../../../components/ThirdwebMiniLogo";
 
 function HeaderLoggedOutDesktopUI(props: {
   className?: string;
+  client: ThirdwebClient;
 }) {
   const pathname = usePathname();
   return (
@@ -33,7 +35,7 @@ function HeaderLoggedOutDesktopUI(props: {
         <SecondaryNavLinks />
 
         <div className="flex items-center gap-4">
-          <Button size="sm" className="rounded-lg" asChild>
+          <Button asChild className="rounded-lg" size="sm">
             <Link
               href={`/login${pathname ? `?next=${encodeURIComponent(pathname)}` : ""}`}
             >
@@ -50,6 +52,7 @@ function HeaderLoggedOutDesktopUI(props: {
 
 function HeaderLoggedOutMobileUI(props: {
   className?: string;
+  client: ThirdwebClient;
 }) {
   const pathname = usePathname();
 
@@ -65,24 +68,27 @@ function HeaderLoggedOutMobileUI(props: {
       </Link>
 
       <div className="flex items-center gap-3">
-        <Button size="sm" className="rounded-lg" asChild>
+        <Button asChild className="rounded-lg" size="sm">
           <Link
             href={`/login${pathname ? `?next=${encodeURIComponent(pathname)}` : ""}`}
           >
             Connect Wallet
           </Link>
         </Button>
-        <MobileBurgerMenuButton type="loggedOut" />
+        <MobileBurgerMenuButton client={props.client} type="loggedOut" />
       </div>
     </header>
   );
 }
 
-export function HeaderLoggedOut() {
+export function HeaderLoggedOut(props: { client: ThirdwebClient }) {
   return (
     <div>
-      <HeaderLoggedOutDesktopUI className="max-lg:hidden" />
-      <HeaderLoggedOutMobileUI className="lg:hidden" />
+      <HeaderLoggedOutDesktopUI
+        className="max-lg:hidden"
+        client={props.client}
+      />
+      <HeaderLoggedOutMobileUI className="lg:hidden" client={props.client} />
     </div>
   );
 }

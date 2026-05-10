@@ -1,3 +1,8 @@
+import { ChevronDownIcon, TicketCheckIcon } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getAuthToken } from "@/api/auth-token";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,109 +18,79 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDownIcon, TicketCheckIcon } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getThirdwebClient } from "../../../../../../@/constants/thirdweb.server";
-import { mapV4ChainToV5Chain } from "../../../../../../contexts/map-chains";
-import { NebulaChatButton } from "../../../../../nebula-app/(app)/components/FloatingChat/FloatingChat";
-import {
-  getAuthToken,
-  getAuthTokenWalletAddress,
-} from "../../../../api/lib/getAuthToken";
+import { getClientThirdwebClient } from "@/constants/thirdweb-client.client";
+import { mapV4ChainToV5Chain } from "@/utils/map-chains";
+import { TeamHeader } from "../../../../team/components/TeamHeader/team-header";
 import { StarButton } from "../../components/client/star-button";
-import { getChain, getChainMetadata } from "../../utils";
+import { getChain, getCustomChainMetadata } from "../../utils";
+import { fetchChainSeo } from "./apis/chain-seo";
 import { AddChainToWallet } from "./components/client/add-chain-to-wallet";
+import { ChainPageView } from "./components/client/chain-pageview";
 import { ChainHeader } from "./components/server/chain-header";
 
-// TODO: improve the behavior when clicking "Get started with thirdweb", currently just redirects to the dashboard
+type Params = Promise<{ chain_id: string }>;
 
 export async function generateMetadata(props: {
-  params: Promise<{ chain_id: string }>;
-}): Promise<Metadata> {
+  params: Params;
+}): Promise<Metadata | undefined> {
   const params = await props.params;
   const chain = await getChain(params.chain_id);
-  const sanitizedChainName = chain.name.replace("Mainnet", "").trim();
-  const title = `${sanitizedChainName}: RPC and Chain Settings`;
+  const chainSeo = await fetchChainSeo(Number(chain.chainId)).catch(
+    () => undefined,
+  );
 
-  const description = `Use the best ${sanitizedChainName} RPC and add to your wallet. Discover the chain ID, native token, explorers, and ${
-    chain.testnet && chain.faucets?.length ? "faucet options" : "more"
-  }.`;
+  if (!chainSeo) {
+    return undefined;
+  }
 
   return {
-    title,
-    description,
+    title: chainSeo.title,
+    description: chainSeo.description,
+    metadataBase: new URL("https://thirdweb.com"),
     openGraph: {
-      title,
-      description,
+      title: chainSeo.og.title,
+      description: chainSeo.og.description,
+      siteName: "thirdweb",
+      type: "website",
+      url: "https://thirdweb.com",
+    },
+    twitter: {
+      title: chainSeo.og.title,
+      description: chainSeo.og.description,
+      card: "summary_large_image",
+      creator: "@thirdweb",
+      site: "@thirdweb",
     },
   };
 }
 
-// this is the dashboard layout file
 export default async function ChainPageLayout(props: {
   children: React.ReactNode;
-  params: Promise<{ chain_id: string }>;
+  params: Params;
 }) {
   const params = await props.params;
   const { children } = props;
-  const [chain, authToken, accountAddress] = await Promise.all([
+  const [chain, authToken] = await Promise.all([
     getChain(params.chain_id),
     getAuthToken(),
-    getAuthTokenWalletAddress(),
   ]);
 
   if (params.chain_id !== chain.slug) {
     redirect(chain.slug);
   }
 
-  const chainMetadata = await getChainMetadata(chain.chainId);
-  const client = getThirdwebClient({
-    jwt: authToken,
-    teamId: undefined,
-  });
-
-  const chainPromptPrefix = `\
-You are assisting users exploring the chain ${chain.name} (Chain ID: ${chain.chainId}). Provide concise insights into the types of applications and activities prevalent on this chain, such as DeFi protocols, NFT marketplaces, or gaming platforms. Highlight notable projects or trends without delving into technical details like consensus mechanisms or gas fees.
-Users may seek comparisons between ${chain.name} and other chains. Provide objective, succinct comparisons focusing on performance, fees, and ecosystem support. Refrain from transaction-specific advice unless requested.
-Provide users with an understanding of the unique use cases and functionalities that ${chain.name} supports. Discuss how developers leverage this chain for specific applications, such as scalable dApps, low-cost transactions, or specialized token standards, focusing on practical implementations.
-Users may be interested in utilizing thirdweb tools on ${chain.name}. Offer clear guidance on how thirdweb's SDKs, smart contract templates, and deployment tools integrate with this chain. Emphasize the functionalities enabled by thirdweb without discussing transaction execution unless prompted.
-Avoid transaction-related actions to be executed by the user unless inquired about.
-
-The following is the user's message:
-  `;
-
-  const examplePrompts: string[] = [
-    "What are users doing on this chain?",
-    "What are the most active contracts?",
-    "Why would I use this chain over others?",
-    "Can I deploy thirdweb contracts to this chain?",
-  ];
-
-  if (chain.chainId !== 1) {
-    examplePrompts.push("Can I bridge assets from Ethereum to this chain?");
-  }
+  const customChainMetadata = getCustomChainMetadata(chain.chainId);
+  const chainSeo = await fetchChainSeo(chain.chainId);
+  const client = getClientThirdwebClient(undefined);
+  const description = customChainMetadata?.about || chainSeo?.description;
 
   return (
-    <>
-      <NebulaChatButton
-        networks={chain.testnet ? "testnet" : "mainnet"}
-        isFloating={true}
-        pageType="chain"
-        authToken={authToken ?? undefined}
-        label="Ask AI about this chain"
-        client={client}
-        nebulaParams={{
-          messagePrefix: chainPromptPrefix,
-          chainIds: [chain.chainId],
-          wallet: accountAddress ?? undefined,
-        }}
-        examplePrompts={examplePrompts.map((prompt) => ({
-          title: prompt,
-          message: prompt,
-        }))}
-      />
+    <div className="flex grow flex-col">
+      <ChainPageView chainId={chain.chainId} is_testnet={chain.testnet} />
+      <div className="border-border border-b bg-card">
+        <TeamHeader />
+      </div>
+
       <div className="flex h-14 border-border border-b pl-7">
         <Breadcrumb className="my-auto">
           <BreadcrumbList>
@@ -160,17 +135,17 @@ The following is the user's message:
         <div className="flex w-full flex-col pb-10">
           {/* Icon + Background */}
           <ChainHeader
-            headerImageUrl={chainMetadata?.headerImgUrl}
-            logoUrl={chain.icon?.url}
             chain={chain}
             client={client}
+            headerImageUrl={customChainMetadata?.headerImgUrl}
+            logoUrl={chain.icon?.url}
           />
 
           <div className="h-4 md:h-8" />
 
           <div className="flex flex-col gap-3 md:gap-2">
             {/* Gas Sponsored badge - Mobile */}
-            {chainMetadata?.gasSponsored && (
+            {customChainMetadata?.gasSponsored && (
               <div className="flex md:hidden">
                 <GasSponsoredBadge />
               </div>
@@ -186,13 +161,13 @@ The following is the user's message:
               {authToken && (
                 <StarButton
                   chainId={chain.chainId}
-                  iconClassName="size-5"
                   className="p-1"
+                  iconClassName="size-5"
                 />
               )}
 
               {/* Gas Sponsored badge - Desktop */}
-              {chainMetadata?.gasSponsored && (
+              {customChainMetadata?.gasSponsored && (
                 <div className="hidden md:block">
                   <GasSponsoredBadge />
                 </div>
@@ -200,9 +175,9 @@ The following is the user's message:
             </div>
 
             {/* description */}
-            {chainMetadata?.about && (
-              <p className="mb-2 whitespace-pre-line text-muted-foreground text-sm lg:text-base">
-                {chainMetadata.about}
+            {description && (
+              <p className="mb-2 whitespace-pre-line text-muted-foreground text-sm lg:text-base text-pretty max-w-3xl">
+                {description}
               </p>
             )}
 
@@ -215,9 +190,10 @@ The following is the user's message:
                     // eslint-disable-next-line no-restricted-syntax
                     mapV4ChainToV5Chain(chain)
                   }
+                  client={client}
                 />
-                <Button variant="primary">
-                  <Link href="/team" target="_blank">
+                <Button asChild variant="primary">
+                  <Link href="/team" rel="noopener noreferrer" target="_blank">
                     Get started
                   </Link>
                 </Button>
@@ -229,7 +205,7 @@ The following is the user's message:
           {children}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

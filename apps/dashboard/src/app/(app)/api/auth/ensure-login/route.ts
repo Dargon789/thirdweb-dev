@@ -1,8 +1,8 @@
-import { COOKIE_ACTIVE_ACCOUNT, COOKIE_PREFIX_TOKEN } from "@/constants/cookie";
-import { API_SERVER_URL } from "@/constants/env";
 import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { getAddress } from "thirdweb/utils";
+import { COOKIE_ACTIVE_ACCOUNT, COOKIE_PREFIX_TOKEN } from "@/constants/cookie";
+import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 
 export type EnsureLoginResponse = {
   isLoggedIn: boolean;
@@ -45,12 +45,15 @@ export const GET = async (req: NextRequest) => {
   }
 
   // check that the token is valid by checking for the user account
-  const accountRes = await fetch(`${API_SERVER_URL}/v1/account/me`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
+  const accountRes = await fetch(
+    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/account/me`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      method: "GET",
     },
-  });
+  );
   if (accountRes.status !== 200) {
     // if the account is not found, clear the token and redirect to login
     cookieStore.delete(authCookieName);
@@ -67,10 +70,10 @@ export const GET = async (req: NextRequest) => {
   ) {
     cookieStore.set(COOKIE_ACTIVE_ACCOUNT, getAddress(address), {
       httpOnly: true,
-      secure: true,
-      sameSite: "strict",
       // 3 days
       maxAge: 3 * 24 * 60 * 60,
+      sameSite: "strict",
+      secure: true,
     });
   }
 

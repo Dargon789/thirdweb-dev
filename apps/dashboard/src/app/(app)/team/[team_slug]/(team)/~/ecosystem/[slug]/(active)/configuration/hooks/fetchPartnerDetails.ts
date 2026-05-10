@@ -1,4 +1,4 @@
-import type { Ecosystem, Partner } from "../../../../types";
+import type { Ecosystem, Partner } from "@/api/team/ecosystems";
 
 export async function fetchPartnerDetails(args: {
   authToken: string;
@@ -12,11 +12,11 @@ export async function fetchPartnerDetails(args: {
     const response = await fetch(
       `${ecosystem.url}/${ecosystem.id}/partner/${partnerId}`,
       {
-        method: "GET",
         headers: {
           Authorization: `Bearer ${authToken}`,
           "x-thirdweb-team-id": teamId,
         },
+        method: "GET",
       },
     );
 

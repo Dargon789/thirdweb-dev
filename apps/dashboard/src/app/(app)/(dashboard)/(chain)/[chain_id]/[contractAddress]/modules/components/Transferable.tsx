@@ -1,5 +1,19 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { CircleAlertIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { useCallback } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import {
+  TransferableERC20,
+  TransferableERC721,
+  TransferableERC1155,
+} from "thirdweb/modules";
+import { useReadContract } from "thirdweb/react";
+import { z } from "zod";
+import { TransactionButton } from "@/components/tx-button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,21 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ToolTipLabel } from "@/components/ui/tooltip";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { TransactionButton } from "components/buttons/TransactionButton";
-import { CircleAlertIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useCallback } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { sendAndConfirmTransaction } from "thirdweb";
-import {
-  TransferableERC20,
-  TransferableERC721,
-  TransferableERC1155,
-} from "thirdweb/modules";
-import { useReadContract } from "thirdweb/react";
-import { z } from "zod";
+import { useSendAndConfirmTx } from "@/hooks/useSendTx";
 import { addressSchema } from "../zod-schemas";
 import { ModuleCardUI, type ModuleCardUIProps } from "./module-card";
 import type { ModuleInstanceProps } from "./module-instance";
@@ -46,7 +46,7 @@ export type TransferableModuleFormValues = z.infer<typeof formSchema>;
 
 function TransferableModule(props: ModuleInstanceProps) {
   const { contract, ownerAccount } = props;
-
+  const sendAndConfirmTx = useSendAndConfirmTx();
   const isTransferEnabledQuery = useReadContract(
     props.contractInfo.name === "TransferableERC721"
       ? TransferableERC721.isTransferEnabled
@@ -79,10 +79,7 @@ function TransferableModule(props: ModuleInstanceProps) {
           enableTransfer: transferEnabled,
         });
 
-        await sendAndConfirmTransaction({
-          transaction: setTransferableTx,
-          account: ownerAccount,
-        });
+        await sendAndConfirmTx.mutateAsync(setTransferableTx);
       }
 
       await Promise.all(
@@ -99,10 +96,7 @@ function TransferableModule(props: ModuleInstanceProps) {
             target: address,
           });
 
-          await sendAndConfirmTransaction({
-            transaction: setTransferableForTx,
-            account: ownerAccount,
-          });
+          await sendAndConfirmTx.mutateAsync(setTransferableForTx);
         }),
       );
     },
@@ -111,18 +105,20 @@ function TransferableModule(props: ModuleInstanceProps) {
       ownerAccount,
       isTransferEnabledQuery.data,
       props.contractInfo.name,
+      sendAndConfirmTx.mutateAsync,
     ],
   );
 
   return (
     <TransferableModuleUI
       {...props}
+      adminAddress={props.ownerAccount?.address || ""}
+      client={props.contract.client}
+      contractChainId={props.contract.chain.id}
+      isOwnerAccount={!!props.ownerAccount}
       isPending={isTransferEnabledQuery.isPending}
       isRestricted={!isTransferEnabledQuery.data}
-      adminAddress={props.ownerAccount?.address || ""}
       update={update}
-      isOwnerAccount={!!props.ownerAccount}
-      contractChainId={props.contract.chain.id}
     />
   );
 }
@@ -141,11 +137,11 @@ export function TransferableModuleUI(
 ) {
   const form = useForm<TransferableModuleFormValues>({
     resolver: zodResolver(formSchema),
+    reValidateMode: "onChange",
     values: {
       allowList: [],
       isRestricted: props.isRestricted,
     },
-    reValidateMode: "onChange",
   });
 
   const updateMutation = useMutation({
@@ -168,8 +164,8 @@ export function TransferableModuleUI(
 
     const promise = updateMutation.mutateAsync(values);
     toast.promise(promise, {
-      success: "Successfully updated transfer restrictions",
       error: (error) => `Failed to update transfer restrictions: ${error}`,
+      success: "Successfully updated transfer restrictions",
     });
   };
 
@@ -184,22 +180,23 @@ export function TransferableModuleUI(
           updateButton={() => {
             return (
               <TransactionButton
-                size="sm"
                 className="min-w-24 gap-2"
-                type="submit"
+                client={props.client}
                 disabled={
                   props.isPending ||
                   !props.isOwnerAccount ||
                   !form.formState.isDirty
                 }
+                isLoggedIn={props.isLoggedIn}
                 isPending={updateMutation.isPending}
+                size="sm"
                 transactionCount={
                   // if already restricted, only need to send the allowlist txs
                   // else - need to send one more
                   (props.isRestricted ? 0 : 1) + allowListLength
                 }
                 txChainID={props.contractChainId}
-                isLoggedIn={props.isLoggedIn}
+                type="submit"
               >
                 Update
               </TransactionButton>
@@ -216,7 +213,7 @@ export function TransferableModuleUI(
                   control={form.control}
                   name="isRestricted"
                   render={({ field }) => {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    // biome-ignore lint/correctness/noUnusedVariables: explicitly removing the value field here
                     const { value, ...restField } = field;
 
                     return (
@@ -226,8 +223,8 @@ export function TransferableModuleUI(
                           <Switch
                             {...restField}
                             checked={field.value}
-                            disabled={!props.isOwnerAccount}
                             className="!m-0"
+                            disabled={!props.isOwnerAccount}
                             onCheckedChange={(v) => {
                               field.onChange(v);
 
@@ -294,12 +291,12 @@ export function TransferableModuleUI(
                         />
                         <ToolTipLabel label="Remove address">
                           <Button
-                            variant="outline"
                             className="!text-destructive-text bg-background"
+                            disabled={!props.isOwnerAccount}
                             onClick={() => {
                               formFields.remove(index);
                             }}
-                            disabled={!props.isOwnerAccount}
+                            variant="outline"
                           >
                             <Trash2Icon className="size-4" />
                           </Button>
@@ -313,8 +310,8 @@ export function TransferableModuleUI(
                   {/* Add Addresses Actions */}
                   <div className="flex gap-3">
                     <Button
-                      variant="outline"
-                      size="sm"
+                      className="gap-2"
+                      disabled={!props.isOwnerAccount}
                       onClick={() => {
                         // add admin by default if adding the first input
                         formFields.append({
@@ -324,8 +321,8 @@ export function TransferableModuleUI(
                               : "",
                         });
                       }}
-                      className="gap-2"
-                      disabled={!props.isOwnerAccount}
+                      size="sm"
+                      variant="outline"
                     >
                       <PlusIcon className="size-3" />
                       Add Address

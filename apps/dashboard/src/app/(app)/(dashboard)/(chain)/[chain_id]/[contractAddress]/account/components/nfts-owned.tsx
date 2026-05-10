@@ -1,47 +1,53 @@
 "use client";
 
-import { useWalletNFTs } from "@3rdweb-sdk/react";
 import type { ThirdwebContract } from "thirdweb";
+import { useOwnedNFTsInsight } from "@/hooks/useWalletNFTs";
+import type { ProjectMeta } from "../../../../../../team/[team_slug]/[project_slug]/contract/[chainIdOrSlug]/[contractAddress]/types";
 import { NFTCards } from "../../_components/NFTCards";
 
 interface NftsOwnedProps {
   contract: ThirdwebContract;
   isInsightSupported: boolean;
+  projectMeta: ProjectMeta | undefined;
 }
 
 export const NftsOwned: React.FC<NftsOwnedProps> = ({
   contract,
   isInsightSupported,
+  projectMeta,
 }) => {
-  const { data: walletNFTs, isPending: isWalletNFTsLoading } = useWalletNFTs({
+  const ownedNFTInsightQuery = useOwnedNFTsInsight({
     chainId: contract.chain.id,
-    walletAddress: contract.address,
     isInsightSupported: isInsightSupported,
+    walletAddress: contract.address,
+    client: contract.client,
+    chain: contract.chain,
   });
 
-  const nfts = walletNFTs?.result || [];
-  const error = walletNFTs?.error;
+  const nfts = ownedNFTInsightQuery.data || [];
+  const error = ownedNFTInsightQuery.error;
 
   return nfts.length !== 0 ? (
     <NFTCards
-      nfts={nfts.map((nft) => ({
-        id: BigInt(nft.id),
-        supply: BigInt(nft.supply),
-        owner: nft.owner,
-        tokenURI: nft.tokenURI,
-        metadata: nft.metadata,
-        type: nft.type,
-        contractAddress: nft.contractAddress,
-        chainId: contract.chain.id,
-        tokenAddress: nft.tokenAddress,
-      }))}
       allNfts
-      isPending={isWalletNFTsLoading}
-      trackingCategory="account_nfts_owned"
+      client={contract.client}
+      isPending={ownedNFTInsightQuery.isPending}
+      nfts={nfts.map((x) => ({
+        chainId: contract.chain.id,
+        contractAddress: x.tokenAddress,
+        id: x.id.toString(),
+        metadata: x.metadata,
+        type: x.type,
+      }))}
+      projectMeta={projectMeta}
     />
-  ) : isWalletNFTsLoading ? null : error ? (
-    <p>Failed to fetch NFTs for this account: {error}</p>
+  ) : ownedNFTInsightQuery.isPending ? null : error ? (
+    <p className="text-sm text-muted-foreground">
+      Failed to fetch NFTs for this account: {error.message}
+    </p>
   ) : (
-    <p>This account doesn&apos;t own any NFTs.</p>
+    <p className="text-sm text-muted-foreground">
+      This account doesn't own any NFTs
+    </p>
   );
 };

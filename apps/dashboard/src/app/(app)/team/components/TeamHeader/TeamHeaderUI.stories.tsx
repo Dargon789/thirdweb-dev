@@ -1,24 +1,25 @@
-import type { Project } from "@/api/projects";
-import type { Team } from "@/api/team";
+import type { Meta, StoryObj } from "@storybook/nextjs";
+import { BoxIcon } from "lucide-react";
+import { ThirdwebProvider } from "thirdweb/react";
+import type { Project } from "@/api/project/projects";
+import type { Team } from "@/api/team/get-team";
 import { Button } from "@/components/ui/button";
-import type { Meta, StoryObj } from "@storybook/react";
-import { teamsAndProjectsStub } from "stories/stubs";
+import { teamsAndProjectsStub } from "@/storybook/stubs";
 import {
   BadgeContainer,
   mobileViewport,
   storybookThirdwebClient,
-} from "stories/utils";
-import { ThirdwebProvider } from "thirdweb/react";
+} from "@/storybook/utils";
 import { TeamHeaderDesktopUI, TeamHeaderMobileUI } from "./TeamHeaderUI";
 
 const meta = {
-  title: "Headers/TeamHeader",
   component: Variants,
   parameters: {
     nextjs: {
       appDirectory: true,
     },
   },
+  title: "Headers/TeamHeader",
 } satisfies Meta<typeof Variants>;
 
 export default meta;
@@ -39,18 +40,12 @@ export const Mobile: Story = {
   },
 };
 
-function Variants(props: {
-  type: "mobile" | "desktop";
-}) {
+function Variants(props: { type: "mobile" | "desktop" }) {
   const freeTeam = teamsAndProjectsStub.find(
     (t) => t.team.billingPlan === "free",
   );
   const starterTeam = teamsAndProjectsStub.find(
     (t) => t.team.billingPlan === "starter",
-  );
-
-  const starterLegacyTeam = teamsAndProjectsStub.find(
-    (t) => t.team.billingPlan === "starter_legacy",
   );
 
   const growthTeam = teamsAndProjectsStub.find(
@@ -80,8 +75,7 @@ function Variants(props: {
     !growthLegacyTeam ||
     !accelerateTeam ||
     !scaleTeam ||
-    !proTeam ||
-    !starterLegacyTeam
+    !proTeam
   ) {
     return <div> invalid storybook stubs </div>;
   }
@@ -95,10 +89,6 @@ function Variants(props: {
 
         <BadgeContainer label="Starter Plan">
           <Variant team={starterTeam.team} type={props.type} />
-        </BadgeContainer>
-
-        <BadgeContainer label="Legacy Starter Plan">
-          <Variant team={starterLegacyTeam.team} type={props.type} />
         </BadgeContainer>
 
         <BadgeContainer label="Growth Plan">
@@ -125,9 +115,22 @@ function Variants(props: {
 
         <BadgeContainer label="Pro Plan - project selected">
           <Variant
+            currentProject={proTeam.projects[0]}
             team={proTeam.team}
             type={props.type}
+          />
+        </BadgeContainer>
+
+        <BadgeContainer label="Pro Plan - active subpage">
+          <Variant
             currentProject={proTeam.projects[0]}
+            currentProjectSubpath={{
+              href: "/team/project/foo",
+              icon: <BoxIcon />,
+              label: "Foo",
+            }}
+            team={proTeam.team}
+            type={props.type}
           />
         </BadgeContainer>
       </div>
@@ -143,32 +146,32 @@ function Variant(props: {
   team: Team;
   type: "mobile" | "desktop";
   currentProject?: Project;
+  currentProjectSubpath?: {
+    label: string;
+    href: string;
+    icon: React.ReactNode;
+  };
 }) {
   const Comp =
     props.type === "mobile" ? TeamHeaderMobileUI : TeamHeaderDesktopUI;
 
-  const getChangelogsStub = () => Promise.resolve([]);
-  const getInboxNotificationsStub = () => Promise.resolve([]);
-  const markNotificationAsReadStub = () => Promise.resolve();
-
   return (
     <div className="border-y bg-card">
       <Comp
-        teamsAndProjects={teamsAndProjectsStub}
-        currentTeam={props.team}
-        currentProject={undefined}
-        accountAddress={"0x1F846F6DAE38E1C88D71EAA191760B15f38B7A37"}
         account={{
           email: "foo@example.com",
           id: "foo",
         }}
-        logout={() => {}}
+        accountAddress={"0x1F846F6DAE38E1C88D71EAA191760B15f38B7A37"}
+        client={storybookThirdwebClient}
         connectButton={<ConnectButtonStub />}
         createProject={() => {}}
-        client={storybookThirdwebClient}
-        getChangelogNotifications={getChangelogsStub}
-        getInboxNotifications={getInboxNotificationsStub}
-        markNotificationAsRead={markNotificationAsReadStub}
+        createTeam={() => {}}
+        currentProject={undefined}
+        currentProjectSubpath={props.currentProjectSubpath}
+        currentTeam={props.team}
+        logout={() => {}}
+        teamsAndProjects={teamsAndProjectsStub}
       />
     </div>
   );

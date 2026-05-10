@@ -1,9 +1,8 @@
-import { GenericLoadingPage } from "@/components/blocks/skeletons/GenericLoadingPage";
-import { DeployableContractTable } from "components/contract-components/contract-table";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getUserThirdwebClient } from "../../../api/lib/getAuthToken";
+import { GenericLoadingPage } from "@/components/blocks/skeletons/GenericLoadingPage";
+import { DeployableContractTable } from "@/components/contracts/contract-table";
 
 export default async function DeployMultipleContractsPage(props: {
   searchParams?: Promise<{
@@ -12,7 +11,6 @@ export default async function DeployMultipleContractsPage(props: {
 }) {
   const searchParams = await props.searchParams;
   const ipfsHashes = searchParams?.ipfs;
-  const client = await getUserThirdwebClient();
 
   if (!ipfsHashes || !Array.isArray(ipfsHashes) || ipfsHashes.length === 0) {
     notFound();
@@ -27,8 +25,9 @@ export default async function DeployMultipleContractsPage(props: {
         Welcome to the thirdweb contract deployment flow.{" "}
         <Link
           className="text-link-foreground hover:text-foreground"
-          target="_blank"
           href="https://portal.thirdweb.com/contracts/deploy/overview"
+          rel="noopener noreferrer"
+          target="_blank"
         >
           Learn more about deploying your contracts.
         </Link>
@@ -37,11 +36,7 @@ export default async function DeployMultipleContractsPage(props: {
       <div className="h-6" />
 
       <Suspense fallback={<GenericLoadingPage />}>
-        <DeployableContractTable
-          contractIds={ipfsHashes}
-          context="deploy"
-          client={client}
-        />
+        <DeployableContractTable context="deploy" contractIds={ipfsHashes} />
       </Suspense>
     </div>
   );
