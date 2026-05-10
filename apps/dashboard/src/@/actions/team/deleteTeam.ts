@@ -3,7 +3,8 @@ import "server-only";
 import { getAuthToken } from "@/api/auth-token";
 import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 
-function isValidTeamId(teamId: string) {
+function isValidTeamId(teamId: string): boolean {
+  // Allow only URL-safe identifier characters to prevent path traversal or injection
   return /^[A-Za-z0-9_-]+$/.test(teamId);
 }
 
@@ -24,7 +25,7 @@ export async function deleteTeam(options: { teamId: string }) {
   }
 
   const res = await fetch(
-    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/teams/${encodeURIComponent(options.teamId)}`,
+    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/teams/${options.teamId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
