@@ -254,8 +254,8 @@ function RenderMessage(props: {
           <SwapTransactionCard
             swapData={message.data}
             client={client}
-            onTxSettled={() => {
-              // no op
+            onTxSettled={(txHash) => {
+              sendMessage(getTransactionSettledPrompt(txHash));
             }}
           />
         );
