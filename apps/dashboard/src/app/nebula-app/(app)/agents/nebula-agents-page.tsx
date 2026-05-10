@@ -204,7 +204,7 @@ export function NebulaAgentsPage() {
                       {agent.icon}
                     </div>
                     <div className="flex-1 space-y-1">
-                      <h4 className="font-medium">Agent {agent.id}</h4>
+<h4 className="font-medium">{agent.name}</h4>
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {agent.description}
                       </p>
