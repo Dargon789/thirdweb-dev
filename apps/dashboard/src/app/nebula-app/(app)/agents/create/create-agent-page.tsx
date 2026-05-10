@@ -90,7 +90,7 @@ export function CreateAgentPage() {
         <div className="w-full h-full">
           {/* Profile Picture */}
           <div className="flex justify-center py-8 w-full">
-            <button className="relative w-24 h-24 rounded-full border-2 border-dashed border-muted-foreground hover:border-foreground transition-colors group">
+            <div className="relative w-24 h-24 rounded-full border-2 border-dashed border-muted-foreground hover:border-foreground transition-colors group">
               <div className="flex items-center justify-center h-full">
                 <PlusIcon className="h-6 w-6 text-muted-foreground group-hover:text-foreground" />
               </div>
@@ -102,7 +102,7 @@ export function CreateAgentPage() {
                   toast.info("Profile picture upload not implemented yet")
                 }
               />
-            </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 px-8 pb-8 w-full">
