@@ -53,8 +53,17 @@ async function sendInvite(
   invite: { email: string; role: "OWNER" | "MEMBER" },
   token: string,
 ) {
+  if (!/^[A-Za-z0-9_-]+$/.test(teamId)) {
+    return {
+      email: invite.email,
+      errorMessage: "Invalid team id",
+      ok: false,
+    };
+  }
+
+  const safeTeamId = encodeURIComponent(teamId);
   const res = await fetch(
-    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/teams/${teamId}/invites`,
+    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/teams/${safeTeamId}/invites`,
     {
       body: JSON.stringify({
         inviteEmail: invite.email,

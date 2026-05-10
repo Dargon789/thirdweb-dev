@@ -16,7 +16,11 @@ const meta = {
       appDirectory: true,
     },
   },
+<<<<<<<< HEAD:apps/dashboard/src/app/(app)/team/[team_slug]/[project_slug]/(sidebar)/ai/components/ExecuteTransactionCard.stories.tsx
+  title: "AI/actions/ExecuteTransactionCard",
+========
   title: "Nebula/actions/ExecuteTransactionCard",
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/components/ExecuteTransactionCard.stories.tsx
 } satisfies Meta<typeof Story>;
 
 export default meta;
@@ -68,7 +72,11 @@ function Variant(props: { label: string; status: TxStatus }) {
         setStatus={setStatus}
         status={status}
         txData={{
+<<<<<<<< HEAD:apps/dashboard/src/app/(app)/team/[team_slug]/[project_slug]/(sidebar)/ai/components/ExecuteTransactionCard.stories.tsx
+          chain_id: 1,
+========
           chainId: 1,
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/components/ExecuteTransactionCard.stories.tsx
           data: "0x", // thirdweb.eth
           to: "0xEb0effdFB4dC5b3d5d3aC6ce29F3ED213E95d675",
           value: "0x16345785d8a0000", // 0.1 eth

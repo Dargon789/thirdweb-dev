@@ -1,4 +1,13 @@
 import { stream } from "fetch-event-stream";
+<<<<<<<< HEAD:apps/playground-web/src/app/ai/api/chat.ts
+import {
+  API_URL,
+  type NebulaContext,
+  type NebulaSwapData,
+  type NebulaTxData,
+  type NebulaUserMessage,
+} from "./types";
+========
 import { NEXT_PUBLIC_NEBULA_URL } from "@/constants/public-envs";
 import type { NebulaTxData, NebulaUserMessage } from "./types";
 
@@ -7,6 +16,7 @@ export type NebulaContext = {
   walletAddress: string | null;
   networks: "mainnet" | "testnet" | "all" | null;
 };
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/api/chat.ts
 
 export type NebulaSwapData = {
   action: string;
@@ -42,20 +52,37 @@ export type NebulaSwapData = {
 
 export async function promptNebula(params: {
   message: NebulaUserMessage;
+<<<<<<<< HEAD:apps/playground-web/src/app/ai/api/chat.ts
+========
   sessionId: string;
   authToken: string;
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/api/chat.ts
   handleStream: (res: ChatStreamedResponse) => void;
   abortController: AbortController;
   context: undefined | NebulaContext;
 }) {
   const body: Record<string, string | boolean | object> = {
     messages: [params.message],
+<<<<<<<< HEAD:apps/playground-web/src/app/ai/api/chat.ts
+========
     session_id: params.sessionId,
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/api/chat.ts
     stream: true,
   };
 
   if (params.context) {
     body.context = {
+<<<<<<<< HEAD:apps/playground-web/src/app/ai/api/chat.ts
+      chain_ids: params.context.chainIds?.map(Number) || [],
+      session_id: params.context.sessionId ?? undefined,
+      from: params.context.walletAddress ?? undefined,
+      auto_execute_transactions:
+        params.context.autoExecuteTransactions || false,
+    };
+  }
+
+  const events = await stream(`${API_URL}/ai/chat`, {
+========
       chain_ids: params.context.chainIds || [],
       networks: params.context.networks,
       wallet_address: params.context.walletAddress,
@@ -63,9 +90,10 @@ export async function promptNebula(params: {
   }
 
   const events = await stream(`${NEXT_PUBLIC_NEBULA_URL}/chat`, {
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/api/chat.ts
     body: JSON.stringify(body),
     headers: {
-      Authorization: `Bearer ${params.authToken}`,
+      "x-client-id": process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || "",
       "Content-Type": "application/json",
     },
     method: "POST",
@@ -121,7 +149,11 @@ export async function promptNebula(params: {
 
         if (data.type === "sign_transaction") {
           try {
+<<<<<<<< HEAD:apps/playground-web/src/app/ai/api/chat.ts
+            const parsedTxData = data.data as NebulaTxData;
+========
             const parsedTxData = JSON.parse(data.data) as NebulaTxData;
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/api/chat.ts
             params.handleStream({
               data: parsedTxData,
               event: "action",
@@ -135,7 +167,11 @@ export async function promptNebula(params: {
 
         if (data.type === "sign_swap") {
           try {
+<<<<<<<< HEAD:apps/playground-web/src/app/ai/api/chat.ts
+            const swapData = data.data as NebulaSwapData;
+========
             const swapData = JSON.parse(data.data) as NebulaSwapData;
+>>>>>>>> upstream/main:apps/nebula/src/app/(app)/api/chat.ts
             params.handleStream({
               data: swapData,
               event: "action",
@@ -190,7 +226,7 @@ export async function promptNebula(params: {
         const contextData = JSON.parse(data.data) as {
           wallet_address: string;
           chain_ids: number[];
-          networks: NebulaContext["networks"];
+          session_id: string;
         };
 
         params.handleStream({
@@ -260,7 +296,14 @@ type ChatStreamedResponse =
       data: {
         wallet_address: string;
         chain_ids: number[];
-        networks: NebulaContext["networks"];
+        session_id: string;
+      };
+    }
+  | {
+      event: "error";
+      data: {
+        code: number;
+        errorMessage: string;
       };
     }
   | {
