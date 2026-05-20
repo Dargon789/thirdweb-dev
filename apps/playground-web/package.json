@@ -51,7 +51,7 @@
     "tailwind-merge": "^2.6.0",
     "thirdweb": "workspace:*",
     "timeago.js": "^4.0.2",
-    "use-debounce": "^10.0.4",
+    "use-debounce": "^10.1.1",
     "zod": "4.3.6"
   },
   "devDependencies": {
