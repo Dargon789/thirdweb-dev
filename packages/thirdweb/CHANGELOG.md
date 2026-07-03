@@ -1,5 +1,63 @@
 # thirdweb
 
+## 5.120.1
+
+### Patch Changes
+
+- [#8801](https://github.com/thirdweb-dev/js/pull/8801) [`49194e3`](https://github.com/thirdweb-dev/js/commit/49194e3a2a1707c5d1e0a2cc67c328e84ef5e9a0) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Fix Arc Testnet native currency decimals (USDC) from 6 to 18 to match the chain's RPC balance encoding
+
+## 5.120.0
+
+### Minor Changes
+
+- [#8764](https://github.com/thirdweb-dev/js/pull/8764) [`23d74a0`](https://github.com/thirdweb-dev/js/commit/23d74a0a54247930e6889bbf66f88fa673a23f1a) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - [SDK] Add RampNow as a new onramp provider
+
+## 5.119.4
+
+### Patch Changes
+
+- [#8733](https://github.com/thirdweb-dev/js/pull/8733) [`83198b2`](https://github.com/thirdweb-dev/js/commit/83198b2ea4dd29b1debb7db2dc2eabba57e9c4d7) Thanks [@Dhaiwat10](https://github.com/Dhaiwat10)! - Updates the hardcoded ENS Universal Resolver address from 0xce01f8eee7E479C928F8919abD53E553a36CeF67 (old) to 0xeeeeeeee14d718c2b47d9923deab1335e144eeee (new)
+
+- [#8735](https://github.com/thirdweb-dev/js/pull/8735) [`ad49560`](https://github.com/thirdweb-dev/js/commit/ad4956033107c52ecdf4cd9f5b2bff87867f3bec) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - ENS: add coinType param to reverse resolver
+
+## 5.119.3
+
+### Patch Changes
+
+- [#8726](https://github.com/thirdweb-dev/js/pull/8726) [`3a18c6e`](https://github.com/thirdweb-dev/js/commit/3a18c6e6a8c12cecaf684fff2dfc5a73c77c40c9) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - [CLI] fix stylus abi exports
+
+## 5.119.2
+
+### Patch Changes
+
+- [#8724](https://github.com/thirdweb-dev/js/pull/8724) [`32c2ff6`](https://github.com/thirdweb-dev/js/commit/32c2ff62f8a2ca8da82c1e8d9bb73def95ec41db) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - [CLI] create-stylus fixes
+
+## 5.119.1
+
+### Patch Changes
+
+- [#8700](https://github.com/thirdweb-dev/js/pull/8700) [`e13b9a7`](https://github.com/thirdweb-dev/js/commit/e13b9a784aca3a9b5d797fc6e011c6d1a10542e9) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Deprecate the `thirdweb create` CLI command
+
+- [#8698](https://github.com/thirdweb-dev/js/pull/8698) [`da4a4a5`](https://github.com/thirdweb-dev/js/commit/da4a4a540a6b141050af8fc8332621826d8dd835) Thanks [@Yash094](https://github.com/Yash094)! - Add `screen` prop to `useWalletDetailsModal` to allow opening the modal directly at a specific screen. Use `screen: "export"` to open directly at the Export Private Key screen.
+
+## 5.119.0
+
+### Minor Changes
+
+- [#8686](https://github.com/thirdweb-dev/js/pull/8686) [`5352152`](https://github.com/thirdweb-dev/js/commit/53521528353a00691e82405460d4fb869ac986de) Thanks [@Yash094](https://github.com/Yash094)! - Add `requireApproval` option to `useConnectModal` hook to require terms of service and privacy policy acceptance before connecting an in-app wallet
+
+## 5.118.2
+
+### Patch Changes
+
+- [#8671](https://github.com/thirdweb-dev/js/pull/8671) [`1caf6dd`](https://github.com/thirdweb-dev/js/commit/1caf6dd4609ac72a06999ef0d70f31a371e5108a) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - fix walletconnect not working on berachain and unallowlisted chains
+
+## 5.118.1
+
+### Patch Changes
+
+- [#8664](https://github.com/thirdweb-dev/js/pull/8664) [`b50e304`](https://github.com/thirdweb-dev/js/commit/b50e304e0ccd1ac7eae551c3d49e82312ffc82d1) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix SiteLink not handling hashed URL paths
+
 ## 5.118.0
 
 ### Minor Changes

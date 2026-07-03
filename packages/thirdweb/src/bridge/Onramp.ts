@@ -13,7 +13,7 @@ import type { TokenWithPrices } from "./types/Token.js";
 export { status } from "./OnrampStatus.js";
 
 type OnrampIntent = {
-  onramp: "stripe" | "coinbase" | "transak";
+  onramp: "stripe" | "coinbase" | "transak" | "rampnow";
   chainId: number;
   tokenAddress: ox__Address.Address;
   receiver: ox__Address.Address;
@@ -42,7 +42,7 @@ type OnrampPrepareQuoteResponseData = {
 
 // Explicit type for the API request body
 interface OnrampApiRequestBody {
-  onramp: "stripe" | "coinbase" | "transak";
+  onramp: "stripe" | "coinbase" | "transak" | "rampnow";
   chainId: number;
   tokenAddress: ox__Address.Address;
   receiver: ox__Address.Address;
@@ -128,7 +128,7 @@ interface OnrampApiRequestBody {
  *
  * @param options - The options for preparing the onramp.
  * @param options.client - Your thirdweb client.
- * @param options.onramp - The onramp provider to use (e.g., "stripe", "coinbase", "transak").
+ * @param options.onramp - The onramp provider to use (e.g., "stripe", "coinbase", "transak", "rampnow").
  * @param options.chainId - The destination chain ID.
  * @param options.tokenAddress - The destination token address.
  * @param options.receiver - The address that will receive the output token.
@@ -272,8 +272,8 @@ export declare namespace prepare {
   export type Options = {
     /** Your thirdweb client */
     client: ThirdwebClient;
-    /** The onramp provider to use (e.g., "stripe", "coinbase", "transak") */
-    onramp: "stripe" | "coinbase" | "transak";
+    /** The onramp provider to use (e.g., "stripe", "coinbase", "transak", "rampnow") */
+    onramp: "stripe" | "coinbase" | "transak" | "rampnow";
     /** The destination chain ID */
     chainId: number;
     /** The destination token address */

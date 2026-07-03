@@ -8,12 +8,6 @@ export async function createStylusProject() {
 
   checkPrerequisites(spinner, "cargo", ["--version"], "Rust (cargo)");
   checkPrerequisites(spinner, "rustc", ["--version"], "Rust compiler (rustc)");
-  checkPrerequisites(
-    spinner,
-    "solc",
-    ["--version"],
-    "Solidity compiler (solc)",
-  );
 
   // Step 1: Ensure cargo is installed
   const cargoCheck = spawnSync("cargo", ["--version"]);
@@ -24,7 +18,7 @@ export async function createStylusProject() {
 
   // Step 2: Install stylus etc.
   spinner.start("Installing Stylus...");
-  const install = spawnSync("cargo", ["install", "--force", "cargo-stylus"], {
+  const install = spawnSync("cargo", ["install", "cargo-stylus"], {
     stdio: "inherit",
   });
   if (install.status !== 0) {
@@ -33,7 +27,7 @@ export async function createStylusProject() {
   }
   spinner.succeed("Stylus installed.");
 
-  spawnSync("rustup", ["default", "1.87"], {
+  spawnSync("rustup", ["default", "stable"], {
     stdio: "inherit",
   });
   spawnSync("rustup", ["target", "add", "wasm32-unknown-unknown"], {
