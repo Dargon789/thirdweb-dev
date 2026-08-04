@@ -14,7 +14,7 @@
     "@tryghost/content-api": "^1.11.28",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "date-fns": "4.1.0",
+    "date-fns": "4.4.0",
     "flexsearch": "^0.8.143",
     "github-slugger": "^2.0.0",
     "he": "^1.2.0",
