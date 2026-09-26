@@ -1,5 +1,64 @@
 # thirdweb
 
+## 5.121.6
+
+### Patch Changes
+
+- [#8995](https://github.com/thirdweb-dev/js/pull/8995) [`cb98fa8`](https://github.com/thirdweb-dev/js/commit/cb98fa892bc411ac900c092efb4ea3ca799bb9df) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Show the WalletConnect QR inside the connect modal instead of a separate window
+
+- [#8966](https://github.com/thirdweb-dev/js/pull/8966) [`6214925`](https://github.com/thirdweb-dev/js/commit/62149255e7033d45d20f36129bc84831ef17fb03) Thanks [@realpaaao](https://github.com/realpaaao)! - Add Vultisig and refresh the wallet registry
+
+## 5.121.5
+
+### Patch Changes
+
+- [#8991](https://github.com/thirdweb-dev/js/pull/8991) [`f7148d2`](https://github.com/thirdweb-dev/js/commit/f7148d29f02f049741cc61a3e7b99a6f58cfdeba) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Show the WalletConnect QR code on desktop browsers with narrow viewports
+
+- [#8969](https://github.com/thirdweb-dev/js/pull/8969) [`5bb1647`](https://github.com/thirdweb-dev/js/commit/5bb1647931e71c5f25f8d7efa924c9a1327c6e13) Thanks [@bassem-abdelazim-trilitech](https://github.com/bassem-abdelazim-trilitech)! - Fix Rabby mobile connections and keep the WalletConnect QR overlay interactive and unstacked
+
+## 5.121.4
+
+### Patch Changes
+
+- [#8944](https://github.com/thirdweb-dev/js/pull/8944) [`d114bc6`](https://github.com/thirdweb-dev/js/commit/d114bc68ebe98ddba651afeb8064277532e886f9) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Update toml dependency
+
+- Updated dependencies [[`d6d1797`](https://github.com/thirdweb-dev/js/commit/d6d1797ea8c1d492afb1b7068f38f6744595caf5)]:
+  - @thirdweb-dev/insight@1.1.2
+
+## 5.121.3
+
+### Patch Changes
+
+- [#8941](https://github.com/thirdweb-dev/js/pull/8941) [`a088faf`](https://github.com/thirdweb-dev/js/commit/a088faf4b63776a570192f12dd6e7fd026a8e9d4) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Accept x402 v2 payment requirements that specify `amount`, and enforce `maxValue: 0n` as a cap.
+
+## 5.121.2
+
+### Patch Changes
+
+- [#8938](https://github.com/thirdweb-dev/js/pull/8938) [`a3488dd`](https://github.com/thirdweb-dev/js/commit/a3488dd200f562ae08545764243d736fcbeb509c) Thanks [@devtechedge](https://github.com/devtechedge)! - Fix CheckoutWidget treating token lookup failures as unsupported tokens
+
+## 5.121.1
+
+### Patch Changes
+
+- [#8906](https://github.com/thirdweb-dev/js/pull/8906) [`fcc0417`](https://github.com/thirdweb-dev/js/commit/fcc04176f1f54d04d4a6705e7f6d1437cfd007ab) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Fixed Universal Bridge onramp checkout incorrectly reporting success when the onramp did not complete. A failed onramp now surfaces the error instead of a false success, and retrying a failed onramp prepares a fresh payment session rather than replaying the expired one (post-onramp transaction failures still retry in place, so completed onramps are never charged twice).
+
+## 5.121.0
+
+### Minor Changes
+
+- [#8887](https://github.com/thirdweb-dev/js/pull/8887) [`133e57d`](https://github.com/thirdweb-dev/js/commit/133e57d373ffbbe3531c9c12023540dcb8ad372f) Thanks [@0xFirekeeper](https://github.com/0xFirekeeper)! - Redirect-based in-app wallet logins now include and verify a one-time `state` value before `AutoConnect` consumes auth material returned in the URL, tying the returned token back to a flow the page actually started. Added a `readUrlToken` option to `AutoConnect` / `useAutoConnect` to opt out of reading wallet auth material from the URL entirely.
+
+### Patch Changes
+
+- [#8886](https://github.com/thirdweb-dev/js/pull/8886) [`e4fba08`](https://github.com/thirdweb-dev/js/commit/e4fba08e2546511f3c4d1f03c49893b0b643aa28) Thanks [@blockgroot](https://github.com/blockgroot)! - Fix: `EIP1193.toProvider()`'s `removeListener` is no longer a no-op. Previously, `removeListener` discarded the unsubscribe function returned by `wallet.subscribe()`, so listeners registered via `provider.on(...)` (e.g. `accountsChanged`, `chainChanged`, `disconnect`) could never actually be detached — they kept firing after callers (such as wagmi connectors) believed they had unsubscribed. `removeListener` now tracks and invokes the correct unsubscribe function per `(event, listener)` pair.
+
+- [#8807](https://github.com/thirdweb-dev/js/pull/8807) [`8c521aa`](https://github.com/thirdweb-dev/js/commit/8c521aa06aca02a57200f5941e10d06c8cbaf9fb) Thanks [@Yash094](https://github.com/Yash094)! - Fix: injected wallets (e.g. MetaMask) no longer fire a spurious `"disconnect"` event for transient EIP-1193 error code 1013 ("disconnected, will reconnect"). Previously, MetaMask's temporary disconnect during chain changes or RPC hiccups would trigger the thirdweb `disconnect` subscriber and tear down wallet state, causing unexpected logouts. The `onDisconnect` handler now ignores code-1013 errors and lets MetaMask reconnect automatically.
+
+  Additionally, the `WalletEmitterEvents["disconnect"]` type is updated from `never` to `WalletDisconnectError | undefined`, so `disconnect` subscribers can inspect the underlying EIP-1193 error code and message when they need to distinguish disconnect causes.
+
+- [#8875](https://github.com/thirdweb-dev/js/pull/8875) [`f411769`](https://github.com/thirdweb-dev/js/commit/f411769e2a0c82ad636a41ba650b72222df29006) Thanks [@SashaMIT](https://github.com/SashaMIT)! - Reject SIWE login payloads with an unparseable Not Before or Expiration Time instead of skipping the time-bound checks.
+
 ## 5.120.1
 
 ### Patch Changes

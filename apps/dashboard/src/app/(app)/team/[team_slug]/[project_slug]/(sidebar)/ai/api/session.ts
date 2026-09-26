@@ -68,7 +68,7 @@ export async function updateSession(params: {
 
   const res = await fetchWithAuthToken({
     body: body,
-    endpoint: `${NEXT_PUBLIC_THIRDWEB_AI_HOST}/session/${params.sessionId}`,
+    endpoint: `${NEXT_PUBLIC_THIRDWEB_AI_HOST}/session/${encodeURIComponent(params.sessionId)}`,
     method: "PUT",
     project: params.project,
   });
@@ -89,7 +89,7 @@ export async function deleteSession(params: {
     throw new Error("Invalid sessionId.");
   }
   const res = await fetchWithAuthToken({
-    endpoint: `${NEXT_PUBLIC_THIRDWEB_AI_HOST}/session/${params.sessionId}`,
+    endpoint: `${NEXT_PUBLIC_THIRDWEB_AI_HOST}/session/${encodeURIComponent(params.sessionId)}`,
     method: "DELETE",
     project: params.project,
   });
@@ -125,7 +125,7 @@ export async function getSessionById(params: {
     throw new Error("Invalid sessionId.");
   }
   const res = await fetchWithAuthToken({
-    endpoint: `${NEXT_PUBLIC_THIRDWEB_AI_HOST}/session/${params.sessionId}`,
+    endpoint: `${NEXT_PUBLIC_THIRDWEB_AI_HOST}/session/${encodeURIComponent(params.sessionId)}`,
     method: "GET",
     project: params.project,
   });

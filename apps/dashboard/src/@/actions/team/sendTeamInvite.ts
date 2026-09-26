@@ -3,12 +3,6 @@
 import { getAuthToken } from "@/api/auth-token";
 import { NEXT_PUBLIC_THIRDWEB_API_HOST } from "@/constants/public-envs";
 
-function isValidTeamId(teamId: string): boolean {
-  // Allow only alphanumeric characters, dashes and underscores, with a reasonable length bound.
-  // This prevents path traversal sequences and other unexpected characters in the URL path.
-  return /^[A-Za-z0-9_-]{1,128}$/.test(teamId);
-}
-
 export async function sendTeamInvites(options: {
   teamId: string;
   invites: Array<{ email: string; role: "OWNER" | "MEMBER" }>;
@@ -31,13 +25,6 @@ export async function sendTeamInvites(options: {
     };
   }
 
-  if (!isValidTeamId(options.teamId)) {
-    return {
-      errorMessage: "Invalid team identifier",
-      ok: false,
-    };
-  }
-
   const results = await Promise.allSettled(
     options.invites.map((invite) => sendInvite(options.teamId, invite, token)),
   );
@@ -53,17 +40,8 @@ async function sendInvite(
   invite: { email: string; role: "OWNER" | "MEMBER" },
   token: string,
 ) {
-  if (!/^[A-Za-z0-9_-]+$/.test(teamId)) {
-    return {
-      email: invite.email,
-      errorMessage: "Invalid team id",
-      ok: false,
-    };
-  }
-
-  const safeTeamId = encodeURIComponent(teamId);
   const res = await fetch(
-    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/teams/${safeTeamId}/invites`,
+    `${NEXT_PUBLIC_THIRDWEB_API_HOST}/v1/teams/${encodeURIComponent(teamId)}/invites`,
     {
       body: JSON.stringify({
         inviteEmail: invite.email,

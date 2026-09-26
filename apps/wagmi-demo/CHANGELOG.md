@@ -1,5 +1,61 @@
 # wagmi-inapp
 
+## 0.0.65
+
+### Patch Changes
+
+- Updated dependencies [[`cb98fa8`](https://github.com/thirdweb-dev/js/commit/cb98fa892bc411ac900c092efb4ea3ca799bb9df), [`6214925`](https://github.com/thirdweb-dev/js/commit/62149255e7033d45d20f36129bc84831ef17fb03)]:
+  - thirdweb@5.121.6
+  - @thirdweb-dev/wagmi-adapter@0.2.220
+
+## 0.0.64
+
+### Patch Changes
+
+- Updated dependencies [[`f7148d2`](https://github.com/thirdweb-dev/js/commit/f7148d29f02f049741cc61a3e7b99a6f58cfdeba), [`5bb1647`](https://github.com/thirdweb-dev/js/commit/5bb1647931e71c5f25f8d7efa924c9a1327c6e13)]:
+  - thirdweb@5.121.5
+  - @thirdweb-dev/wagmi-adapter@0.2.219
+
+## 0.0.63
+
+### Patch Changes
+
+- Updated dependencies [[`d114bc6`](https://github.com/thirdweb-dev/js/commit/d114bc68ebe98ddba651afeb8064277532e886f9)]:
+  - thirdweb@5.121.4
+  - @thirdweb-dev/wagmi-adapter@0.2.218
+
+## 0.0.62
+
+### Patch Changes
+
+- Updated dependencies [[`a088faf`](https://github.com/thirdweb-dev/js/commit/a088faf4b63776a570192f12dd6e7fd026a8e9d4)]:
+  - thirdweb@5.121.3
+  - @thirdweb-dev/wagmi-adapter@0.2.217
+
+## 0.0.61
+
+### Patch Changes
+
+- Updated dependencies [[`a3488dd`](https://github.com/thirdweb-dev/js/commit/a3488dd200f562ae08545764243d736fcbeb509c)]:
+  - thirdweb@5.121.2
+  - @thirdweb-dev/wagmi-adapter@0.2.216
+
+## 0.0.60
+
+### Patch Changes
+
+- Updated dependencies [[`fcc0417`](https://github.com/thirdweb-dev/js/commit/fcc04176f1f54d04d4a6705e7f6d1437cfd007ab)]:
+  - thirdweb@5.121.1
+  - @thirdweb-dev/wagmi-adapter@0.2.215
+
+## 0.0.59
+
+### Patch Changes
+
+- Updated dependencies [[`133e57d`](https://github.com/thirdweb-dev/js/commit/133e57d373ffbbe3531c9c12023540dcb8ad372f), [`e4fba08`](https://github.com/thirdweb-dev/js/commit/e4fba08e2546511f3c4d1f03c49893b0b643aa28), [`8c521aa`](https://github.com/thirdweb-dev/js/commit/8c521aa06aca02a57200f5941e10d06c8cbaf9fb), [`f411769`](https://github.com/thirdweb-dev/js/commit/f411769e2a0c82ad636a41ba650b72222df29006)]:
+  - thirdweb@5.121.0
+  - @thirdweb-dev/wagmi-adapter@0.2.214
+
 ## 0.0.58
 
 ### Patch Changes
