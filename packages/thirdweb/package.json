@@ -29,7 +29,7 @@
     "@walletconnect/universal-provider": "2.21.8",
     "abitype": "1.0.8",
     "cross-spawn": "7.0.6",
-    "fuse.js": "7.1.0",
+    "fuse.js": "7.5.0",
     "input-otp": "^1.4.1",
     "mipd": "0.0.7",
     "open": "10.1.1",
