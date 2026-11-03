@@ -92,7 +92,7 @@
     "sharp": "^0.35.4",
     "size-limit": "11.2.0",
     "storybook": "9.1.21",
-    "tsup": "^8.5.0",
+    "tsup": "^9.0.0",
     "typedoc": "0.27.9",
     "typedoc-better-json": "0.9.4",
     "typescript": "5.8.3",
